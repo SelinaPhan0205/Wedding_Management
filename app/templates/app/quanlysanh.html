@@ -356,6 +356,21 @@
     let currentPage = 1;
     const itemsPerPage = 8;
 
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
     // Hàm gọi API
     async function goiAPI(method, url, data = null) {
         try {
@@ -365,6 +380,10 @@
                     'Content-Type': 'application/json',
                 },
             };
+            // Thêm CSRF token cho các method thay đổi dữ liệu
+            if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method.toUpperCase())) {
+                options.headers['X-CSRFToken'] = getCookie('csrftoken');
+            }
             if (data) {
                 options.body = JSON.stringify(data);
             }
