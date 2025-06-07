@@ -243,20 +243,20 @@
 
     <div class="sidebar" id="sidebar">
         <h2>Quản lý Tiệc Cưới</h2>
-        <a href="#">Trang Chủ</a>
+        <a href="{% url 'trangchu' %}">Trang Chủ</a>
+        <a href="{% url 'quanlytaikhoan' %}">Tài Khoản</a>
         <a href="{% url 'quanlyhoadon' %}">Hóa Đơn</a>
         <a href="{% url 'quanlysanh' %}">Sảnh</a>
-        <a href="{% url 'quanlytieccuoi' %}">Tiệc Cưới</a>
-        <a href="{% url 'quanlytaikhoan' %}">Tài Khoản</a>
         <a href="{% url 'quanlythucdon' %}">Thực Đơn</a>
         <a href="{% url 'quanlydichvu' %}">Dịch Vụ</a>
+        <a href="{% url 'quanlytieccuoi' %}">Tiệc Cưới</a>
         <a href="{% url 'quanlyquydinh' %}">Quy Định</a>
         <a href="{% url 'xembaocao' %}">Xem Báo Cáo</a>
     </div>
 
     <div class="content" id="content">
         <div class="dashboard-header">
-            <h1>Dashboard</h1>
+            <h1>Trang chủ</h1>
 
             <div class="profile" onclick="toggleDropdown(event)">
                 <div class="profile-img">
