@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Sảnh - Hệ thống Quản Lý Tiệc Cưới</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for better aesthetics */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Light gray background */
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 1.5rem;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .search-input {
+            border: 1px solid #d1d5db;
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            width: 300px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .search-input:focus {
+            border-color: #2c3e50; /* Indigo-500 */
+        }
+        .add-button {
+            background-color: #2c3e50; /* Indigo-600 */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        .add-button:hover {
+            background-color: #2c3e50; /* Indigo-700 */
+            transform: translateY(-1px);
+        }
+        .table-container {
+            overflow-x: auto; /* Allows horizontal scrolling on small screens */
+        }
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 8px;
+            overflow: hidden; /* Ensures rounded corners apply to table content */
+        }
+        th, td {
+            padding: 1rem 1.25rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        th {
+            background-color: #f9fafb; /* Lightest gray for table header */
+            font-weight: 600;
+            color: #374151; /* Dark gray text */
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.05em;
+        }
+        tr:last-child td {
+            border-bottom: none; /* No border for the last row */
+        }
+        .action-button {
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        .edit-button {
+            background-color: #e0e7ff; /* Indigo-100 */
+            color: #2c3e50; /* Indigo-600 */
+        }
+        .edit-button:hover {
+            background-color: rgb(188, 202, 240); /* Indigo-200 */
+            transform: translateY(-1px);
+        }
+        .delete-button {
+            background-color: rgb(241, 215, 215); /* Red-100 */
+            color: #dc2626; /* Red-600 */
+            margin-left: 0.5rem;
+        }
+        .delete-button:hover {
+            background-color: #fecaca; /* Red-200 */
+            transform: translateY(-1px);
+        }
+        /* Pagination styles */
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 1.5rem;
+            gap: 0.5rem;
+        }
+        .pagination-button {
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            background-color: #e0e7ff; /* Indigo-100 */
+            color: #2c3e50; /* Indigo-600 */
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .pagination-button:hover:not(.active) {
+            background-color: #c7d2fe; /* Indigo-200 */
+        }
+        .pagination-button.active {
+            background-color: #2c3e50; /* Indigo-600 */
+            color: white;
+            cursor: default;
+        }
+        .pagination-button.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .header-section {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            .search-input {
+                width: 100%;
+            }
+            .add-button {
+                width: 100%;
+                justify-content: center;
+            }
+            .container {
+                margin: 1rem;
+                padding: 1rem;
+            }
+            th, td {
+                padding: 0.8rem;
+                font-size: 0.75rem;
+            }
+            .pagination-container {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            .pagination-button {
+                padding: 0.5rem 0.8rem;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-section">
+            <h1 class="text-2xl font-bold text-gray-800">QUẢN LÝ SẢNH</h1>
+            <div class="flex items-center gap-3">
+                <div class="relative">
+                    <input type="text" placeholder="Tìm kiếm sảnh..." class="search-input" id="searchInput">
+                    <button class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+                <button class="add-button" onclick="moFormThemMoi()">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Thêm Sảnh
+                </button>
+            </div>
+        </div>
+
+        <h2 class="text-xl font-semibold text-gray-700 mb-4">Danh sách sảnh</h2>
+
+        <div class="table-container">
+            <table class="min-w-full bg-white">
+                <thead>
+                    <tr>
+                        <th>Mã sảnh</th>
+                        <th>Tên sảnh</th>
+                        <th>Loại sảnh</th>
+                        <th>Số lượng bàn tối đa</th>
+                        <th>Trạng thái</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+                <tbody id="danhSachSanh">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination-container" id="paginationControls">
+        </div>
+    </div>
+
+    <div id="modalSanh" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
+            <h2 id="modalTitle" class="text-2xl font-bold mb-6 text-gray-800">Thêm Sảnh Mới</h2>
+            <form id="formSanh">
+                <div class="mb-4">
+                    <label for="tenSanh" class="block text-gray-700 text-sm font-medium mb-2">Tên sảnh:</label>
+                    <input type="text" id="tenSanh" name="tenSanh" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="loaiSanh" class="block text-gray-700 text-sm font-medium mb-2">Loại sảnh:</label>
+                    <select id="loaiSanh" name="loaiSanh" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                        <option value="">Chọn loại sanh</option>
+                        <option value="1">Standard</option>
+                        <option value="2">VIP</option>
+                        <option value="3">Luxury</option>
+                        <option value="4">Premium</option>
+                        <option value="5">Royal Grand</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label for="soLuongBanToiDa" class="block text-gray-700 text-sm font-medium mb-2">Số lượng bàn tối đa:</label>
+                    <input type="number" id="soLuongBanToiDa" name="soLuongBanToiDa" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="trangThai" class="block text-gray-700 text-sm font-medium mb-2">Trạng thái:</label>
+                    <select id="trangThai" name="trangThai" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                        <option value="Active">Đang hoạt động</option>
+                        <option value="Maintaining">Đang bảo trì</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-3">
+                    <button type="button" onclick="dongModal()" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-100 transition">Hủy</button>
+                    <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Dữ liệu mẫu cho sảnh
+        let danhSachSanh = [
+            { id: 1, ten_sanh: 'Sảnh Hoàng Gia', loai_sanh: { id: 3, ten_loai_sanh: 'Luxury' }, so_luong_ban_toi_da: 30, trang_thai: 'Active' },
+            { id: 2, ten_sanh: 'Sảnh Kim Cương', loai_sanh: { id: 2, ten_loai_sanh: 'VIP' }, so_luong_ban_toi_da: 15, trang_thai: 'Active' },
+            { id: 3, ten_sanh: 'Sảnh Ngọc Bích', loai_sanh: { id: 1, ten_loai_sanh: 'Standard' }, so_luong_ban_toi_da: 8, trang_thai: 'Maintaining' },
+            { id: 4, ten_sanh: 'Sảnh Hồng Ngọc', loai_sanh: { id: 3, ten_loai_sanh: 'Luxury' }, so_luong_ban_toi_da: 25, trang_thai: 'Active' },
+            { id: 5, ten_sanh: 'Sảnh Lam Ngọc', loai_sanh: { id: 2, ten_loai_sanh: 'VIP' }, so_luong_ban_toi_da: 12, trang_thai: 'Maintaining' },
+            { id: 6, ten_sanh: 'Sảnh Bạch Kim', loai_sanh: { id: 1, ten_loai_sanh: 'Standard' }, so_luong_ban_toi_da: 10, trang_thai: 'Active' },
+            { id: 7, ten_sanh: 'Sảnh Thiên Thanh', loai_sanh: { id: 3, ten_loai_sanh: 'Luxury' }, so_luong_ban_toi_da: 28, trang_thai: 'Active' },
+            { id: 8, ten_sanh: 'Sảnh Xanh Biển', loai_sanh: { id: 2, ten_loai_sanh: 'VIP' }, so_luong_ban_toi_da: 18, trang_thai: 'Active' },
+            { id: 9, ten_sanh: 'Sảnh Vàng Anh', loai_sanh: { id: 1, ten_loai_sanh: 'Standard' }, so_luong_ban_toi_da: 7, trang_thai: 'Active' },
+            { id: 10, ten_sanh: 'Sảnh Tím Huế', loai_sanh: { id: 3, ten_loai_sanh: 'Luxury' }, so_luong_ban_toi_da: 20, trang_thai: 'Maintaining' },
+            { id: 11, ten_sanh: 'Sảnh Đỏ Son', loai_sanh: { id: 2, ten_loai_sanh: 'VIP' }, so_luong_ban_toi_da: 14, trang_thai: 'Active' },
+            { id: 12, ten_sanh: 'Sảnh Trắng Tinh Khôi', loai_sanh: { id: 1, ten_loai_sanh: 'Standard' }, so_luong_ban_toi_da: 9, trang_thai: 'Active' },
+        ];
+
+        const danhSachSanhElement = document.getElementById('danhSachSanh');
+        const modalSanh = document.getElementById('modalSanh');
+        const modalTitle = document.getElementById('modalTitle');
+        const formSanh = document.getElementById('formSanh');
+        const paginationControls = document.getElementById('paginationControls');
+
+        let isEditMode = false;
+        let currentSanhId = null;
+        let currentPage = 1;
+        const itemsPerPage = 8;
+
+        // Hàm hiển thị danh sách sảnh
+        function hienThiDanhSach() {
+            danhSachSanhElement.innerHTML = '';
+
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const sanhToDisplay = danhSachSanh.slice(startIndex, endIndex);
+
+            sanhToDisplay.forEach(sanh => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${sanh.id}</td>
+                    <td>${sanh.ten_sanh}</td>
+                    <td>${sanh.loai_sanh.ten_loai_sanh}</td>
+                    <td>${sanh.so_luong_ban_toi_da}</td>
+                    <td>${sanh.trang_thai === 'Active' ? 'Đang hoạt động' : 'Đang bảo trì'}</td>
+                    <td>
+                        <button class="action-button edit-button" onclick="suaSanh(${sanh.id})">Sửa</button>
+                        <button class="action-button delete-button" onclick="xoaSanh(${sanh.id})">Xóa</button>
+                    </td>
+                `;
+                danhSachSanhElement.appendChild(row);
+            });
+            hienThiPhanTrang();
+        }
+
+        // Hàm hiển thị phân trang
+        function hienThiPhanTrang() {
+            paginationControls.innerHTML = '';
+            const totalPages = Math.ceil(danhSachSanh.length / itemsPerPage);
+
+            const prevButton = document.createElement('button');
+            prevButton.textContent = '«';
+            prevButton.classList.add('pagination-button');
+            if (currentPage === 1) {
+                prevButton.classList.add('disabled');
+                prevButton.disabled = true;
+            }
+            prevButton.onclick = () => chuyenTrang(currentPage - 1);
+            paginationControls.appendChild(prevButton);
+
+            for (let i = 1; i <= totalPages; i++) {
+                const pageButton = document.createElement('button');
+                pageButton.textContent = i;
+                pageButton.classList.add('pagination-button');
+                if (i === currentPage) {
+                    pageButton.classList.add('active');
+                }
+                pageButton.onclick = () => chuyenTrang(i);
+                paginationControls.appendChild(pageButton);
+            }
+
+            const nextButton = document.createElement('button');
+            nextButton.textContent = '»';
+            nextButton.classList.add('pagination-button');
+            if (currentPage === totalPages || totalPages === 0) {
+                nextButton.classList.add('disabled');
+                nextButton.disabled = true;
+            }
+            nextButton.onclick = () => chuyenTrang(currentPage + 1);
+            paginationControls.appendChild(nextButton);
+        }
+
+        // Hàm chuyển trang
+        function chuyenTrang(pageNumber) {
+            const totalPages = Math.ceil(danhSachSanh.length / itemsPerPage);
+            if (pageNumber >= 1 && pageNumber <= totalPages) {
+                currentPage = pageNumber;
+                hienThiDanhSach();
+            }
+        }
+
+        // Hàm mở form thêm sảnh
+        function moFormThemMoi() {
+            isEditMode = false;
+            modalTitle.textContent = 'Thêm Sảnh Mới';
+            formSanh.reset();
+            modalSanh.classList.remove('hidden');
+        }
+
+        // Hàm mở form sửa sảnh
+        function suaSanh(id) {
+            isEditMode = true;
+            currentSanhId = id;
+            modalTitle.textContent = 'Chỉnh Sửa Sảnh';
+            const sanhToEdit = danhSachSanh.find(sanh => sanh.id === id);
+            if (sanhToEdit) {
+                document.getElementById('tenSanh').value = sanhToEdit.ten_sanh;
+                document.getElementById('loaiSanh').value = sanhToEdit.loai_sanh.id;
+                document.getElementById('soLuongBanToiDa').value = sanhToEdit.so_luong_ban_toi_da;
+                document.getElementById('trangThai').value = sanhToEdit.trang_thai;
+                modalSanh.classList.remove('hidden');
+            }
+        }
+
+        // Hàm đóng form
+        function dongModal() {
+            modalSanh.classList.add('hidden');
+        }
+
+        // Xử lý submit form
+        formSanh.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const newSanhData = {
+                ten_sanh: document.getElementById('tenSanh').value,
+                loai_sanh: { id: parseInt(document.getElementById('loaiSanh').value), ten_loai_sanh: document.getElementById('loaiSanh').options[document.getElementById('loaiSanh').selectedIndex].text },
+                so_luong_ban_toi_da: parseInt(document.getElementById('soLuongBanToiDa').value),
+                trang_thai: document.getElementById('trangThai').value,
+            };
+
+            if (isEditMode) {
+                danhSachSanh = danhSachSanh.map(sanh =>
+                    sanh.id === currentSanhId ? { ...sanh, ...newSanhData } : sanh
+                );
+            } else {
+                newSanhData.id = danhSachSanh.length + 1;
+                danhSachSanh.push(newSanhData);
+            }
+
+            if (!isEditMode) {
+                currentPage = Math.ceil(danhSachSanh.length / itemsPerPage);
+            }
+            hienThiDanhSach();
+            dongModal();
+        });
+
+        // Hàm xóa sảnh
+        function xoaSanh(id) {
+            if (confirm('Bạn có chắc chắn muốn xóa sảnh này không?')) {
+                danhSachSanh = danhSachSanh.filter(sanh => sanh.id !== id);
+                const totalPages = Math.ceil(danhSachSanh.length / itemsPerPage);
+                if (currentPage > totalPages && totalPages > 0) {
+                    currentPage = totalPages;
+                } else if (totalPages === 0) {
+                    currentPage = 1;
+                }
+                hienThiDanhSach();
+            }
+        }
+
+        // Hiển thị danh sách sảnh khi trang tải
+        document.addEventListener('DOMContentLoaded', hienThiDanhSach);
+    </script>
+</body>
+</html>
