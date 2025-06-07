@@ -288,7 +288,7 @@
             <table class="min-w-full bg-white">
                 <thead>
                     <tr>
-                        <th class="px-4 py-2">Mã Món Ăn</th>
+                        <th class="px-4 py-2">STT</th>
                         <th class="px-4 py-2">Tên Món Ăn</th>
                         <th class="px-4 py-2">Đơn Giá</th>
                         <th class="px-4 py-2">Ghi Chú</th>
@@ -423,7 +423,7 @@
                 const stt = (currentPage - 1) * itemsPerPage + index + 1;
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${monAn.id}</td>
+                    <td>${stt}</td>
                     <td>${monAn.ten_mon_an}</td>
                     <td>${formatCurrencyVND(monAn.don_gia)}</td>
                     <td>${monAn.ghi_chu || ''}</td>

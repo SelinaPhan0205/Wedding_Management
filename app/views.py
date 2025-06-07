@@ -77,7 +77,7 @@ def bo_dau(text):
     )
 
 class LoaiSanhViewSet(viewsets.ModelViewSet):
-    queryset = LoaiSanh.objects.all()
+    queryset = LoaiSanh.objects.all().order_by('gia_ban_toi_thieu')
     serializer_class = LoaiSanhSerializer
 
 class SanhViewSet(viewsets.ModelViewSet):
@@ -150,7 +150,7 @@ class TaiKhoanViewSet(viewsets.ModelViewSet):
         return Response({'total': queryset.count()})
     
 class DichVuViewSet(viewsets.ModelViewSet):
-    queryset = DichVu.objects.all()
+    queryset = DichVu.objects.all().order_by('ten_dich_vu')
     serializer_class = DichVuSerializer
 
     def list(self, request, *args, **kwargs):
@@ -158,9 +158,11 @@ class DichVuViewSet(viewsets.ModelViewSet):
         search_query = request.query_params.get('search', '').strip().lower()
 
         if search_query:
-            queryset = queryset.filter(ten_dich_vu__icontains=search_query)
-
-        queryset = queryset.order_by('ten_dich_vu')
+            search_query_no_diacritics = bo_dau(search_query).lower()
+            queryset = [
+                dv for dv in queryset
+                if bo_dau(dv.ten_dich_vu).lower().startswith(search_query_no_diacritics)
+            ]
 
         # Phân trang
         page = request.query_params.get('page', 1)
@@ -185,7 +187,7 @@ class DichVuViewSet(viewsets.ModelViewSet):
         return Response({'total': queryset.count()})
     
 class MonAnViewSet(viewsets.ModelViewSet):
-    queryset = MonAn.objects.all()
+    queryset = MonAn.objects.all().order_by('ten_mon_an')
     serializer_class = MonAnSerializer
 
     def list(self, request, *args, **kwargs):
@@ -193,9 +195,12 @@ class MonAnViewSet(viewsets.ModelViewSet):
         search_query = request.query_params.get('search', '').strip().lower()
 
         if search_query:
-            queryset = queryset.filter(ten_mon_an__icontains=search_query)
-
-        queryset = queryset.order_by('ten_mon_an')
+            search_query_no_diacritics = bo_dau(search_query).lower()
+            # Lọc theo từng ký tự đầu, không dấu, không phân biệt hoa thường
+            queryset = [
+                m for m in queryset
+                if bo_dau(m.ten_mon_an).lower().startswith(search_query_no_diacritics)
+            ]
 
         # Phân trang
         page = request.query_params.get('page', 1)

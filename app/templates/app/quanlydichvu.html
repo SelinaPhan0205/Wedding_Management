@@ -296,7 +296,7 @@
             <table class="min-w-full bg-white">
                 <thead>
                     <tr>
-                        <th class="px-4 py-2">Mã Dịch Vụ</th>
+                        <th class="px-4 py-2">STT</th>
                         <th class="px-4 py-2">Tên Dịch Vụ</th>
                         <th class="px-4 py-2">Đơn Giá</th>
                         <th class="px-4 py-2">Mô Tả</th>
@@ -346,7 +346,7 @@
             container.style.marginLeft = '250px';
         }
     }
-    
+
     // --- Đồng bộ biến ---
     let danhSachDichVu = [];
     const danhSachDichVuBodyElement = document.getElementById('danhSachDichVuBody');
@@ -431,7 +431,7 @@
                 const stt = (currentPage - 1) * itemsPerPage + index + 1;
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${dichVu.id}</td>
+                    <td>${stt}</td>
                     <td>${dichVu.ten_dich_vu}</td>
                     <td>${formatCurrencyVND(dichVu.don_gia)}</td>
                     <td>${dichVu.mo_ta || ''}</td>
