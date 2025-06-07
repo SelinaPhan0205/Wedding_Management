@@ -53,7 +53,7 @@ class MonAn(models.Model):
         return self.ten_mon_an
 
 class DichVu(models.Model):
-    ten_dich_vu = models.CharField(max_length=50)
+    ten_dich_vu = models.CharField(max_length=255)
     mo_ta = models.CharField(max_length=200, blank=True)
     don_gia = models.FloatField()
 

@@ -1,22 +1,591 @@
-<<!DOCTYPE html>
-<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
-<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
-<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
-<!--[if gt IE 8]>      <html class="no-js"> <!--<![endif]-->
-<html>
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title></title>
-        <meta name="description" content="">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="">
-    </head>
-    <body>
-        <!--[if lt IE 7]>
-            <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="#">upgrade your browser</a> to improve your experience.</p>
-        <![endif]-->
-        
-        <script src="" async defer></script>
-    </body>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Dịch Vụ - Hệ thống Quản Lý Tiệc Cưới</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles, similar to quanlytieccuoi.html for consistency */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            background-color: #2c3e50;
+            color: white;
+            padding-top: 20px;
+            position: fixed;
+            transition: width 0.3s ease-in-out;
+            z-index: 1000;
+        }
+        .sidebar.collapsed {
+            width: 60px;
+        }
+        .sidebar h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: 40px;
+            font-size: 22px;
+            transition: opacity 0.3s;
+        }
+        .sidebar.collapsed h2 {
+            opacity: 0;
+            transition: opacity 0.1s;
+        }
+        .sidebar a {
+            display: block;
+            padding: 15px 20px;
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            transition: all 0.3s ease-in-out;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .sidebar.collapsed a {
+            font-size: 0;
+            padding: 15px 10px;
+        }
+        .sidebar a:hover {
+            background-color: #34495e;
+        }
+        .toggle-btn {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            font-size: 20px;
+            cursor: pointer;
+            border-radius: 4px;
+            z-index: 1001;
+            transition: background-color 0.2s;
+        }
+        .toggle-btn:hover {
+            background-color: #34495e;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 1.5rem;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            margin-left: 250px;
+            transition: margin-left 0.3s;
+            width: 100%;
+        }
+        .sidebar.collapsed ~ .container {
+            margin-left: 60px;
+        }
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .search-input {
+            border: 1px solid #d1d5db;
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            width: 300px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .search-input:focus {
+            border-color: #2c3e50; /* Indigo-500 */
+        }
+        .add-button {
+            background-color: #2c3e50; /* Indigo-600 */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        .add-button:hover {
+            background-color: #2c3e50; /* Indigo-700 */
+            transform: translateY(-1px);
+        }
+        .table-container {
+            overflow-x: auto; /* Allows horizontal scrolling on small screens */
+        }
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 8px;
+            overflow: hidden; /* Ensures rounded corners apply to table content */
+        }
+        th, td {
+            padding: 1rem 1.25rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        th {
+            background-color: #f9fafb; /* Lightest gray for table header */
+            font-weight: 600;
+            color: #374151; /* Dark gray text */
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.05em;
+        }
+        tr:last-child td {
+            border-bottom: none; /* No border for the last row */
+        }
+        .action-button {
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: background-color 0.2s, transform 0.1s;
+            margin-right: 0.5rem; /* Space between buttons */
+        }
+        .edit-button {
+            background-color: #e0e7ff; /* Indigo-100 */
+            color: #2c3e50; /* Indigo-600 */
+        }
+        .edit-button:hover {
+            background-color: rgb(188, 202, 240); /* Indigo-200 */
+            transform: translateY(-1px);
+        }
+        .delete-button {
+            background-color: rgb(241, 215, 215); /* Red-100 */
+            color: #dc2626; /* Red-600 */
+        }
+        .delete-button:hover {
+            background-color: #fecaca; /* Red-200 */
+            transform: translateY(-1px);
+        }
+
+        /* Pagination styles */
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 1.5rem;
+            gap: 0.5rem;
+        }
+        .pagination-button {
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            background-color: #e0e7ff; /* Indigo-100 */
+            color: #2c3e50; /* Indigo-600 */
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .pagination-button:hover:not(.active) {
+            background-color: #c7d2fe; /* Indigo-200 */
+        }
+        .pagination-button.active {
+            background-color: #2c3e50; /* Indigo-600 */
+            color: white;
+            cursor: default;
+        }
+        .pagination-button.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Modal specific styles */
+        .modal {
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            max-width: 56rem; /* Tailwind max-w-lg */
+            width: 100%;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .header-section {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            .search-input {
+                width: 100%;
+            }
+            .add-button {
+                width: 100%;
+                justify-content: center;
+            }
+            .container {
+                margin: 1rem;
+                padding: 1rem;
+            }
+            th, td {
+                padding: 0.8rem;
+                font-size: 0.75rem;
+            }
+            .pagination-container {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            .pagination-button {
+                padding: 0.5rem 0.8rem;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Nút toggle sidebar -->
+    <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <h2>Quản lý Tiệc Cưới</h2>
+        <a href="{% url 'trangchu' %}">Trang Chủ</a>
+        <a href="{% url 'quanlytaikhoan' %}">Tài Khoản</a>
+        <a href="{% url 'quanlyhoadon' %}">Hóa Đơn</a>
+        <a href="{% url 'quanlysanh' %}">Sảnh</a>
+        <a href="{% url 'quanlythucdon' %}">Thực Đơn</a>
+        <a href="{% url 'quanlydichvu' %}">Dịch Vụ</a>
+        <a href="{% url 'quanlytieccuoi' %}">Tiệc Cưới</a>
+        <a href="{% url 'quanlyquydinh' %}">Quy Định</a>
+        <a href="{% url 'xembaocao' %}">Xem Báo Cáo</a>
+    </div>
+    <div class="container">
+        <div class="header-section">
+            <h1 class="text-2xl font-bold text-gray-800">QUẢN LÝ DỊCH VỤ</h1>
+            <div class="flex items-center gap-3">
+                <div class="relative">
+                    <input type="text" placeholder="Tìm kiếm dịch vụ..." class="search-input" id="searchInput">
+                    <button class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+                <button class="add-button" onclick="moFormThemMoiDichVu()">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Thêm Dịch vụ
+                </button>
+            </div>
+        </div>
+
+        <h2 class="text-xl font-semibold text-gray-700 mb-4">Danh sách Dịch vụ</h2>
+
+        <div class="table-container">
+            <table class="min-w-full bg-white">
+                <thead>
+                    <tr>
+                        <th class="px-4 py-2">Mã Dịch Vụ</th>
+                        <th class="px-4 py-2">Tên Dịch Vụ</th>
+                        <th class="px-4 py-2">Đơn Giá</th>
+                        <th class="px-4 py-2">Mô Tả</th>
+                        <th class="px-4 py-2">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="danhSachDichVuBody"></tbody>
+            </table>
+        </div>
+
+        <div class="pagination-container" id="paginationControls"></div>
+    </div>
+
+    <div id="modalDichVu" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-lg modal-content">
+            <h2 id="modalTitle" class="text-2xl font-bold mb-6 text-gray-800">Thêm Dịch Vụ Mới</h2>
+            <form id="formDichVu">
+                <div class="mb-4">
+                    <label for="tenDichVu" class="block text-gray-700 text-sm font-medium mb-2">Tên Dịch Vụ:</label>
+                    <input type="text" id="tenDichVu" name="tenDichVu" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="donGia" class="block text-gray-700 text-sm font-medium mb-2">Đơn Giá:</label>
+                    <input type="number" id="donGia" name="donGia" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required min="0">
+                </div>
+                <div class="mb-4">
+                    <label for="moTa" class="block text-gray-700 text-sm font-medium mb-2">Mô Tả:</label>
+                    <textarea id="moTa" name="moTa" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                </div>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" onclick="dongModal('modalDichVu')" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-100 transition">Hủy</button>
+                    <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+    // --- Toggle sidebar ---
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const container = document.getElementById('mainContainer');
+        sidebar.classList.toggle('collapsed');
+        if (sidebar.classList.contains('collapsed')) {
+            container.style.marginLeft = '60px';
+        } else {
+            container.style.marginLeft = '250px';
+        }
+    }
+    
+    // --- Đồng bộ biến ---
+    let danhSachDichVu = [];
+    const danhSachDichVuBodyElement = document.getElementById('danhSachDichVuBody');
+    const modalDichVu = document.getElementById('modalDichVu');
+    const modalTitle = document.getElementById('modalTitle');
+    const formDichVu = document.getElementById('formDichVu');
+    const paginationControls = document.getElementById('paginationControls');
+    const searchInput = document.getElementById('searchInput');
+
+    let isEditMode = false;
+    let currentDichVuId = null;
+    let currentPage = 1;
+    const itemsPerPage = 8;
+
+    // --- CSRF ---
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // --- Gọi API ---
+    async function goiAPI(method, url, data = null) {
+        try {
+            const options = {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            };
+            if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method.toUpperCase())) {
+                options.headers['X-CSRFToken'] = getCookie('csrftoken');
+            }
+            if (data) {
+                options.body = JSON.stringify(data);
+            }
+            const response = await fetch(url, options);
+            let responseBody = null;
+            try {
+                responseBody = await response.json();
+            } catch (e) {
+                responseBody = await response.text();
+            }
+            if (!response.ok) {
+                console.error('API error response:', responseBody);
+                alert('Có lỗi khi gọi API. Vui lòng thử lại.\n' + JSON.stringify(responseBody));
+                throw new Error(`Lỗi HTTP: ${response.status}`);
+            }
+            return responseBody;
+        } catch (error) {
+            console.error('Lỗi API:', error);
+            throw error;
+        }
+    }
+
+    // --- Hiển thị danh sách dịch vụ ---
+    async function hienThiDanhSachDichVu(searchQuery = '') {
+        try {
+            const url = searchQuery
+                ? `/api/dichvu/?search=${encodeURIComponent(searchQuery)}&page=${currentPage}&limit=${itemsPerPage}`
+                : `/api/dichvu/?page=${currentPage}&limit=${itemsPerPage}`;
+            const response = await goiAPI('GET', url);
+            danhSachDichVu = response.data || [];
+            danhSachDichVuBodyElement.innerHTML = '';
+
+            if (danhSachDichVu.length === 0) {
+                danhSachDichVuBodyElement.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">Không tìm thấy dịch vụ nào.</td></tr>`;
+                hienThiPhanTrang(response.total || 0);
+                return;
+            }
+
+            danhSachDichVu.forEach((dichVu, index) => {
+                const stt = (currentPage - 1) * itemsPerPage + index + 1;
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${dichVu.id}</td>
+                    <td>${dichVu.ten_dich_vu}</td>
+                    <td>${formatCurrencyVND(dichVu.don_gia)}</td>
+                    <td>${dichVu.mo_ta || ''}</td>
+                    <td class="whitespace-nowrap">
+                        <button class="action-button edit-button" onclick="suaDichVu(${dichVu.id})">Sửa</button>
+                        <button class="action-button delete-button" onclick="xoaDichVu(${dichVu.id})">Xóa</button>
+                    </td>
+                `;
+                danhSachDichVuBodyElement.appendChild(row);
+            });
+            hienThiPhanTrang(response.total || danhSachDichVu.length);
+        } catch (error) {
+            console.error('Lỗi hiển thị danh sách dịch vụ:', error);
+        }
+    }
+
+    // --- Hiển thị phân trang ---
+    function hienThiPhanTrang(totalItems) {
+        paginationControls.innerHTML = '';
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+        const prevButton = document.createElement('button');
+        prevButton.textContent = '«';
+        prevButton.classList.add('pagination-button');
+        if (currentPage === 1) {
+            prevButton.classList.add('disabled');
+            prevButton.disabled = true;
+        }
+        prevButton.onclick = () => chuyenTrang(currentPage - 1);
+        paginationControls.appendChild(prevButton);
+
+        for (let i = 1; i <= totalPages; i++) {
+            const pageButton = document.createElement('button');
+            pageButton.textContent = i;
+            pageButton.classList.add('pagination-button');
+            if (i === currentPage) {
+                pageButton.classList.add('active');
+            }
+            pageButton.onclick = () => chuyenTrang(i);
+            paginationControls.appendChild(pageButton);
+        }
+
+        const nextButton = document.createElement('button');
+        nextButton.textContent = '»';
+        nextButton.classList.add('pagination-button');
+        if (currentPage === totalPages || totalPages === 0) {
+            nextButton.classList.add('disabled');
+            nextButton.disabled = true;
+        }
+        nextButton.onclick = () => chuyenTrang(currentPage + 1);
+        paginationControls.appendChild(nextButton);
+    }
+
+    // --- Chuyển trang ---
+    function chuyenTrang(pageNumber) {
+        currentPage = pageNumber;
+        hienThiDanhSachDichVu(searchInput.value);
+    }
+
+    // --- Mở form thêm dịch vụ ---
+    function moFormThemMoiDichVu() {
+        isEditMode = false;
+        modalTitle.textContent = 'Thêm Dịch Vụ Mới';
+        formDichVu.reset();
+        modalDichVu.classList.remove('hidden');
+    }
+
+    // --- Mở form sửa dịch vụ ---
+    async function suaDichVu(id) {
+        try {
+            const dichVuToEdit = await goiAPI('GET', `/api/dichvu/${id}/`);
+            isEditMode = true;
+            currentDichVuId = id;
+            modalTitle.textContent = 'Chỉnh Sửa Dịch Vụ';
+            document.getElementById('tenDichVu').value = dichVuToEdit.ten_dich_vu;
+            document.getElementById('donGia').value = dichVuToEdit.don_gia;
+            document.getElementById('moTa').value = dichVuToEdit.mo_ta || '';
+            modalDichVu.classList.remove('hidden');
+        } catch (error) {
+            console.error('Lỗi lấy thông tin dịch vụ:', error);
+        }
+    }
+
+    // --- Đóng modal ---
+    function dongModal(modalId) {
+        document.getElementById(modalId).classList.add('hidden');
+    }
+
+    // --- Xử lý submit form ---
+    formDichVu.addEventListener('submit', async function(event) {
+        event.preventDefault();
+
+        const newDichVuData = {
+            ten_dich_vu: document.getElementById('tenDichVu').value,
+            don_gia: parseFloat(document.getElementById('donGia').value),
+            mo_ta: document.getElementById('moTa').value
+        };
+
+        try {
+            if (isEditMode) {
+                await goiAPI('PUT', `/api/dichvu/${currentDichVuId}/`, newDichVuData);
+            } else {
+                await goiAPI('POST', `/api/dichvu/`, newDichVuData);
+            }
+
+            if (!isEditMode) {
+                // Lấy lại tổng số dịch vụ để chuyển đến trang cuối
+                const response = await goiAPI('GET', '/api/dichvu/?page=1&limit=1');
+                const totalItems = response.total || 0;
+                currentPage = Math.ceil(totalItems / itemsPerPage);
+            }
+            hienThiDanhSachDichVu(searchInput.value);
+            dongModal('modalDichVu');
+        } catch (error) {
+            console.error('Lỗi lưu dịch vụ:', error);
+        }
+    });
+
+    // --- Xóa dịch vụ ---
+    async function xoaDichVu(id) {
+        if (confirm('Bạn có chắc chắn muốn xóa dịch vụ này không?')) {
+            try {
+                await goiAPI('DELETE', `/api/dichvu/${id}/`);
+                // Lấy lại tổng số dịch vụ để cập nhật phân trang
+                const response = await goiAPI('GET', '/api/dichvu/?page=1&limit=1');
+                const totalItems = response.total || 0;
+                const totalPages = Math.ceil(totalItems / itemsPerPage);
+                if (currentPage > totalPages && totalPages > 0) {
+                    currentPage = totalPages;
+                } else if (totalPages === 0) {
+                    currentPage = 1;
+                }
+                hienThiDanhSachDichVu(searchInput.value);
+            } catch (error) {
+                console.error('Lỗi xóa dịch vụ:', error);
+            }
+        }
+    }
+
+    // --- Tìm kiếm ---
+    searchInput.addEventListener('input', function(event) {
+        currentPage = 1;
+        hienThiDanhSachDichVu(event.target.value);
+    });
+
+    // --- Hiển thị danh sách dịch vụ khi trang tải ---
+    document.addEventListener('DOMContentLoaded', () => {
+        hienThiDanhSachDichVu();
+    });
+
+    // --- Helper format tiền tệ ---
+    function formatCurrencyVND(amount) {
+        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+    }
+    </script>
+</body>
 </html>

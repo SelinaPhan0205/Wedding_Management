@@ -61,3 +61,13 @@ class TaiKhoanSerializer(serializers.ModelSerializer):
         instance.trangthai = validated_data.get('trangthai', instance.trangthai)
         instance.save()
         return instance
+        
+class DichVuSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DichVu
+        fields = ['id', 'ten_dich_vu', 'don_gia', 'mo_ta']
+
+class MonAnSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MonAn
+        fields = ['id', 'ten_mon_an', 'don_gia', 'ghi_chu']

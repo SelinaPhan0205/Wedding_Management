@@ -153,6 +153,7 @@
             font-size: 0.85rem;
             font-weight: 500;
             transition: background-color 0.2s, transform 0.1s;
+            margin-right: 0.5rem;
         }
         .edit-button {
             background-color: #e0e7ff;
@@ -165,7 +166,6 @@
         .delete-button {
             background-color: rgb(241, 215, 215);
             color: #dc2626;
-            margin-left: 0.5rem;
         }
         .delete-button:hover {
             background-color: #fecaca;
@@ -199,6 +199,20 @@
             opacity: 0.5;
             cursor: not-allowed;
         }
+        .modal {
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            max-width: 56rem;
+            width: 100%;
+        }
         @media (max-width: 768px) {
             .header-section {
                 flex-direction: column;
@@ -215,7 +229,6 @@
             .container {
                 margin: 1rem;
                 padding: 1rem;
-                margin-left: 60px;
             }
             th, td {
                 padding: 0.8rem;
@@ -235,21 +248,19 @@
 <body>
     <!-- Nút toggle sidebar -->
     <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
-
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <h2>Quản lý Tiệc Cưới</h2>
         <a href="{% url 'trangchu' %}">Trang Chủ</a>
+        <a href="{% url 'quanlytaikhoan' %}">Tài Khoản</a>
         <a href="{% url 'quanlyhoadon' %}">Hóa Đơn</a>
         <a href="{% url 'quanlysanh' %}">Sảnh</a>
-        <a href="{% url 'quanlytieccuoi' %}">Tiệc Cưới</a>
-        <a href="{% url 'quanlytaikhoan' %}">Tài Khoản</a>
         <a href="{% url 'quanlythucdon' %}">Thực Đơn</a>
         <a href="{% url 'quanlydichvu' %}">Dịch Vụ</a>
+        <a href="{% url 'quanlytieccuoi' %}">Tiệc Cưới</a>
         <a href="{% url 'quanlyquydinh' %}">Quy Định</a>
         <a href="{% url 'xembaocao' %}">Xem Báo Cáo</a>
     </div>
-
     <div class="container" id="mainContainer">
         <div class="header-section">
             <h1 class="text-2xl font-bold text-gray-800">QUẢN LÝ THỰC ĐƠN</h1>
@@ -262,7 +273,7 @@
                         </svg>
                     </button>
                 </div>
-                <button class="add-button" onclick="openAddModal()">
+                <button class="add-button" onclick="moFormThemMoiMonAn()">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                     </svg>
@@ -271,46 +282,44 @@
             </div>
         </div>
 
-        <h2 class="text-xl font-semibold text-gray-700 mb-4">Danh sách món ăn</h2>
+        <h2 class="text-xl font-semibold text-gray-700 mb-4">Danh sách Món Ăn</h2>
 
         <div class="table-container">
             <table class="min-w-full bg-white">
                 <thead>
                     <tr>
-                        <th>STT</th>
-                        <th>Tên món ăn</th>
-                        <th>Đơn giá</th>
-                        <th>Ghi chú</th>
-                        <th>Hành động</th>
+                        <th class="px-4 py-2">Mã Món Ăn</th>
+                        <th class="px-4 py-2">Tên Món Ăn</th>
+                        <th class="px-4 py-2">Đơn Giá</th>
+                        <th class="px-4 py-2">Ghi Chú</th>
+                        <th class="px-4 py-2">Thao tác</th>
                     </tr>
                 </thead>
-                <tbody id="menuList">
-                </tbody>
+                <tbody id="danhSachMonAnBody"></tbody>
             </table>
         </div>
 
-        <div class="pagination-container" id="paginationControls">
-        </div>
+        <div class="pagination-container" id="paginationControls"></div>
     </div>
 
-    <div id="menuModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
-        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
+    <div id="modalMonAn" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-lg modal-content">
             <h2 id="modalTitle" class="text-2xl font-bold mb-6 text-gray-800">Thêm Món Ăn Mới</h2>
-            <form id="menuForm">
+            <form id="formMonAn">
                 <div class="mb-4">
-                    <label for="tenMon" class="block text-gray-700 text-sm font-medium mb-2">Tên món ăn:</label>
-                    <input type="text" id="tenMon" name="tenMon" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                    <label for="tenMonAn" class="block text-gray-700 text-sm font-medium mb-2">Tên Món Ăn:</label>
+                    <input type="text" id="tenMonAn" name="tenMonAn" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
                 </div>
                 <div class="mb-4">
-                    <label for="donGia" class="block text-gray-700 text-sm font-medium mb-2">Đơn giá:</label>
-                    <input type="number" id="donGia" name="donGia" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                    <label for="donGia" class="block text-gray-700 text-sm font-medium mb-2">Đơn Giá:</label>
+                    <input type="number" id="donGia" name="donGia" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required min="0">
                 </div>
-                <div class="mb-6">
-                    <label for="ghiChu" class="block text-gray-700 text-sm font-medium mb-2">Ghi chú:</label>
+                <div class="mb-4">
+                    <label for="ghiChu" class="block text-gray-700 text-sm font-medium mb-2">Ghi Chú:</label>
                     <textarea id="ghiChu" name="ghiChu" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
                 </div>
-                <div class="flex justify-end gap-3">
-                    <button type="button" onclick="closeModal()" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-100 transition">Hủy</button>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" onclick="dongModal('modalMonAn')" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-100 transition">Hủy</button>
                     <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition">Lưu</button>
                 </div>
             </form>
@@ -318,237 +327,257 @@
     </div>
 
     <script>
-        // Sidebar toggle logic
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const container = document.getElementById('mainContainer');
-            sidebar.classList.toggle('collapsed');
-            if (sidebar.classList.contains('collapsed')) {
-                container.style.marginLeft = '60px';
-            } else {
-                container.style.marginLeft = '250px';
+    // --- Toggle sidebar ---
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const container = document.getElementById('mainContainer');
+        sidebar.classList.toggle('collapsed');
+        if (sidebar.classList.contains('collapsed')) {
+            container.style.marginLeft = '60px';
+        } else {
+            container.style.marginLeft = '250px';
+        }
+    }
+
+    // --- CSRF ---
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
             }
         }
+        return cookieValue;
+    }
 
-        // Sample data for menu
-        let menu = [
-            { id: 'M001', tenMon: 'Gà hấp lá chanh', donGia: 250000, ghiChu: 'Món truyền thống' },
-            { id: 'M002', tenMon: 'Tôm sú nướng', donGia: 320000, ghiChu: '' },
-            { id: 'M003', tenMon: 'Bò lúc lắc', donGia: 280000, ghiChu: 'Thịt bò Úc' },
-            { id: 'M004', tenMon: 'Cá lóc hấp bầu', donGia: 210000, ghiChu: '' },
-            { id: 'M005', tenMon: 'Súp cua', donGia: 120000, ghiChu: 'Khai vị' },
-            { id: 'M006', tenMon: 'Lẩu hải sản', donGia: 350000, ghiChu: 'Món chính' },
-            { id: 'M007', tenMon: 'Chè hạt sen', donGia: 90000, ghiChu: 'Tráng miệng' },
-            { id: 'M008', tenMon: 'Gỏi ngó sen tôm thịt', donGia: 180000, ghiChu: '' },
-            { id: 'M009', tenMon: 'Bánh bao chiên', donGia: 100000, ghiChu: '' },
-            { id: 'M010', tenMon: 'Cơm chiên dương châu', donGia: 150000, ghiChu: '' },
-        ];
+    // --- Gọi API ---
+    async function goiAPI(method, url, data = null) {
+        try {
+            const options = {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            };
+            if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method.toUpperCase())) {
+                options.headers['X-CSRFToken'] = getCookie('csrftoken');
+            }
+            if (data) {
+                options.body = JSON.stringify(data);
+            }
+            const response = await fetch(url, options);
+            let responseBody = null;
+            try {
+                responseBody = await response.json();
+            } catch (e) {
+                responseBody = await response.text();
+            }
+            if (!response.ok) {
+                console.error('API error response:', responseBody);
+                alert('Có lỗi khi gọi API. Vui lòng thử lại.\n' + JSON.stringify(responseBody));
+                throw new Error(`Lỗi HTTP: ${response.status}`);
+            }
+            return responseBody;
+        } catch (error) {
+            console.error('Lỗi API:', error);
+            throw error;
+        }
+    }
 
-        const menuListBody = document.getElementById('menuList');
-        const menuModal = document.getElementById('menuModal');
-        const modalTitle = document.getElementById('modalTitle');
-        const menuForm = document.getElementById('menuForm');
-        const paginationControls = document.getElementById('paginationControls');
-        const searchInput = document.getElementById('searchInput');
+    // --- Đồng bộ biến ---
+    let danhSachMonAn = [];
+    const danhSachMonAnBodyElement = document.getElementById('danhSachMonAnBody');
+    const modalMonAn = document.getElementById('modalMonAn');
+    const modalTitle = document.getElementById('modalTitle');
+    const formMonAn = document.getElementById('formMonAn');
+    const paginationControls = document.getElementById('paginationControls');
+    const searchInput = document.getElementById('searchInput');
 
-        let isEditMode = false;
-        let currentMenuId = null;
+    let isEditMode = false;
+    let currentMonAnId = null;
+    let currentPage = 1;
+    const itemsPerPage = 8;
 
-        // Pagination variables
-        let currentPage = 1;
-        const itemsPerPage = 7;
+    // --- Hiển thị danh sách món ăn ---
+    async function hienThiDanhSachMonAn(searchQuery = '') {
+        try {
+            const url = searchQuery
+                ? `/api/monan/?search=${encodeURIComponent(searchQuery)}&page=${currentPage}&limit=${itemsPerPage}`
+                : `/api/monan/?page=${currentPage}&limit=${itemsPerPage}`;
+            const response = await goiAPI('GET', url);
+            danhSachMonAn = response.data || [];
+            danhSachMonAnBodyElement.innerHTML = '';
 
-        // Function to render menu for the current page
-        function renderMenu() {
-            menuListBody.innerHTML = '';
-
-            // Lọc theo tìm kiếm nếu có
-            let filteredMenu = menu;
-            const searchValue = searchInput.value.trim().toLowerCase();
-            if (searchValue) {
-                filteredMenu = menu.filter(item =>
-                    item.tenMon.toLowerCase().includes(searchValue) ||
-                    String(item.donGia).includes(searchValue) ||
-                    (item.ghiChu && item.ghiChu.toLowerCase().includes(searchValue))
-                );
+            if (danhSachMonAn.length === 0) {
+                danhSachMonAnBodyElement.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">Không tìm thấy món ăn nào.</td></tr>`;
+                hienThiPhanTrang(response.total || 0);
+                return;
             }
 
-            const startIndex = (currentPage - 1) * itemsPerPage;
-            const endIndex = startIndex + itemsPerPage;
-            const menuToDisplay = filteredMenu.slice(startIndex, endIndex);
-
-            menuToDisplay.forEach((item, index) => {
-                const stt = startIndex + index + 1;
+            danhSachMonAn.forEach((monAn, index) => {
+                const stt = (currentPage - 1) * itemsPerPage + index + 1;
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${stt}</td>
-                    <td>${item.tenMon}</td>
-                    <td>${item.donGia.toLocaleString('vi-VN')} đ</td>
-                    <td>${item.ghiChu || ''}</td>
-                    <td>
-                        <button class="action-button edit-button" onclick="editMenu('${item.id}')">Sửa</button>
-                        <button class="action-button delete-button" onclick="deleteMenu('${item.id}')">Xóa</button>
+                    <td>${monAn.id}</td>
+                    <td>${monAn.ten_mon_an}</td>
+                    <td>${formatCurrencyVND(monAn.don_gia)}</td>
+                    <td>${monAn.ghi_chu || ''}</td>
+                    <td class="whitespace-nowrap">
+                        <button class="action-button edit-button" onclick="suaMonAn(${monAn.id})">Sửa</button>
+                        <button class="action-button delete-button" onclick="xoaMonAn(${monAn.id})">Xóa</button>
                     </td>
                 `;
-                menuListBody.appendChild(row);
+                danhSachMonAnBodyElement.appendChild(row);
             });
-            renderPagination(filteredMenu.length);
+            hienThiPhanTrang(response.total || danhSachMonAn.length);
+        } catch (error) {
+            console.error('Lỗi hiển thị danh sách món ăn:', error);
+        }
+    }
+
+    // --- Hiển thị phân trang ---
+    function hienThiPhanTrang(totalItems) {
+        paginationControls.innerHTML = '';
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+        const prevButton = document.createElement('button');
+        prevButton.textContent = '«';
+        prevButton.classList.add('pagination-button');
+        if (currentPage === 1) {
+            prevButton.classList.add('disabled');
+            prevButton.disabled = true;
+        }
+        prevButton.onclick = () => chuyenTrang(currentPage - 1);
+        paginationControls.appendChild(prevButton);
+
+        for (let i = 1; i <= totalPages; i++) {
+            const pageButton = document.createElement('button');
+            pageButton.textContent = i;
+            pageButton.classList.add('pagination-button');
+            if (i === currentPage) {
+                pageButton.classList.add('active');
+            }
+            pageButton.onclick = () => chuyenTrang(i);
+            paginationControls.appendChild(pageButton);
         }
 
-        // Function to render pagination controls
-        function renderPagination(totalItems) {
-            paginationControls.innerHTML = '';
-            const totalPages = Math.ceil(totalItems / itemsPerPage);
-
-            // Previous button
-            const prevButton = document.createElement('button');
-            prevButton.textContent = '«';
-            prevButton.classList.add('pagination-button');
-            if (currentPage === 1) {
-                prevButton.classList.add('disabled');
-                prevButton.disabled = true;
-            }
-            prevButton.onclick = () => goToPage(currentPage - 1);
-            paginationControls.appendChild(prevButton);
-
-            // Page number buttons
-            for (let i = 1; i <= totalPages; i++) {
-                const pageButton = document.createElement('button');
-                pageButton.textContent = i;
-                pageButton.classList.add('pagination-button');
-                if (i === currentPage) {
-                    pageButton.classList.add('active');
-                }
-                pageButton.onclick = () => goToPage(i);
-                paginationControls.appendChild(pageButton);
-            }
-
-            // Next button
-            const nextButton = document.createElement('button');
-            nextButton.textContent = '»';
-            nextButton.classList.add('pagination-button');
-            if (currentPage === totalPages || totalPages === 0) {
-                nextButton.classList.add('disabled');
-                nextButton.disabled = true;
-            }
-            nextButton.onclick = () => goToPage(currentPage + 1);
-            paginationControls.appendChild(nextButton);
+        const nextButton = document.createElement('button');
+        nextButton.textContent = '»';
+        nextButton.classList.add('pagination-button');
+        if (currentPage === totalPages || totalPages === 0) {
+            nextButton.classList.add('disabled');
+            nextButton.disabled = true;
         }
+        nextButton.onclick = () => chuyenTrang(currentPage + 1);
+        paginationControls.appendChild(nextButton);
+    }
 
-        // Function to change page
-        function goToPage(pageNumber) {
-            const searchValue = searchInput.value.trim().toLowerCase();
-            let filteredMenu = menu;
-            if (searchValue) {
-                filteredMenu = menu.filter(item =>
-                    item.tenMon.toLowerCase().includes(searchValue) ||
-                    String(item.donGia).includes(searchValue) ||
-                    (item.ghiChu && item.ghiChu.toLowerCase().includes(searchValue))
-                );
-            }
-            const totalPages = Math.ceil(filteredMenu.length / itemsPerPage);
-            if (pageNumber >= 1 && pageNumber <= totalPages) {
-                currentPage = pageNumber;
-                renderMenu();
-            }
-        }
+    // --- Chuyển trang ---
+    function chuyenTrang(pageNumber) {
+        currentPage = pageNumber;
+        hienThiDanhSachMonAn(searchInput.value);
+    }
 
-        // Function to open the add/edit modal
-        function openAddModal() {
-            isEditMode = false;
-            modalTitle.textContent = 'Thêm Món Ăn Mới';
-            menuForm.reset();
-            menuModal.classList.remove('hidden');
-        }
+    // --- Mở form thêm món ăn ---
+    function moFormThemMoiMonAn() {
+        isEditMode = false;
+        modalTitle.textContent = 'Thêm Món Ăn Mới';
+        formMonAn.reset();
+        modalMonAn.classList.remove('hidden');
+    }
 
-        function editMenu(id) {
+    // --- Mở form sửa món ăn ---
+    async function suaMonAn(id) {
+        try {
+            const monAnToEdit = await goiAPI('GET', `/api/monan/${id}/`);
             isEditMode = true;
-            currentMenuId = id;
+            currentMonAnId = id;
             modalTitle.textContent = 'Chỉnh Sửa Món Ăn';
-            const itemToEdit = menu.find(item => item.id === id);
-            if (itemToEdit) {
-                document.getElementById('tenMon').value = itemToEdit.tenMon;
-                document.getElementById('donGia').value = itemToEdit.donGia;
-                document.getElementById('ghiChu').value = itemToEdit.ghiChu;
-                menuModal.classList.remove('hidden');
-            }
+            document.getElementById('tenMonAn').value = monAnToEdit.ten_mon_an;
+            document.getElementById('donGia').value = monAnToEdit.don_gia;
+            document.getElementById('ghiChu').value = monAnToEdit.ghi_chu || '';
+            modalMonAn.classList.remove('hidden');
+        } catch (error) {
+            console.error('Lỗi lấy thông tin món ăn:', error);
         }
+    }
 
-        // Function to close the modal
-        function closeModal() {
-            menuModal.classList.add('hidden');
-        }
+    // --- Đóng modal ---
+    function dongModal(modalId) {
+        document.getElementById(modalId).classList.add('hidden');
+    }
 
-        // Handle form submission (Add/Edit)
-        menuForm.addEventListener('submit', function(event) {
-            event.preventDefault();
+    // --- Xử lý submit form ---
+    formMonAn.addEventListener('submit', async function(event) {
+        event.preventDefault();
 
-            const newMenuData = {
-                tenMon: document.getElementById('tenMon').value,
-                donGia: parseInt(document.getElementById('donGia').value),
-                ghiChu: document.getElementById('ghiChu').value,
-            };
+        const newMonAnData = {
+            ten_mon_an: document.getElementById('tenMonAn').value,
+            don_gia: parseFloat(document.getElementById('donGia').value),
+            ghi_chu: document.getElementById('ghiChu').value
+        };
 
+        try {
             if (isEditMode) {
-                // Update existing menu item
-                menu = menu.map(item =>
-                    item.id === currentMenuId ? { ...item, ...newMenuData } : item
-                );
+                await goiAPI('PUT', `/api/monan/${currentMonAnId}/`, newMonAnData);
             } else {
-                // Add new menu item
-                newMenuData.id = 'M' + String(menu.length + 1).padStart(3, '0');
-                menu.push(newMenuData);
+                await goiAPI('POST', `/api/monan/`, newMonAnData);
             }
 
-            // After adding/editing, re-render and go to the last page if adding, or stay on current page if editing
             if (!isEditMode) {
-                const searchValue = searchInput.value.trim().toLowerCase();
-                let filteredMenu = menu;
-                if (searchValue) {
-                    filteredMenu = menu.filter(item =>
-                        item.tenMon.toLowerCase().includes(searchValue) ||
-                        String(item.donGia).includes(searchValue) ||
-                        (item.ghiChu && item.ghiChu.toLowerCase().includes(searchValue))
-                    );
-                }
-                currentPage = Math.ceil(filteredMenu.length / itemsPerPage);
+                // Lấy lại tổng số món ăn để chuyển đến trang cuối
+                const response = await goiAPI('GET', '/api/monan/?page=1&limit=1');
+                const totalItems = response.total || 0;
+                currentPage = Math.ceil(totalItems / itemsPerPage);
             }
-            renderMenu();
-            closeModal();
-        });
+            hienThiDanhSachMonAn(searchInput.value);
+            dongModal('modalMonAn');
+        } catch (error) {
+            console.error('Lỗi lưu món ăn:', error);
+        }
+    });
 
-        // Function to delete a menu item
-        function deleteMenu(id) {
-            if (confirm('Bạn có chắc chắn muốn xóa món ăn này không?')) {
-                menu = menu.filter(item => item.id !== id);
-                // After deletion, check if current page is empty, if so, go to previous page
-                const searchValue = searchInput.value.trim().toLowerCase();
-                let filteredMenu = menu;
-                if (searchValue) {
-                    filteredMenu = menu.filter(item =>
-                        item.tenMon.toLowerCase().includes(searchValue) ||
-                        String(item.donGia).includes(searchValue) ||
-                        (item.ghiChu && item.ghiChu.toLowerCase().includes(searchValue))
-                    );
-                }
-                const totalPages = Math.ceil(filteredMenu.length / itemsPerPage);
+    // --- Xóa món ăn ---
+    async function xoaMonAn(id) {
+        if (confirm('Bạn có chắc chắn muốn xóa món ăn này không?')) {
+            try {
+                await goiAPI('DELETE', `/api/monan/${id}/`);
+                // Lấy lại tổng số món ăn để cập nhật phân trang
+                const response = await goiAPI('GET', '/api/monan/?page=1&limit=1');
+                const totalItems = response.total || 0;
+                const totalPages = Math.ceil(totalItems / itemsPerPage);
                 if (currentPage > totalPages && totalPages > 0) {
                     currentPage = totalPages;
                 } else if (totalPages === 0) {
                     currentPage = 1;
                 }
-                renderMenu();
+                hienThiDanhSachMonAn(searchInput.value);
+            } catch (error) {
+                console.error('Lỗi xóa món ăn:', error);
             }
         }
+    }
 
-        // Xử lý tìm kiếm realtime
-        searchInput.addEventListener('input', function() {
-            currentPage = 1;
-            renderMenu();
-        });
+    // --- Tìm kiếm ---
+    searchInput.addEventListener('input', function(event) {
+        currentPage = 1;
+        hienThiDanhSachMonAn(event.target.value);
+    });
 
-        // Initial render when the page loads
-        document.addEventListener('DOMContentLoaded', renderMenu);
+    // --- Hiển thị danh sách món ăn khi trang tải ---
+    document.addEventListener('DOMContentLoaded', () => {
+        hienThiDanhSachMonAn();
+    });
+
+    // --- Helper format tiền tệ ---
+    function formatCurrencyVND(amount) {
+        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+    }
     </script>
 </body>
 </html>
