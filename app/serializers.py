@@ -1,88 +1,63 @@
 from rest_framework import serializers
-from .models import Sanh, TaiKhoan, LoaiSanh, MonAn, DichVu, QuyDinh, TiecCuoi, HoaDon, ChiTietThucDon, ChiTietDichVu
+from .models import *
 
-class SanhCuoiSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Sanh
-        fields = '__all__'
-
-class TaiKhoanSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = TaiKhoan
-        fields = '__all__'
+        model = User
+        fields = ['id', 'username', 'email', 'first_name', 'last_name']
 
 class LoaiSanhSerializer(serializers.ModelSerializer):
     class Meta:
         model = LoaiSanh
-        fields = '__all__'
+        fields = ['id', 'ten_loai_sanh']
 
-class MonAnSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = MonAn
-        fields = '__all__'
-
-class DichVuSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = DichVu
-        fields = '__all__'
-
-class QuyDinhSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = QuyDinh
-        fields = '__all__'
-
-class ChiTietThucDonSerializer(serializers.ModelSerializer):
-    thanh_tien = serializers.FloatField(read_only=True)
-    tiec_cuoi = serializers.PrimaryKeyRelatedField(read_only=True)
+class SanhSerializer(serializers.ModelSerializer):
+    loai_sanh = LoaiSanhSerializer(read_only=True)
+    loai_sanh_id = serializers.PrimaryKeyRelatedField(
+        queryset=LoaiSanh.objects.all(), source='loai_sanh', write_only=True
+    )
 
     class Meta:
-        model = ChiTietThucDon
-        fields = ['id', 'tiec_cuoi', 'mon_an', 'so_luong', 'ghi_chu', 'thanh_tien']
+        model = Sanh
+        fields = ['id', 'ten_sanh', 'loai_sanh', 'loai_sanh_id', 'so_luong_ban_toi_da', 'trang_thai']
 
-class ChiTietDichVuSerializer(serializers.ModelSerializer):
-    thanh_tien = serializers.FloatField(read_only=True)
-    tiec_cuoi = serializers.PrimaryKeyRelatedField(read_only=True)
-
-    class Meta:
-        model = ChiTietDichVu
-        fields = ['id', 'tiec_cuoi', 'dich_vu', 'so_luong', 'thanh_tien']
-
-class TiecCuoiSerializer(serializers.ModelSerializer):
-    thuc_don = ChiTietThucDonSerializer(many=True, write_only=True)
-    dich_vu = ChiTietDichVuSerializer(many=True, write_only=True)
+class TaiKhoanSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    user_id = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), source='user', write_only=True, required=False
+    )
 
     class Meta:
-        model = TiecCuoi
-        fields = '__all__'
-        extra_fields = ['thuc_don', 'dich_vu']
+        model = TaiKhoan
+        fields = ['id', 'user', 'user_id', 'hovaten', 'sodienthoai', 'vaitro', 'trangthai']
 
     def create(self, validated_data):
-        thuc_don_data = validated_data.pop('thuc_don', [])
-        dich_vu_data = validated_data.pop('dich_vu', [])
-        tiec_cuoi = TiecCuoi.objects.create(**validated_data)
-        for td in thuc_don_data:
-            mon_an = MonAn.objects.get(pk=td['mon_an'].id if hasattr(td['mon_an'], 'id') else td['mon_an'])
-            thanh_tien = td['so_luong'] * mon_an.don_gia
-            ChiTietThucDon.objects.create(
-                tiec_cuoi=tiec_cuoi,
-                mon_an=mon_an,
-                so_luong=td['so_luong'],
-                thanh_tien=thanh_tien,
-                ghi_chu=td.get('ghi_chu', '')
+        user_data = validated_data.pop('user', None)
+        if user_data and 'user_id' in validated_data:
+            user = validated_data['user_id']
+        elif user_data and 'username' in validated_data.get('user', {}):
+            user = User.objects.create_user(
+                username=user_data['username'],
+                email=user_data.get('email', ''),
+                password=user_data.get('password', ''),
+                first_name=validated_data.get('hovaten', '').split(' ')[0],
+                last_name=validated_data.get('hovaten', '').split(' ')[-1]
             )
-        for dv in dich_vu_data:
-            dich_vu = DichVu.objects.get(pk=dv['dich_vu'].id if hasattr(dv['dich_vu'], 'id') else dv['dich_vu'])
-            thanh_tien = dv['so_luong'] * dich_vu.don_gia
-            ChiTietDichVu.objects.create(
-                tiec_cuoi=tiec_cuoi,
-                dich_vu=dich_vu,
-                so_luong=dv['so_luong'],
-                thanh_tien=thanh_tien
-            )
-        return tiec_cuoi
+        else:
+            raise serializers.ValidationError("Username or user_id is required.")
+        tai_khoan = TaiKhoan.objects.create(user=user, **validated_data)
+        return tai_khoan
 
-class HoaDonSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = HoaDon
-        fields = '__all__'
-
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop('user', None)
+        if user_data and 'user_id' in validated_data:
+            instance.user = validated_data['user_id']
+        elif user_data and 'password' in user_data:
+            instance.user.set_password(user_data['password'])
+            instance.user.save()
+        instance.hovaten = validated_data.get('hovaten', instance.hovaten)
+        instance.sodienthoai = validated_data.get('sodienthoai', instance.sodienthoai)
+        instance.vaitro = validated_data.get('vaitro', instance.vaitro)
+        instance.trangthai = validated_data.get('trangthai', instance.trangthai)
+        instance.save()
+        return instance

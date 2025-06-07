@@ -6,10 +6,71 @@
     <title>Quản Lý Sảnh - Hệ thống Quản Lý Tiệc Cưới</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Custom styles for better aesthetics */
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6; /* Light gray background */
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            background-color: #2c3e50;
+            color: white;
+            padding-top: 20px;
+            position: fixed;
+            transition: width 0.3s ease-in-out;
+            z-index: 1000;
+        }
+        .sidebar.collapsed {
+            width: 60px;
+        }
+        .sidebar h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: 40px;
+            font-size: 22px;
+            transition: opacity 0.3s;
+        }
+        .sidebar.collapsed h2 {
+            opacity: 0;
+            transition: opacity 0.1s;
+        }
+        .sidebar a {
+            display: block;
+            padding: 15px 20px;
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            transition: all 0.3s ease-in-out;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .sidebar.collapsed a {
+            font-size: 0;
+            padding: 15px 10px;
+        }
+        .sidebar a:hover {
+            background-color: #34495e;
+        }
+        .toggle-btn {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            font-size: 20px;
+            cursor: pointer;
+            border-radius: 4px;
+            z-index: 1001;
+            transition: background-color 0.2s;
+        }
+        .toggle-btn:hover {
+            background-color: #34495e;
         }
         .container {
             max-width: 1200px;
@@ -18,6 +79,12 @@
             background-color: #ffffff;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            margin-left: 250px;
+            transition: margin-left 0.3s;
+            width: 100%;
+        }
+        .sidebar.collapsed ~ .container {
+            margin-left: 60px;
         }
         .header-section {
             display: flex;
@@ -37,10 +104,10 @@
             transition: border-color 0.2s;
         }
         .search-input:focus {
-            border-color: #2c3e50; /* Indigo-500 */
+            border-color: #2c3e50;
         }
         .add-button {
-            background-color: #2c3e50; /* Indigo-600 */
+            background-color: #2c3e50;
             color: white;
             padding: 0.75rem 1.5rem;
             border-radius: 8px;
@@ -51,18 +118,18 @@
             transition: background-color 0.2s, transform 0.1s;
         }
         .add-button:hover {
-            background-color: #2c3e50; /* Indigo-700 */
+            background-color: #2c3e50;
             transform: translateY(-1px);
         }
         .table-container {
-            overflow-x: auto; /* Allows horizontal scrolling on small screens */
+            overflow-x: auto;
         }
         table {
             width: 100%;
             border-collapse: separate;
             border-spacing: 0;
             border-radius: 8px;
-            overflow: hidden; /* Ensures rounded corners apply to table content */
+            overflow: hidden;
         }
         th, td {
             padding: 1rem 1.25rem;
@@ -70,15 +137,15 @@
             border-bottom: 1px solid #e5e7eb;
         }
         th {
-            background-color: #f9fafb; /* Lightest gray for table header */
+            background-color: #f9fafb;
             font-weight: 600;
-            color: #374151; /* Dark gray text */
+            color: #374151;
             text-transform: uppercase;
             font-size: 0.8rem;
             letter-spacing: 0.05em;
         }
         tr:last-child td {
-            border-bottom: none; /* No border for the last row */
+            border-bottom: none;
         }
         .action-button {
             padding: 0.4rem 0.8rem;
@@ -88,23 +155,22 @@
             transition: background-color 0.2s, transform 0.1s;
         }
         .edit-button {
-            background-color: #e0e7ff; /* Indigo-100 */
-            color: #2c3e50; /* Indigo-600 */
+            background-color: #e0e7ff;
+            color: #2c3e50;
         }
         .edit-button:hover {
-            background-color: rgb(188, 202, 240); /* Indigo-200 */
+            background-color: rgb(188, 202, 240);
             transform: translateY(-1px);
         }
         .delete-button {
-            background-color: rgb(241, 215, 215); /* Red-100 */
-            color: #dc2626; /* Red-600 */
+            background-color: rgb(241, 215, 215);
+            color: #dc2626;
             margin-left: 0.5rem;
         }
         .delete-button:hover {
-            background-color: #fecaca; /* Red-200 */
+            background-color: #fecaca;
             transform: translateY(-1px);
         }
-        /* Pagination styles */
         .pagination-container {
             display: flex;
             justify-content: center;
@@ -115,17 +181,17 @@
         .pagination-button {
             padding: 0.6rem 1rem;
             border-radius: 8px;
-            background-color: #e0e7ff; /* Indigo-100 */
-            color: #2c3e50; /* Indigo-600 */
+            background-color: #e0e7ff;
+            color: #2c3e50;
             font-weight: 500;
             cursor: pointer;
             transition: background-color 0.2s, color 0.2s;
         }
         .pagination-button:hover:not(.active) {
-            background-color: #c7d2fe; /* Indigo-200 */
+            background-color: #c7d2fe;
         }
         .pagination-button.active {
-            background-color: #2c3e50; /* Indigo-600 */
+            background-color: #2c3e50;
             color: white;
             cursor: default;
         }
@@ -133,8 +199,6 @@
             opacity: 0.5;
             cursor: not-allowed;
         }
-
-        /* Responsive adjustments */
         @media (max-width: 768px) {
             .header-section {
                 flex-direction: column;
@@ -151,6 +215,7 @@
             .container {
                 margin: 1rem;
                 padding: 1rem;
+                margin-left: 60px;
             }
             th, td {
                 padding: 0.8rem;
@@ -168,7 +233,24 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- Nút toggle sidebar -->
+    <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <h2>Quản lý Tiệc Cưới</h2>
+        <a href="{% url 'trangchu' %}">Trang Chủ</a>
+        <a href="{% url 'quanlytaikhoan' %}">Tài Khoản</a>
+        <a href="{% url 'quanlyhoadon' %}">Hóa Đơn</a>
+        <a href="{% url 'quanlysanh' %}">Sảnh</a>
+        <a href="{% url 'quanlythucdon' %}">Thực Đơn</a>
+        <a href="{% url 'quanlydichvu' %}">Dịch Vụ</a>
+        <a href="{% url 'quanlytieccuoi' %}">Tiệc Cưới</a>
+        <a href="{% url 'quanlyquydinh' %}">Quy Định</a>
+        <a href="{% url 'xembaocao' %}">Xem Báo Cáo</a>
+    </div>
+
+    <div class="container" id="mainContainer">
         <div class="header-section">
             <h1 class="text-2xl font-bold text-gray-800">QUẢN LÝ SẢNH</h1>
             <div class="flex items-center gap-3">
@@ -189,13 +271,15 @@
             </div>
         </div>
 
-        <h2 class="text-xl font-semibold text-gray-700 mb-4">Danh sách sảnh</h2>
-
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-semibold text-gray-700 mb-0">Danh sách sảnh</h2>
+            <div id="tongSoSanh" class="text-gray-800 font-semibold text-base"></div>
+        </div>
         <div class="table-container">
             <table class="min-w-full bg-white">
                 <thead>
                     <tr>
-                        <th>Mã sảnh</th>
+                        <th>STT</th>
                         <th>Tên sảnh</th>
                         <th>Loại sảnh</th>
                         <th>Số lượng bàn tối đa</th>
@@ -224,11 +308,6 @@
                     <label for="loaiSanh" class="block text-gray-700 text-sm font-medium mb-2">Loại sảnh:</label>
                     <select id="loaiSanh" name="loaiSanh" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
                         <option value="">Chọn loại sanh</option>
-                        <option value="1">Standard</option>
-                        <option value="2">VIP</option>
-                        <option value="3">Luxury</option>
-                        <option value="4">Premium</option>
-                        <option value="5">Royal Grand</option>
                     </select>
                 </div>
                 <div class="mb-4">
@@ -249,49 +328,106 @@
             </form>
         </div>
     </div>
+<script>
+    // Sidebar toggle logic
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const container = document.getElementById('mainContainer');
+        sidebar.classList.toggle('collapsed');
+        if (sidebar.classList.contains('collapsed')) {
+            container.style.marginLeft = '60px';
+        } else {
+            container.style.marginLeft = '250px';
+        }
+    }
 
-    <script>
-        // Dữ liệu mẫu cho sảnh
-        let danhSachSanh = [
-            { id: 1, ten_sanh: 'Sảnh Hoàng Gia', loai_sanh: { id: 3, ten_loai_sanh: 'Luxury' }, so_luong_ban_toi_da: 30, trang_thai: 'Active' },
-            { id: 2, ten_sanh: 'Sảnh Kim Cương', loai_sanh: { id: 2, ten_loai_sanh: 'VIP' }, so_luong_ban_toi_da: 15, trang_thai: 'Active' },
-            { id: 3, ten_sanh: 'Sảnh Ngọc Bích', loai_sanh: { id: 1, ten_loai_sanh: 'Standard' }, so_luong_ban_toi_da: 8, trang_thai: 'Maintaining' },
-            { id: 4, ten_sanh: 'Sảnh Hồng Ngọc', loai_sanh: { id: 3, ten_loai_sanh: 'Luxury' }, so_luong_ban_toi_da: 25, trang_thai: 'Active' },
-            { id: 5, ten_sanh: 'Sảnh Lam Ngọc', loai_sanh: { id: 2, ten_loai_sanh: 'VIP' }, so_luong_ban_toi_da: 12, trang_thai: 'Maintaining' },
-            { id: 6, ten_sanh: 'Sảnh Bạch Kim', loai_sanh: { id: 1, ten_loai_sanh: 'Standard' }, so_luong_ban_toi_da: 10, trang_thai: 'Active' },
-            { id: 7, ten_sanh: 'Sảnh Thiên Thanh', loai_sanh: { id: 3, ten_loai_sanh: 'Luxury' }, so_luong_ban_toi_da: 28, trang_thai: 'Active' },
-            { id: 8, ten_sanh: 'Sảnh Xanh Biển', loai_sanh: { id: 2, ten_loai_sanh: 'VIP' }, so_luong_ban_toi_da: 18, trang_thai: 'Active' },
-            { id: 9, ten_sanh: 'Sảnh Vàng Anh', loai_sanh: { id: 1, ten_loai_sanh: 'Standard' }, so_luong_ban_toi_da: 7, trang_thai: 'Active' },
-            { id: 10, ten_sanh: 'Sảnh Tím Huế', loai_sanh: { id: 3, ten_loai_sanh: 'Luxury' }, so_luong_ban_toi_da: 20, trang_thai: 'Maintaining' },
-            { id: 11, ten_sanh: 'Sảnh Đỏ Son', loai_sanh: { id: 2, ten_loai_sanh: 'VIP' }, so_luong_ban_toi_da: 14, trang_thai: 'Active' },
-            { id: 12, ten_sanh: 'Sảnh Trắng Tinh Khôi', loai_sanh: { id: 1, ten_loai_sanh: 'Standard' }, so_luong_ban_toi_da: 9, trang_thai: 'Active' },
-        ];
+    let danhSachSanh = [];
+    let danhSachLoaiSanh = [];
+    const danhSachSanhElement = document.getElementById('danhSachSanh');
+    const modalSanh = document.getElementById('modalSanh');
+    const modalTitle = document.getElementById('modalTitle');
+    const formSanh = document.getElementById('formSanh');
+    const paginationControls = document.getElementById('paginationControls');
+    const searchInput = document.getElementById('searchInput');
+    const loaiSanhSelect = document.getElementById('loaiSanh');
 
-        const danhSachSanhElement = document.getElementById('danhSachSanh');
-        const modalSanh = document.getElementById('modalSanh');
-        const modalTitle = document.getElementById('modalTitle');
-        const formSanh = document.getElementById('formSanh');
-        const paginationControls = document.getElementById('paginationControls');
+    let isEditMode = false;
+    let currentSanhId = null;
+    let currentPage = 1;
+    const itemsPerPage = 8;
 
-        let isEditMode = false;
-        let currentSanhId = null;
-        let currentPage = 1;
-        const itemsPerPage = 8;
+    // Hàm gọi API
+    async function goiAPI(method, url, data = null) {
+        try {
+            const options = {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            };
+            if (data) {
+                options.body = JSON.stringify(data);
+            }
+            const response = await fetch(url, options);
+            let responseBody = null;
+            try {
+                responseBody = await response.json();
+            } catch (e) {
+                responseBody = await response.text();
+            }
+            if (!response.ok) {
+                console.error('API error response:', responseBody);
+                alert('Có lỗi khi gọi API. Vui lòng thử lại.\n' + JSON.stringify(responseBody));
+                throw new Error(`Lỗi HTTP: ${response.status}`);
+            }
+            return responseBody;
+        } catch (error) {
+            console.error('Lỗi API:', error);
+            throw error;
+        }
+    }
 
-        // Hàm hiển thị danh sách sảnh
-        function hienThiDanhSach() {
+    // Hàm lấy danh sách loại sảnh và hiển thị trong dropdown
+    async function layDanhSachLoaiSanh() {
+        try {
+            const response = await goiAPI('GET', '/api/loaisanh/'); // Sửa thành đường dẫn tương đối
+            danhSachLoaiSanh = response;
+            const select = document.getElementById('loaiSanh');
+            select.innerHTML = '<option value="">-- Chọn loại sảnh --</option>';
+            danhSachLoaiSanh.forEach(loai => {
+                const option = document.createElement('option');
+                option.value = loai.id;
+                option.textContent = loai.ten_loai_sanh;
+                select.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Lỗi lấy danh sách loại sảnh:', error);
+        }
+    }
+
+    // Hàm hiển thị danh sách sảnh
+    async function hienThiDanhSach(searchQuery = '') {
+        try {
+            const url = searchQuery
+                ? `/api/sanh/?search=${encodeURIComponent(searchQuery)}&page=${currentPage}&limit=${itemsPerPage}`
+                : `/api/sanh/?page=${currentPage}&limit=${itemsPerPage}`;
+            const response = await goiAPI('GET', url);
+            danhSachSanh = response.data || [];
             danhSachSanhElement.innerHTML = '';
 
-            const startIndex = (currentPage - 1) * itemsPerPage;
-            const endIndex = startIndex + itemsPerPage;
-            const sanhToDisplay = danhSachSanh.slice(startIndex, endIndex);
-
-            sanhToDisplay.forEach(sanh => {
+            // Hiển thị tổng số sảnh
+            if (searchQuery) {
+                document.getElementById('tongSoSanh').textContent = `Kết quả tìm kiếm: ${response.total || danhSachSanh.length}`;
+            } else {
+                document.getElementById('tongSoSanh').textContent = `Tổng số sảnh: ${response.total || danhSachSanh.length}`;
+            }
+            danhSachSanh.forEach((sanh, index) => {
+                const stt = (currentPage - 1) * itemsPerPage + index + 1;
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${sanh.id}</td>
+                    <td>${stt}</td>
                     <td>${sanh.ten_sanh}</td>
-                    <td>${sanh.loai_sanh.ten_loai_sanh}</td>
+                    <td>${sanh.loai_sanh ? sanh.loai_sanh.ten_loai_sanh : ''}</td>
                     <td>${sanh.so_luong_ban_toi_da}</td>
                     <td>${sanh.trang_thai === 'Active' ? 'Đang hoạt động' : 'Đang bảo trì'}</td>
                     <td>
@@ -301,126 +437,154 @@
                 `;
                 danhSachSanhElement.appendChild(row);
             });
-            hienThiPhanTrang();
+
+            hienThiPhanTrang(response.total || danhSachSanh.length);
+        } catch (error) {
+            console.error('Lỗi hiển thị danh sách sảnh:', error);
+        }
+    }
+
+    // Hàm hiển thị phân trang
+    function hienThiPhanTrang(totalItems) {
+        paginationControls.innerHTML = '';
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+        const prevButton = document.createElement('button');
+        prevButton.textContent = '«';
+        prevButton.classList.add('pagination-button');
+        if (currentPage === 1) {
+            prevButton.classList.add('disabled');
+            prevButton.disabled = true;
+        }
+        prevButton.onclick = () => chuyenTrang(currentPage - 1);
+        paginationControls.appendChild(prevButton);
+
+        for (let i = 1; i <= totalPages; i++) {
+            const pageButton = document.createElement('button');
+            pageButton.textContent = i;
+            pageButton.classList.add('pagination-button');
+            if (i === currentPage) {
+                pageButton.classList.add('active');
+            }
+            pageButton.onclick = () => chuyenTrang(i);
+            paginationControls.appendChild(pageButton);
         }
 
-        // Hàm hiển thị phân trang
-        function hienThiPhanTrang() {
-            paginationControls.innerHTML = '';
-            const totalPages = Math.ceil(danhSachSanh.length / itemsPerPage);
-
-            const prevButton = document.createElement('button');
-            prevButton.textContent = '«';
-            prevButton.classList.add('pagination-button');
-            if (currentPage === 1) {
-                prevButton.classList.add('disabled');
-                prevButton.disabled = true;
-            }
-            prevButton.onclick = () => chuyenTrang(currentPage - 1);
-            paginationControls.appendChild(prevButton);
-
-            for (let i = 1; i <= totalPages; i++) {
-                const pageButton = document.createElement('button');
-                pageButton.textContent = i;
-                pageButton.classList.add('pagination-button');
-                if (i === currentPage) {
-                    pageButton.classList.add('active');
-                }
-                pageButton.onclick = () => chuyenTrang(i);
-                paginationControls.appendChild(pageButton);
-            }
-
-            const nextButton = document.createElement('button');
-            nextButton.textContent = '»';
-            nextButton.classList.add('pagination-button');
-            if (currentPage === totalPages || totalPages === 0) {
-                nextButton.classList.add('disabled');
-                nextButton.disabled = true;
-            }
-            nextButton.onclick = () => chuyenTrang(currentPage + 1);
-            paginationControls.appendChild(nextButton);
+        const nextButton = document.createElement('button');
+        nextButton.textContent = '»';
+        nextButton.classList.add('pagination-button');
+        if (currentPage === totalPages || totalPages === 0) {
+            nextButton.classList.add('disabled');
+            nextButton.disabled = true;
         }
+        nextButton.onclick = () => chuyenTrang(currentPage + 1);
+        paginationControls.appendChild(nextButton);
+    }
 
-        // Hàm chuyển trang
-        function chuyenTrang(pageNumber) {
-            const totalPages = Math.ceil(danhSachSanh.length / itemsPerPage);
-            if (pageNumber >= 1 && pageNumber <= totalPages) {
-                currentPage = pageNumber;
-                hienThiDanhSach();
-            }
-        }
+    // Hàm chuyển trang
+    function chuyenTrang(pageNumber) {
+        currentPage = pageNumber;
+        hienThiDanhSach(searchInput.value);
+    }
 
-        // Hàm mở form thêm sảnh
-        function moFormThemMoi() {
-            isEditMode = false;
-            modalTitle.textContent = 'Thêm Sảnh Mới';
-            formSanh.reset();
-            modalSanh.classList.remove('hidden');
-        }
+    // Hàm mở form thêm sảnh
+    function moFormThemMoi() {
+        isEditMode = false;
+        modalTitle.textContent = 'Thêm Sảnh Mới';
+        formSanh.reset();
+        modalSanh.classList.remove('hidden');
+    }
 
-        // Hàm mở form sửa sảnh
-        function suaSanh(id) {
+    // Hàm mở form sửa sảnh
+    async function suaSanh(id) {
+        try {
+            const sanhToEdit = await goiAPI('GET', `/api/sanh/${id}/`);
             isEditMode = true;
             currentSanhId = id;
             modalTitle.textContent = 'Chỉnh Sửa Sảnh';
-            const sanhToEdit = danhSachSanh.find(sanh => sanh.id === id);
-            if (sanhToEdit) {
-                document.getElementById('tenSanh').value = sanhToEdit.ten_sanh;
-                document.getElementById('loaiSanh').value = sanhToEdit.loai_sanh.id;
-                document.getElementById('soLuongBanToiDa').value = sanhToEdit.so_luong_ban_toi_da;
-                document.getElementById('trangThai').value = sanhToEdit.trang_thai;
-                modalSanh.classList.remove('hidden');
-            }
+            document.getElementById('tenSanh').value = sanhToEdit.ten_sanh;
+            document.getElementById('loaiSanh').value = sanhToEdit.loai_sanh ? sanhToEdit.loai_sanh.id : ''; // Gán ID trực tiếp
+            document.getElementById('soLuongBanToiDa').value = sanhToEdit.so_luong_ban_toi_da;
+            document.getElementById('trangThai').value = sanhToEdit.trang_thai;
+            modalSanh.classList.remove('hidden');
+        } catch (error) {
+            console.error('Lỗi lấy thông tin sảnh:', error);
+        }
+    }
+
+    // Hàm đóng form
+    function dongModal() {
+        modalSanh.classList.add('hidden');
+    }
+
+    // Xử lý submit form
+    formSanh.addEventListener('submit', async function(event) {
+        event.preventDefault();
+
+        const selectedLoaiSanhId = document.getElementById('loaiSanh').value;
+
+        if (!selectedLoaiSanhId) {
+            alert('Vui lòng chọn loại sảnh!');
+            return;
         }
 
-        // Hàm đóng form
-        function dongModal() {
-            modalSanh.classList.add('hidden');
-        }
+        const newSanhData = {
+            ten_sanh: document.getElementById('tenSanh').value,
+            loai_sanh_id: parseInt(selectedLoaiSanhId), // Gửi ID thay vì tên
+            so_luong_ban_toi_da: parseInt(document.getElementById('soLuongBanToiDa').value),
+            trang_thai: document.getElementById('trangThai').value,
+        };
 
-        // Xử lý submit form
-        formSanh.addEventListener('submit', function(event) {
-            event.preventDefault();
-
-            const newSanhData = {
-                ten_sanh: document.getElementById('tenSanh').value,
-                loai_sanh: { id: parseInt(document.getElementById('loaiSanh').value), ten_loai_sanh: document.getElementById('loaiSanh').options[document.getElementById('loaiSanh').selectedIndex].text },
-                so_luong_ban_toi_da: parseInt(document.getElementById('soLuongBanToiDa').value),
-                trang_thai: document.getElementById('trangThai').value,
-            };
-
+        try {
             if (isEditMode) {
-                danhSachSanh = danhSachSanh.map(sanh =>
-                    sanh.id === currentSanhId ? { ...sanh, ...newSanhData } : sanh
-                );
+                await goiAPI('PUT', `/api/sanh/${currentSanhId}/`, newSanhData);
             } else {
-                newSanhData.id = danhSachSanh.length + 1;
-                danhSachSanh.push(newSanhData);
+                await goiAPI('POST', `/api/sanh/`, newSanhData);
             }
 
             if (!isEditMode) {
-                currentPage = Math.ceil(danhSachSanh.length / itemsPerPage);
+                const response = await goiAPI('GET', '/api/sanh/count/');
+                const totalItems = response.total || 0;
+                currentPage = Math.ceil(totalItems / itemsPerPage);
             }
-            hienThiDanhSach();
+            hienThiDanhSach(searchInput.value);
             dongModal();
-        });
+        } catch (error) {
+            console.error('Lỗi lưu sảnh:', error);
+        }
+    });
 
-        // Hàm xóa sảnh
-        function xoaSanh(id) {
-            if (confirm('Bạn có chắc chắn muốn xóa sảnh này không?')) {
-                danhSachSanh = danhSachSanh.filter(sanh => sanh.id !== id);
-                const totalPages = Math.ceil(danhSachSanh.length / itemsPerPage);
+    // Hàm xóa sảnh
+    async function xoaSanh(id) {
+        if (confirm('Bạn có chắc chắn muốn xóa sảnh này không?')) {
+            try {
+                await goiAPI('DELETE', `/api/sanh/${id}/`);
+                const response = await goiAPI('GET', '/api/sanh/count/');
+                const totalItems = response.total || 0;
+                const totalPages = Math.ceil(totalItems / itemsPerPage);
                 if (currentPage > totalPages && totalPages > 0) {
                     currentPage = totalPages;
                 } else if (totalPages === 0) {
                     currentPage = 1;
                 }
-                hienThiDanhSach();
+                hienThiDanhSach(searchInput.value);
+            } catch (error) {
+                console.error('Lỗi xóa sảnh:', error);
             }
         }
+    }
 
-        // Hiển thị danh sách sảnh khi trang tải
-        document.addEventListener('DOMContentLoaded', hienThiDanhSach);
-    </script>
+    // Xử lý tìm kiếm
+    searchInput.addEventListener('input', function(event) {
+        currentPage = 1;
+        hienThiDanhSach(event.target.value);
+    });
+
+    // Hiển thị danh sách sảnh và loại sảnh khi trang tải
+    document.addEventListener('DOMContentLoaded', async () => {
+        await layDanhSachLoaiSanh();
+        hienThiDanhSach();
+    });
+</script>
 </body>
 </html>
