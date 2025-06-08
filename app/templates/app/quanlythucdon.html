@@ -282,8 +282,10 @@
             </div>
         </div>
 
-        <h2 class="text-xl font-semibold text-gray-700 mb-4">Danh sách Món Ăn</h2>
-
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-semibold text-gray-700 mb-0">Danh sách Món Ăn</h2>
+            <div id="tongSoMonAn" class="text-gray-800 font-semibold text-base"></div>
+        </div>
         <div class="table-container">
             <table class="min-w-full bg-white">
                 <thead>
@@ -413,12 +415,20 @@
             danhSachMonAn = response.data || [];
             danhSachMonAnBodyElement.innerHTML = '';
 
+            // Hiển thị tổng số món ăn
+            const tongSoMonAnDiv = document.getElementById('tongSoMonAn');
+            if (searchQuery) {
+                tongSoMonAnDiv.textContent = `Kết quả tìm kiếm: ${response.total || danhSachMonAn.length}`;
+            } else {
+                tongSoMonAnDiv.textContent = `Tổng số món ăn: ${response.total || danhSachMonAn.length}`;
+            }
+
             if (danhSachMonAn.length === 0) {
                 danhSachMonAnBodyElement.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">Không tìm thấy món ăn nào.</td></tr>`;
                 hienThiPhanTrang(response.total || 0);
                 return;
             }
-
+            
             danhSachMonAn.forEach((monAn, index) => {
                 const stt = (currentPage - 1) * itemsPerPage + index + 1;
                 const row = document.createElement('tr');

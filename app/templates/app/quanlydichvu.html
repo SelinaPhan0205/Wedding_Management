@@ -290,8 +290,10 @@
             </div>
         </div>
 
-        <h2 class="text-xl font-semibold text-gray-700 mb-4">Danh sách Dịch vụ</h2>
-
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-semibold text-gray-700 mb-0">Danh sách Dịch vụ</h2>
+            <div id="tongSoDichVu" class="text-gray-800 font-semibold text-base"></div>
+        </div>
         <div class="table-container">
             <table class="min-w-full bg-white">
                 <thead>
@@ -420,6 +422,14 @@
             const response = await goiAPI('GET', url);
             danhSachDichVu = response.data || [];
             danhSachDichVuBodyElement.innerHTML = '';
+
+            // Hiển thị tổng số dịch vụ hoặc kết quả tìm kiếm
+            const tongSoDichVuDiv = document.getElementById('tongSoDichVu');
+            if (searchQuery) {
+                tongSoDichVuDiv.textContent = `Kết quả tìm kiếm: ${response.total || danhSachDichVu.length}`;
+            } else {
+                tongSoDichVuDiv.textContent = `Tổng số dịch vụ: ${response.total || danhSachDichVu.length}`;
+            }
 
             if (danhSachDichVu.length === 0) {
                 danhSachDichVuBodyElement.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">Không tìm thấy dịch vụ nào.</td></tr>`;
