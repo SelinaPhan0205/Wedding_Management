@@ -221,3 +221,44 @@ class MonAnViewSet(viewsets.ModelViewSet):
         if search_query:
             queryset = queryset.filter(ten_mon_an__icontains=search_query)
         return Response({'total': queryset.count()})
+    
+class QuyDinhViewSet(viewsets.ModelViewSet):
+    queryset = QuyDinh.objects.all().order_by('id')
+    serializer_class = QuyDinhSerializer
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset().order_by('ma_quy_dinh')
+        search_query = request.query_params.get('search', '').strip().lower()
+
+        if search_query:
+            search_query_no_diacritics = bo_dau(search_query).lower()
+            queryset = [
+                qd for qd in queryset
+                if bo_dau(qd.ma_quy_dinh).lower().startswith(search_query_no_diacritics)
+                or bo_dau(qd.mo_ta or '').lower().startswith(search_query_no_diacritics)
+            ]
+
+        # Phân trang
+        page = request.query_params.get('page', 1)
+        limit = int(request.query_params.get('limit', 8))
+        paginator = Paginator(queryset, limit)
+        page_obj = paginator.page(page)
+
+        serializer = self.get_serializer(page_obj, many=True)
+        return Response({
+            'data': serializer.data,
+            'total': paginator.count
+        })
+
+    @action(detail=False, methods=['get'], url_path='count')
+    def count(self, request):
+        search_query = request.query_params.get('search', '').strip().lower()
+        queryset = self.get_queryset()
+        if search_query:
+            search_query_no_diacritics = bo_dau(search_query).lower()
+            queryset = [
+                qd for qd in queryset
+                if bo_dau(qd.ma_quy_dinh).lower().startswith(search_query_no_diacritics)
+                or bo_dau(qd.mo_ta or '').lower().startswith(search_query_no_diacritics)
+            ]
+        return Response({'total': queryset.count()})

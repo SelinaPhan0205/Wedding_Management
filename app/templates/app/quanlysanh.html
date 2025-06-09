@@ -435,10 +435,11 @@
             danhSachSanhElement.innerHTML = '';
 
             // Hiển thị tổng số sảnh
+            const tongSoSanhDiv = document.getElementById('tongSoSanh');
             if (searchQuery) {
-                document.getElementById('tongSoSanh').textContent = `Kết quả tìm kiếm: ${response.total || danhSachSanh.length}`;
+                tongSoSanhDiv.textContent = `Kết quả tìm kiếm: ${response.total || danhSachSanh.length}`;
             } else {
-                document.getElementById('tongSoSanh').textContent = `Tổng số sảnh: ${response.total || danhSachSanh.length}`;
+                tongSoSanhDiv.textContent = `Tổng số sảnh: ${response.total || danhSachSanh.length}`;
             }
             danhSachSanh.forEach((sanh, index) => {
                 const stt = (currentPage - 1) * itemsPerPage + index + 1;
@@ -573,12 +574,14 @@
         }
     });
 
+
     // Hàm xóa sảnh
     async function xoaSanh(id) {
         if (confirm('Bạn có chắc chắn muốn xóa sảnh này không?')) {
             try {
                 await goiAPI('DELETE', `/api/sanh/${id}/`);
-                const response = await goiAPI('GET', '/api/sanh/count/');
+                // Lấy lại tổng số sảnh với search hiện tại
+                const response = await goiAPI('GET', '/api/sanh/?page=1&limit=1');
                 const totalItems = response.total || 0;
                 const totalPages = Math.ceil(totalItems / itemsPerPage);
                 if (currentPage > totalPages && totalPages > 0) {
@@ -600,8 +603,7 @@
     });
 
     // Hiển thị danh sách sảnh và loại sảnh khi trang tải
-    document.addEventListener('DOMContentLoaded', async () => {
-        await layDanhSachLoaiSanh();
+    document.addEventListener('DOMContentLoaded', () => {
         hienThiDanhSach();
     });
 </script>

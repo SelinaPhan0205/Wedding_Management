@@ -71,3 +71,8 @@ class MonAnSerializer(serializers.ModelSerializer):
     class Meta:
         model = MonAn
         fields = ['id', 'ten_mon_an', 'don_gia', 'ghi_chu']
+
+class QuyDinhSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = QuyDinh
+        fields = ['id', 'ma_quy_dinh', 'mo_ta', 'gia_tri', 'dang_ap_dung']
