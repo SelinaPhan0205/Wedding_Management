@@ -21,40 +21,53 @@ class SanhSerializer(serializers.ModelSerializer):
         model = Sanh
         fields = ['id', 'ten_sanh', 'loai_sanh', 'loai_sanh_id', 'so_luong_ban_toi_da', 'trang_thai']
 
+
 class TaiKhoanSerializer(serializers.ModelSerializer):
+    # Trả về thông tin user (username, email, ...)
     user = UserSerializer(read_only=True)
-    user_id = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(), source='user', write_only=True, required=False
-    )
+    # Các trường này chỉ dùng khi tạo mới, không trả về khi GET
+    username = serializers.CharField(write_only=True, required=False)
+    password = serializers.CharField(write_only=True, required=False)
+    email = serializers.EmailField(write_only=True, required=False)
 
     class Meta:
         model = TaiKhoan
-        fields = ['id', 'user', 'user_id', 'hovaten', 'sodienthoai', 'vaitro', 'trangthai']
+        fields = [
+            'id', 'user', 'hovaten', 'sodienthoai', 'vaitro', 'trangthai',
+            'username', 'password', 'email'
+        ]
+        read_only_fields = ['user']
 
     def create(self, validated_data):
-        user_data = validated_data.pop('user', None)
-        if user_data and 'user_id' in validated_data:
-            user = validated_data['user_id']
-        elif user_data and 'username' in validated_data.get('user', {}):
-            user = User.objects.create_user(
-                username=user_data['username'],
-                email=user_data.get('email', ''),
-                password=user_data.get('password', ''),
-                first_name=validated_data.get('hovaten', '').split(' ')[0],
-                last_name=validated_data.get('hovaten', '').split(' ')[-1]
-            )
+        username = validated_data.pop('username', None)
+        password = validated_data.pop('password', None)
+        email = validated_data.pop('email', '')
+
+        # Nếu user đã tồn tại thì lấy user đó, không tạo mới
+        user = None
+        if username:
+            try:
+                user = User.objects.get(username=username)
+            except User.DoesNotExist:
+                if not password:
+                    raise serializers.ValidationError({'password': 'Password là bắt buộc khi tạo user mới!'})
+                user = User.objects.create_user(username=username, password=password, email=email)
         else:
-            raise serializers.ValidationError("Username or user_id is required.")
+            raise serializers.ValidationError({'username': 'Username là bắt buộc!'})
+
+        # Kiểm tra user này đã có TaiKhoan chưa
+        if TaiKhoan.objects.filter(user=user).exists():
+            raise serializers.ValidationError({'username': 'Tài khoản cho user này đã tồn tại!'})
+
         tai_khoan = TaiKhoan.objects.create(user=user, **validated_data)
         return tai_khoan
 
     def update(self, instance, validated_data):
-        user_data = validated_data.pop('user', None)
-        if user_data and 'user_id' in validated_data:
-            instance.user = validated_data['user_id']
-        elif user_data and 'password' in user_data:
-            instance.user.set_password(user_data['password'])
-            instance.user.save()
+        # Không cho update username, password, email qua TaiKhoanSerializer
+        validated_data.pop('username', None)
+        validated_data.pop('password', None)
+        validated_data.pop('email', None)
+
         instance.hovaten = validated_data.get('hovaten', instance.hovaten)
         instance.sodienthoai = validated_data.get('sodienthoai', instance.sodienthoai)
         instance.vaitro = validated_data.get('vaitro', instance.vaitro)

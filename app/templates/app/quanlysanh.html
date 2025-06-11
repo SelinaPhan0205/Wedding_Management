@@ -5,13 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản Lý Sảnh - Hệ thống Quản Lý Tiệc Cưới</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-rounded/css/uicons-solid-rounded.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-bold-rounded/css/uicons-bold-rounded.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-bold-straight/css/uicons-bold-straight.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-regular-straight/css/uicons-regular-straight.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-straight/css/uicons-solid-straight.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-chubby/css/uicons-solid-chubby.css'>
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
             margin: 0;
             padding: 0;
             display: flex;
+            background-color: #eff7ff;
+            min-height: 100vh;
         }
         .sidebar {
             width: 250px;
@@ -20,39 +28,74 @@
             color: white;
             padding-top: 20px;
             position: fixed;
-            transition: width 0.3s ease-in-out;
+            top: 0;
+            left: 0;
+            transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-x: hidden;
             z-index: 1000;
         }
         .sidebar.collapsed {
-            width: 60px;
+            width: 70px;
         }
         .sidebar h2 {
             text-align: center;
             margin-bottom: 20px;
             margin-top: 40px;
             font-size: 22px;
-            transition: opacity 0.3s;
+            font-weight: 700;
+            transition: opacity 0.3s ease;
+            white-space: nowrap;
         }
         .sidebar.collapsed h2 {
             opacity: 0;
-            transition: opacity 0.1s;
+            pointer-events: none;
+            user-select: none;
         }
         .sidebar a {
-            display: block;
-            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            padding: 14px 24px;
             color: white;
             text-decoration: none;
             font-size: 16px;
-            transition: all 0.3s ease-in-out;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            transition: background-color 0.3s, padding 0.35s, border-radius 0.3s;
+            border-radius: 12px;
+            margin: 4px 12px;
+        }
+        .sidebar.collapsed a {
+            padding: 14px 15px;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        .sidebar a i {
+            font-size: 22px;
+            width: 24px;
+            height: 24px;
+            display: inline-block;
+            object-fit: contain;
+        }
+        .sidebar a span {
+            display: inline-block;
+            margin-left: 12px;
+            max-width: 180px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            transition: max-width 0.35s, opacity 0.35s;
+            vertical-align: middle;
         }
-        .sidebar.collapsed a {
-            font-size: 0;
-            padding: 15px 10px;
+        .sidebar.collapsed a span {
+            max-width: 0;
+            opacity: 0;
+            pointer-events: none;
+            user-select: none;
+            margin-left: 0;
         }
-        .sidebar a:hover {
+        .sidebar a:hover,
+        .sidebar a.active {
             background-color: #34495e;
         }
         .toggle-btn {
@@ -72,6 +115,18 @@
         .toggle-btn:hover {
             background-color: #34495e;
         }
+        .content {
+            margin-left: 250px;
+            margin-right: 20px;
+            padding-left: 24px;
+            transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            width: calc(100% - 250px);
+            min-height: 100vh;
+        }
+        .content.collapsed {
+            margin-left: 70px;
+            width: calc(100% - 70px);
+        }
         .container {
             max-width: 1200px;
             margin: 2rem auto;
@@ -79,12 +134,6 @@
             background-color: #ffffff;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            margin-left: 250px;
-            transition: margin-left 0.3s;
-            width: 100%;
-        }
-        .sidebar.collapsed ~ .container {
-            margin-left: 60px;
         }
         .header-section {
             display: flex;
@@ -107,18 +156,20 @@
             border-color: #2c3e50;
         }
         .add-button {
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            font-size: 16px;
             background-color: #2c3e50;
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 600;
+            color: #fff;
+            border-radius: 12px;
+            padding: 14px 24px;
             display: flex;
             align-items: center;
             gap: 0.5rem;
             transition: background-color 0.2s, transform 0.1s;
         }
         .add-button:hover {
-            background-color: #2c3e50;
+            background-color: #34495e;
             transform: translateY(-1px);
         }
         .table-container {
@@ -155,11 +206,11 @@
             transition: background-color 0.2s, transform 0.1s;
         }
         .edit-button {
-            background-color: #e0e7ff;
+            background-color:  #e3ecfd;
             color: #2c3e50;
         }
         .edit-button:hover {
-            background-color: rgb(188, 202, 240);
+            background-color:  #e3ecfd;
             transform: translateY(-1px);
         }
         .delete-button {
@@ -181,14 +232,14 @@
         .pagination-button {
             padding: 0.6rem 1rem;
             border-radius: 8px;
-            background-color: #e0e7ff;
+            background-color:#e3ecfd;
             color: #2c3e50;
             font-weight: 500;
             cursor: pointer;
             transition: background-color 0.2s, color 0.2s;
         }
         .pagination-button:hover:not(.active) {
-            background-color: #c7d2fe;
+            background-color: #e3ecfd;
         }
         .pagination-button.active {
             background-color: #2c3e50;
@@ -199,36 +250,16 @@
             opacity: 0.5;
             cursor: not-allowed;
         }
-        @media (max-width: 768px) {
-            .header-section {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 1rem;
-            }
-            .search-input {
-                width: 100%;
-            }
-            .add-button {
-                width: 100%;
-                justify-content: center;
-            }
-            .container {
-                margin: 1rem;
-                padding: 1rem;
-                margin-left: 60px;
-            }
-            th, td {
-                padding: 0.8rem;
-                font-size: 0.75rem;
-            }
-            .pagination-container {
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-            .pagination-button {
-                padding: 0.5rem 0.8rem;
-                font-size: 0.8rem;
-            }
+        .header-section h1 {
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            color: #2c3e50;      
+            background: none;    
+            padding: 0;         
+            border-radius: 0;  
+            margin: 0;
+            font-size: 2rem;
+            display: inline-block;
         }
     </style>
 </head>
@@ -239,60 +270,88 @@
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <h2>Quản lý Tiệc Cưới</h2>
-        <a href="{% url 'trangchu' %}">Trang Chủ</a>
-        <a href="{% url 'quanlytaikhoan' %}">Tài Khoản</a>
-        <a href="{% url 'quanlyhoadon' %}">Hóa Đơn</a>
-        <a href="{% url 'quanlysanh' %}">Sảnh</a>
-        <a href="{% url 'quanlythucdon' %}">Thực Đơn</a>
-        <a href="{% url 'quanlydichvu' %}">Dịch Vụ</a>
-        <a href="{% url 'quanlytieccuoi' %}">Tiệc Cưới</a>
-        <a href="{% url 'quanlyquydinh' %}">Quy Định</a>
-        <a href="{% url 'xembaocao' %}">Xem Báo Cáo</a>
+        <a href="{% url 'trangchu' %}">
+            <i class="fi fi-sr-house-chimney"></i>
+            <span>Trang Chủ</span>
+        </a>
+        <a href="{% url 'quanlytaikhoan' %}">
+            <i class="fi fi-sr-user"></i>
+            <span>Tài Khoản</span>
+        </a>
+        <a href="{% url 'quanlyhoadon' %}">
+            <i class="fi fi-bs-dollar"></i>
+            <span>Hóa Đơn</span>
+        </a>
+        <a href="{% url 'quanlysanh' %}" class="active">
+            <i class="fi fi-br-calendar-heart"></i>
+            <span>Sảnh</span>
+        </a>
+        <a href="{% url 'quanlythucdon' %}">
+            <i class="fi fi-sr-restaurant"></i>
+            <span>Thực Đơn</span>
+        </a>
+        <a href="{% url 'quanlydichvu' %}">
+            <i class="fi fi-sr-holding-hand-dinner"></i>
+            <span>Dịch Vụ</span>
+        </a>
+        <a href="{% url 'quanlytieccuoi' %}">
+            <i class="fi fi-rs-rings-wedding"></i>
+            <span>Tiệc Cưới</span>
+        </a>
+        <a href="{% url 'quanlyquydinh' %}">
+            <i class="fi fi-ss-rules"></i>
+            <span>Quy Định</span>
+        </a>
+        <a href="{% url 'xembaocao' %}">
+            <i class="fi fi-sr-big-data-analytics"></i>
+            <span>Xem Báo Cáo</span>
+        </a>
     </div>
 
-    <div class="container" id="mainContainer">
-        <div class="header-section">
-            <h1 class="text-2xl font-bold text-gray-800">QUẢN LÝ SẢNH</h1>
-            <div class="flex items-center gap-3">
-                <div class="relative">
-                    <input type="text" placeholder="Tìm kiếm sảnh..." class="search-input" id="searchInput">
-                    <button class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+    <div class="content" id="content">
+        <div class="container" id="mainContainer">
+            <div class="header-section">
+                <h1 class="text-2xl font-bold text-gray-800">QUẢN LÝ SẢNH</h1>
+                <div class="flex items-center gap-3">
+                    <div class="relative">
+                        <input type="text" placeholder="Tìm kiếm sảnh..." class="search-input" id="searchInput">
+                        <button class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                    <button class="add-button" onclick="moFormThemMoi()">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                         </svg>
+                        Thêm Sảnh
                     </button>
                 </div>
-                <button class="add-button" onclick="moFormThemMoi()">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-                    </svg>
-                    Thêm Sảnh
-                </button>
             </div>
-        </div>
 
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-xl font-semibold text-gray-700 mb-0">Danh sách sảnh</h2>
-            <div id="tongSoSanh" class="text-gray-800 font-semibold text-base"></div>
-        </div>
-        <div class="table-container">
-            <table class="min-w-full bg-white">
-                <thead>
-                    <tr>
-                        <th>STT</th>
-                        <th>Tên sảnh</th>
-                        <th>Loại sảnh</th>
-                        <th>Số lượng bàn tối đa</th>
-                        <th>Trạng thái</th>
-                        <th>Hành động</th>
-                    </tr>
-                </thead>
-                <tbody id="danhSachSanh">
-                </tbody>
-            </table>
-        </div>
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-gray-700 mb-0">Danh sách sảnh</h2>
+                <div id="tongSoSanh" class="text-gray-800 font-semibold text-base"></div>
+            </div>
+            <div class="table-container">
+                <table class="min-w-full bg-white">
+                    <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>Tên sảnh</th>
+                            <th>Loại sảnh</th>
+                            <th>Số lượng bàn tối đa</th>
+                            <th>Trạng thái</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="danhSachSanh"></tbody>
+                </table>
+            </div>
 
-        <div class="pagination-container" id="paginationControls">
+            <div class="pagination-container" id="paginationControls">
+            </div>
         </div>
     </div>
 
@@ -332,13 +391,9 @@
     // Sidebar toggle logic
     function toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
-        const container = document.getElementById('mainContainer');
+        const content = document.getElementById('content');
         sidebar.classList.toggle('collapsed');
-        if (sidebar.classList.contains('collapsed')) {
-            container.style.marginLeft = '60px';
-        } else {
-            container.style.marginLeft = '250px';
-        }
+        content.classList.toggle('collapsed');
     }
 
     let danhSachSanh = [];
@@ -380,7 +435,6 @@
                     'Content-Type': 'application/json',
                 },
             };
-            // Thêm CSRF token cho các method thay đổi dữ liệu
             if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method.toUpperCase())) {
                 options.headers['X-CSRFToken'] = getCookie('csrftoken');
             }
@@ -409,7 +463,7 @@
     // Hàm lấy danh sách loại sảnh và hiển thị trong dropdown
     async function layDanhSachLoaiSanh() {
         try {
-            const response = await goiAPI('GET', '/api/loaisanh/'); // Sửa thành đường dẫn tương đối
+            const response = await goiAPI('GET', '/api/loaisanh/');
             danhSachLoaiSanh = response;
             const select = document.getElementById('loaiSanh');
             select.innerHTML = '<option value="">-- Chọn loại sảnh --</option>';
@@ -434,12 +488,10 @@
             danhSachSanh = response.data || [];
             danhSachSanhElement.innerHTML = '';
 
-            // Hiển thị tổng số sảnh
-            const tongSoSanhDiv = document.getElementById('tongSoSanh');
             if (searchQuery) {
-                tongSoSanhDiv.textContent = `Kết quả tìm kiếm: ${response.total || danhSachSanh.length}`;
+                document.getElementById('tongSoSanh').textContent = `Kết quả tìm kiếm: ${response.total || danhSachSanh.length}`;
             } else {
-                tongSoSanhDiv.textContent = `Tổng số sảnh: ${response.total || danhSachSanh.length}`;
+                document.getElementById('tongSoSanh').textContent = `Tổng số sảnh: ${response.total || danhSachSanh.length}`;
             }
             danhSachSanh.forEach((sanh, index) => {
                 const stt = (currentPage - 1) * itemsPerPage + index + 1;
@@ -523,7 +575,7 @@
             currentSanhId = id;
             modalTitle.textContent = 'Chỉnh Sửa Sảnh';
             document.getElementById('tenSanh').value = sanhToEdit.ten_sanh;
-            document.getElementById('loaiSanh').value = sanhToEdit.loai_sanh ? sanhToEdit.loai_sanh.id : ''; // Gán ID trực tiếp
+            document.getElementById('loaiSanh').value = sanhToEdit.loai_sanh ? sanhToEdit.loai_sanh.id : '';
             document.getElementById('soLuongBanToiDa').value = sanhToEdit.so_luong_ban_toi_da;
             document.getElementById('trangThai').value = sanhToEdit.trang_thai;
             modalSanh.classList.remove('hidden');
@@ -550,7 +602,7 @@
 
         const newSanhData = {
             ten_sanh: document.getElementById('tenSanh').value,
-            loai_sanh_id: parseInt(selectedLoaiSanhId), // Gửi ID thay vì tên
+            loai_sanh_id: parseInt(selectedLoaiSanhId),
             so_luong_ban_toi_da: parseInt(document.getElementById('soLuongBanToiDa').value),
             trang_thai: document.getElementById('trangThai').value,
         };
@@ -574,14 +626,12 @@
         }
     });
 
-
     // Hàm xóa sảnh
     async function xoaSanh(id) {
         if (confirm('Bạn có chắc chắn muốn xóa sảnh này không?')) {
             try {
                 await goiAPI('DELETE', `/api/sanh/${id}/`);
-                // Lấy lại tổng số sảnh với search hiện tại
-                const response = await goiAPI('GET', '/api/sanh/?page=1&limit=1');
+                const response = await goiAPI('GET', '/api/sanh/count/');
                 const totalItems = response.total || 0;
                 const totalPages = Math.ceil(totalItems / itemsPerPage);
                 if (currentPage > totalPages && totalPages > 0) {
@@ -603,7 +653,8 @@
     });
 
     // Hiển thị danh sách sảnh và loại sảnh khi trang tải
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+        await layDanhSachLoaiSanh();
         hienThiDanhSach();
     });
 </script>

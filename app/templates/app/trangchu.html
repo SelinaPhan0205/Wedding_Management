@@ -1,18 +1,26 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trang Chủ - Quản lý Tiệc Cưới</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-rounded/css/uicons-solid-rounded.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-bold-rounded/css/uicons-bold-rounded.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-bold-straight/css/uicons-bold-straight.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-regular-straight/css/uicons-regular-straight.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-straight/css/uicons-solid-straight.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-chubby/css/uicons-solid-chubby.css'>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', sans-serif;
             margin: 0;
             padding: 0;
             display: flex;
-            background-color: #f4f6f9;
+            background-color: #eff7ff;
+            min-height: 100vh;
         }
-
         .sidebar {
             width: 250px;
             height: 100vh;
@@ -20,59 +28,85 @@
             color: white;
             padding-top: 20px;
             position: fixed;
-            transition: width 0.3s ease-in-out;
+            top: 0;
+            left: 0;
+            transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-x: hidden;
             z-index: 1000;
         }
-
         .sidebar.collapsed {
-            width: 60px;
+            width: 70px;
         }
-
         .sidebar h2 {
             text-align: center;
             margin-bottom: 20px;
             margin-top: 40px;
             font-size: 22px;
-            transition: opacity 0.3s;
+            font-weight: 700;
+            transition: opacity 0.3s ease;
+            white-space: nowrap;
         }
-
         .sidebar.collapsed h2 {
             opacity: 0;
-            transition: opacity 0.1s;
+            pointer-events: none;
+            user-select: none;
         }
-
         .sidebar a {
-            display: block;
-            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            padding: 14px 24px;
             color: white;
             text-decoration: none;
             font-size: 16px;
-            transition: all 0.3s ease-in-out;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            transition: background-color 0.3s, padding 0.35s, border-radius 0.3s;
+            border-radius: 12px;
+            margin: 4px 12px;
+        }
+        .sidebar.collapsed a {
+            padding: 14px 15px;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        .sidebar a i {
+            font-size: 22px;
+            width: 24px;
+            height: 24px;
+            display: inline-block;
+            object-fit: contain;
+        }
+        .sidebar a span {
+            display: inline-block;
+            margin-left: 12px;
+            max-width: 180px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            transition: max-width 0.35s, opacity 0.35s;
+            vertical-align: middle;
         }
-
-        .sidebar.collapsed a {
-            font-size: 0;
-            padding: 15px 10px;
+        .sidebar.collapsed a span {
+            max-width: 0;
+            opacity: 0;
+            pointer-events: none;
+            user-select: none;
+            margin-left: 0;
         }
-
-        .sidebar a:hover {
+        .sidebar a:hover,
+        .sidebar a.active {
             background-color: #34495e;
         }
-
         .content {
             margin-left: 250px;
             padding: 20px;
             flex-grow: 1;
-            transition: margin-left 0.3s ease-in-out;
+            transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         }
-
         .sidebar.collapsed + .content {
-            margin-left: 60px;
+            margin-left: 70px;
         }
-
         .dashboard-header {
             position: relative;
             display: flex;
@@ -84,13 +118,12 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
         }
-
         .dashboard-header h1 {
             margin: 0;
             font-size: 26px;
             color: #2c3e50;
+            font-weight: bold;
         }
-
         .toggle-btn {
             position: fixed;
             top: 15px;
@@ -108,8 +141,6 @@
         .toggle-btn:hover {
             background-color: #34495e;
         }
-
-        /* Profile phần */
         .profile {
             display: flex;
             align-items: center;
@@ -124,16 +155,14 @@
             transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
             box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
-
         .profile:hover {
             background-color: #465a73;
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
-
         .profile-img {
             width: 40px;
             height: 40px;
-            background-color: #f8c291;
+            background-color:rgb(222, 236, 242);
             border-radius: 50%;
             display: flex;
             justify-content: center;
@@ -143,7 +172,6 @@
             font-weight: bold;
             flex-shrink: 0;
         }
-
         .profile-info {
             display: flex;
             flex-direction: column;
@@ -151,26 +179,21 @@
             text-align: right;
             margin-right: 5px;
         }
-
         .profile-name {
             font-weight: 600;
             font-size: 14px;
             color: #ffffff;
         }
-
         .profile-fullname {
             font-size: 11px;
             opacity: 0.85;
             color: #e0e0e0;
         }
-
         .dropdown-arrow {
             font-size: 10px;
             color: #e0e0e0;
             margin-left: 0px;
         }
-
-        /* Profile Dropdown Styling */
         .profile-dropdown {
             display: none;
             position: absolute;
@@ -181,28 +204,16 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             overflow: hidden;
             z-index: 1000;
-            min-width: 250px; /* Kept width for consistency */
+            min-width: 250px;
             opacity: 0;
             transform: translateY(-10px);
             transition: opacity 0.3s ease-out, transform 0.3s ease-out;
         }
-
         .profile-dropdown.show {
             display: block;
             opacity: 1;
             transform: translateY(0);
         }
-
-        /* Removed dropdown-header and its associated styles */
-        /*
-        .dropdown-header { ... }
-        .dropdown-header .profile-img { ... }
-        .dropdown-header-info { ... }
-        .dropdown-header-name { ... }
-        .dropdown-header-email { ... }
-        */
-        
-        /* Dropdown Buttons (Menu Items) */
         .profile-dropdown button {
             width: 100%;
             padding: 10px 20px;
@@ -218,23 +229,19 @@
             align-items: center;
             gap: 15px;
         }
-
         .profile-dropdown button:last-child {
             border-bottom: none;
         }
-
         .profile-dropdown button:hover {
             background-color: #f5f5f5;
             color: #000;
         }
-
-        /* Icon styling within buttons */
         .profile-dropdown button .icon {
-            font-size: 20px;
-            width: 24px;
+            font-size: 17px;
+            width: 22px;
             text-align: center;
             flex-shrink: 0;
-            color: #606060;
+            color:rgb(8, 7, 7);
         }
     </style>
 </head>
@@ -243,21 +250,47 @@
 
     <div class="sidebar" id="sidebar">
         <h2>Quản lý Tiệc Cưới</h2>
-        <a href="{% url 'trangchu' %}">Trang Chủ</a>
-        <a href="{% url 'quanlytaikhoan' %}">Tài Khoản</a>
-        <a href="{% url 'quanlyhoadon' %}">Hóa Đơn</a>
-        <a href="{% url 'quanlysanh' %}">Sảnh</a>
-        <a href="{% url 'quanlythucdon' %}">Thực Đơn</a>
-        <a href="{% url 'quanlydichvu' %}">Dịch Vụ</a>
-        <a href="{% url 'quanlytieccuoi' %}">Tiệc Cưới</a>
-        <a href="{% url 'quanlyquydinh' %}">Quy Định</a>
-        <a href="{% url 'xembaocao' %}">Xem Báo Cáo</a>
+        <a href="{% url 'trangchu' %}" class="active">
+            <i class="fi fi-sr-house-chimney"></i>
+            <span>Trang Chủ</span>
+        </a>
+        <a href="{% url 'quanlytaikhoan' %}">
+            <i class="fi fi-sr-user"></i>
+            <span>Tài Khoản</span>
+        </a>
+        <a href="{% url 'quanlyhoadon' %}">
+            <i class="fi fi-bs-dollar"></i>
+            <span>Hóa Đơn</span>
+        </a>
+        <a href="{% url 'quanlysanh' %}">
+            <i class="fi fi-br-calendar-heart"></i>
+            <span>Sảnh</span>
+        </a>
+        <a href="{% url 'quanlythucdon' %}">
+            <i class="fi fi-sr-restaurant"></i>
+            <span>Thực Đơn</span>
+        </a>
+        <a href="{% url 'quanlydichvu' %}">
+            <i class="fi fi-sr-holding-hand-dinner"></i>
+            <span>Dịch Vụ</span>
+        </a>
+        <a href="{% url 'quanlytieccuoi' %}">
+            <i class="fi fi-rs-rings-wedding"></i>
+            <span>Tiệc Cưới</span>
+        </a>
+        <a href="{% url 'quanlyquydinh' %}">
+            <i class="fi fi-ss-rules"></i>
+            <span>Quy Định</span>
+        </a>
+        <a href="{% url 'xembaocao' %}">
+            <i class="fi fi-sr-big-data-analytics"></i>
+            <span>Xem Báo Cáo</span>
+        </a>
     </div>
 
     <div class="content" id="content">
         <div class="dashboard-header">
             <h1>Trang chủ</h1>
-
             <div class="profile" onclick="toggleDropdown(event)">
                 <div class="profile-img">
                     <span>S</span>
@@ -267,22 +300,24 @@
                     <div class="profile-fullname">23521358@gm.uit.edu.vn</div>
                 </div>
                 <div class="dropdown-arrow">▼</div>
-
                 <div class="profile-dropdown" id="dropdown">
-                    <button><span class="icon">👤</span> Xem tài khoản</button>
-                    <button><span class="icon">⚙️</span> Cài đặt</button>
-                    <button><span class="icon">🚪</span> Đăng xuất</button>
+                    <button><i class="fi fi-sr-user icon"></i> Xem tài khoản</button>
+                    <button><i class="fi fi-sr-settings icon"></i> Cài đặt</button>
+                    <button onclick="window.location.href='dangnhap.html'"><i class="fi fi-sr-sign-out-alt icon"></i> Đăng xuất</button>
                 </div>
             </div>
         </div>
-
-        <p>Nội dung trang chủ ở đây.</p>
+        <p style="font-size: 20px; font-weight: 550;">
+            Chào mừng đến với hệ thống Quản lý Tiệc Cưới!
+        </p>
     </div>
 
     <script>
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
+            const content = document.getElementById('content');
             sidebar.classList.toggle('collapsed');
+            content.classList.toggle('collapsed');
         }
 
         function toggleDropdown(event) {
@@ -291,7 +326,6 @@
             dropdown.classList.toggle('show');
         }
 
-        // Ẩn dropdown khi click ra ngoài
         document.addEventListener('click', (event) => {
             const dropdown = document.getElementById('dropdown');
             const profile = document.querySelector('.profile');

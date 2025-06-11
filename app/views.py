@@ -122,21 +122,30 @@ class SanhViewSet(viewsets.ModelViewSet):
 
         return Response({'total': queryset.count()})
 
-# Thêm viewset cho Tài Khoản (nếu cần cho quản lý tài khoản)
 class TaiKhoanViewSet(viewsets.ModelViewSet):
     queryset = TaiKhoan.objects.all().select_related('user')
     serializer_class = TaiKhoanSerializer
-    filter_backends = [SearchFilter]
-    search_fields = ['hovaten', 'sodienthoai', 'user__email', 'user__username']
 
     def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
+        queryset = self.get_queryset()
+        search_query = request.query_params.get('search', '').strip().lower()
+
+        if search_query:
+            search_query_no_diacritics = bo_dau(search_query).lower()
+            queryset = [
+                tk for tk in queryset
+                if search_query_no_diacritics in bo_dau(tk.hovaten or '').lower()
+                or search_query_no_diacritics in bo_dau(tk.sodienthoai or '').lower()
+                or search_query_no_diacritics in bo_dau(tk.user.username or '').lower()
+                or search_query_no_diacritics in bo_dau(tk.user.email or '').lower()
+            ]
+
+        # Phân trang
         page = request.query_params.get('page', 1)
         limit = int(request.query_params.get('limit', 8))
-        
         paginator = Paginator(queryset, limit)
         page_obj = paginator.page(page)
-        
+
         serializer = self.get_serializer(page_obj, many=True)
         return Response({
             'data': serializer.data,
