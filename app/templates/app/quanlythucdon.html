@@ -310,27 +310,27 @@
     <div class="content" id="content">
         <div class="container" id="mainContainer">
             <div class="header-section">
-                <h1 class="text-2xl font-bold text-gray-800 flex-shrink-0">QUẢN LÝ DỊCH VỤ</h1>
+                <h1 class="text-2xl font-bold text-gray-800 flex-shrink-0">QUẢN LÝ THỰC ĐƠN</h1>
                 <div class="flex items-center gap-3 flex-1 justify-end">
                     <div class="relative">
-                        <input type="text" placeholder="Tìm kiếm dịch vụ..." class="search-input" id="searchInput">
+                        <input type="text" placeholder="Tìm kiếm món ăn..." class="search-input" id="searchInput">
                         <button class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
                             </svg>
                         </button>
                     </div>
-                    <button class="add-button" onclick="moFormThemMoiDichVu()">
+                    <button class="add-button" onclick="moFormThemMoiMonAn()">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                         </svg>
-                        Thêm Dịch vụ
+                        Thêm Món Ăn
                     </button>
                 </div>
             </div>
 
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-semibold text-gray-700 mb-0">Danh sách Món Ăn</h2>
+                <h2 class="text-xl font-semibold text-gray-700 mb-0">Danh sách Món ăn</h2>
                 <div id="tongSoMonAn" class="text-gray-800 font-semibold text-base"></div>
             </div>
             <div class="table-container">
@@ -341,7 +341,7 @@
                             <th class="px-4 py-2">Tên Món Ăn</th>
                             <th class="px-4 py-2">Đơn Giá</th>
                             <th class="px-4 py-2">Ghi Chú</th>
-                            <th class="px-4 py-2">Thao tác</th>
+                            <th class="px-4 py-2">Hành động</th>
                         </tr>
                     </thead>
                     <tbody id="danhSachMonAnBody"></tbody>
