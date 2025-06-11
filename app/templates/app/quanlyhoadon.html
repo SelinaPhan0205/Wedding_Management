@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Thanh Toán - Hệ thống Quản Lý Tiệc Cưới</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-rounded/css/uicons-solid-rounded.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-bold-rounded/css/uicons-bold-rounded.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-bold-straight/css/uicons-bold-straight.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-regular-straight/css/uicons-regular-straight.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-straight/css/uicons-solid-straight.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-chubby/css/uicons-solid-chubby.css'>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            background-color: #eff7ff;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            background-color: #2c3e50;
+            color: white;
+            padding-top: 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-x: hidden;
+            z-index: 1000;
+        }
+        .sidebar.collapsed {
+            width: 70px;
+        }
+        .sidebar h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: 40px;
+            font-size: 22px;
+            font-weight: 700;
+            transition: opacity 0.3s ease;
+            white-space: nowrap;
+        }
+        .sidebar.collapsed h2 {
+            opacity: 0;
+            pointer-events: none;
+            user-select: none;
+        }
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            padding: 14px 24px;
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            transition: background-color 0.3s, padding 0.35s, border-radius 0.3s;
+            border-radius: 12px;
+            margin: 4px 12px;
+        }
+        .sidebar.collapsed a {
+            padding: 14px 15px;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        .sidebar a i {
+            font-size: 22px;
+            width: 24px;
+            height: 24px;
+            display: inline-block;
+            object-fit: contain;
+        }
+        .sidebar a span {
+            display: inline-block;
+            margin-left: 12px;
+            max-width: 180px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: max-width 0.35s, opacity 0.35s;
+            vertical-align: middle;
+        }
+        .sidebar.collapsed a span {
+            max-width: 0;
+            opacity: 0;
+            pointer-events: none;
+            user-select: none;
+            margin-left: 0;
+        }
+        .sidebar a:hover,
+        .sidebar a.active {
+            background-color: #34495e;
+        }
+        .toggle-btn {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            font-size: 20px;
+            cursor: pointer;
+            border-radius: 4px;
+            z-index: 1001;
+            transition: background-color 0.2s;
+        }
+        .toggle-btn:hover {
+            background-color: #34495e;
+        }
+        .content {
+            margin-left: 250px;
+            margin-right: 20px;
+            padding-left: 24px;
+            transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            width: calc(100% - 250px);
+            min-height: 100vh;
+        }
+        .content.collapsed {
+            margin-left: 70px;
+            width: calc(100% - 70px);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 1.5rem;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .search-input {
+            border: 1px solid #d1d5db;
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            width: 300px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .search-input:focus {
+            border-color: #2c3e50;
+        }
+        .add-button {
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            font-size: 16px;
+            background-color: #2c3e50;
+            color: #fff;
+            border-radius: 12px;
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        .add-button:hover {
+            background-color: #34495e;
+            transform: translateY(-1px);
+        }
+        .table-container {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 1rem 1.25rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        th {
+            background-color: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.05em;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        .action-button {
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        .edit-button {
+            background-color: #e3ecfd;
+            color: #2c3e50;
+        }
+        .edit-button:hover {
+            background-color: #e3ecfd;
+            transform: translateY(-1px);
+        }
+        .delete-button {
+            background-color: rgb(241, 215, 215);
+            color: #dc2626;
+            margin-left: 0.5rem;
+        }
+        .delete-button:hover {
+            background-color: #fecaca;
+            transform: translateY(-1px);
+        }
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 1.5rem;
+            gap: 0.5rem;
+        }
+        .pagination-button {
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            background-color: #e3ecfd;
+            color: #2c3e50;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .pagination-button:hover:not(.active) {
+            background-color: #e3ecfd;
+        }
+        .pagination-button.active {
+            background-color: #2c3e50;
+            color: white;
+            cursor: default;
+        }
+        .pagination-button.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .header-section h1 {
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            color: #2c3e50;
+            background: none;
+            padding: 0;
+            border-radius: 0;
+            margin: 0;
+            font-size: 2rem;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Nút toggle sidebar -->
+    <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <h2>Quản lý Tiệc Cưới</h2>
+        <a href="{% url 'trangchu' %}">
+            <i class="fi fi-sr-house-chimney"></i>
+            <span>Trang Chủ</span>
+        </a>
+        <a href="{% url 'quanlytaikhoan' %}">
+            <i class="fi fi-sr-user"></i>
+            <span>Tài Khoản</span>
+        </a>
+        <a href="{% url 'quanlyhoadon' %}" class="active">
+            <i class="fi fi-bs-dollar"></i>
+            <span>Hóa Đơn</span>
+        </a>
+        <a href="{% url 'quanlysanh' %}">
+            <i class="fi fi-br-calendar-heart"></i>
+            <span>Sảnh</span>
+        </a>
+        <a href="{% url 'quanlythucdon' %}">
+            <i class="fi fi-sr-restaurant"></i>
+            <span>Thực Đơn</span>
+        </a>
+        <a href="{% url 'quanlydichvu' %}">
+            <i class="fi fi-sr-holding-hand-dinner"></i>
+            <span>Dịch Vụ</span>
+        </a>
+        <a href="{% url 'quanlytieccuoi' %}">
+            <i class="fi fi-rs-rings-wedding"></i>
+            <span>Tiệc Cưới</span>
+        </a>
+        <a href="{% url 'quanlyquydinh' %}">
+            <i class="fi fi-ss-rules"></i>
+            <span>Quy Định</span>
+        </a>
+        <a href="{% url 'xembaocao' %}">
+            <i class="fi fi-sr-big-data-analytics"></i>
+            <span>Xem Báo Cáo</span>
+        </a>
+    </div>
+
+    <div class="content" id="content">
+        <div class="container" id="mainContainer">
+            <div class="header-section">
+                <h1 class="text-2xl font-bold text-gray-800">QUẢN LÝ THANH TOÁN</h1>
+                <div class="flex items-center gap-3">
+                    <div class="relative">
+                        <input type="text" placeholder="Tìm kiếm hóa đơn..." class="search-input" id="searchHoaDonInput">
+                        <button class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                    <button class="add-button" onclick="moFormThemHoaDon()">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Thêm Hóa Đơn
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-gray-700 mb-0">Danh sách hóa đơn</h2>
+                <div id="tongSoHoaDon" class="text-gray-800 font-semibold text-base"></div>
+            </div>
+            <div class="table-container">
+                <table class="min-w-full bg-white">
+                    <thead>
+                        <tr>
+                            <th>Mã Hóa Đơn</th>
+                            <th>Mã Số Tiệc</th>
+                            <th>Ngày Thanh Toán</th>
+                            <th>Tổng Tiền</th>
+                            <th>Tiền Cọc</th>
+                            <th>Tiền Còn Lại</th>
+                            <th>Số Ngày Trễ</th>
+                            <th>Tiền Phạt</th>
+                            <th>Trạng Thái</th>
+                            <th>Hành Động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="danhSachHoaDon"></tbody>
+                </table>
+            </div>
+
+            <div class="pagination-container" id="paginationControlsHoaDon"></div>
+        </div>
+    </div>
+
+    <div id="modalHoaDon" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
+            <h2 id="modalTitleHoaDon" class="text-2xl font-bold mb-6 text-gray-800">Thêm Hóa Đơn Mới</h2>
+            <form id="formHoaDon">
+                <div class="mb-4">
+                    <label for="maTiec" class="block text-gray-700 text-sm font-medium mb-2">Mã Số Tiệc:</label>
+                    <input type="text" id="maTiec" name="maTiec" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="soLuongBan" class="block text-gray-700 text-sm font-medium mb-2">Số Lượng Bàn:</label>
+                    <input type="number" id="soLuongBan" name="soLuongBan" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div class="flex justify-end gap-3">
+                    <button type="button" onclick="dongModalHoaDon()" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-100 transition">Hủy</button>
+                    <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modalXemHoaDon" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
+            <h2 id="modalTitleXemHoaDon" class="text-2xl font-bold mb-6 text-gray-800">Xem Hóa Đơn</h2>
+            <div id="chiTietHoaDon" class="space-y-4">
+                <p><strong>Mã Hóa Đơn:</strong> <span id="xemMaHoaDon"></span></p>
+                <p><strong>Mã Số Tiệc:</strong> <span id="xemMaTiec"></span></p>
+                <p><strong>Ngày Thanh Toán:</strong> <span id="xemNgayThanhToan"></span></p>
+                <p><strong>Tổng Tiền:</strong> <span id="xemTongTien"></span> VNĐ</p>
+                <p><strong>Tiền Cọc:</strong> <span id="xemTienCoc"></span> VNĐ</p>
+                <p><strong>Tiền Còn Lại:</strong> <span id="xemTienConLai"></span> VNĐ</p>
+                <p><strong>Số Ngày Trễ:</strong> <span id="xemSoNgayTre"></span></p>
+                <p><strong>Tiền Phạt:</strong> <span id="xemTienPhat"></span> VNĐ</p>
+                <p><strong>Trạng Thái:</strong> <span id="xemTrangThai"></span></p>
+            </div>
+            <div class="flex justify-end mt-6">
+                <button type="button" onclick="dongModalXemHoaDon()" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-100 transition">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalSuaHoaDon" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
+            <h2 id="modalTitleSuaHoaDon" class="text-2xl font-bold mb-6 text-gray-800">Chỉnh Sửa Hóa Đơn</h2>
+            <form id="formSuaHoaDon">
+                <div class="mb-4">
+                    <label for="suaMaTiec" class="block text-gray-700 text-sm font-medium mb-2">Mã Số Tiệc:</label>
+                    <input type="text" id="suaMaTiec" name="suaMaTiec" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="suaSoLuongBan" class="block text-gray-700 text-sm font-medium mb-2">Số Lượng Bàn:</label>
+                    <input type="number" id="suaSoLuongBan" name="suaSoLuongBan" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="suaNgayThanhToan" class="block text-gray-700 text-sm font-medium mb-2">Ngày Thanh Toán:</label>
+                    <input type="date" id="suaNgayThanhToan" name="suaNgayThanhToan" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="suaTongTien" class="block text-gray-700 text-sm font-medium mb-2">Tổng Tiền:</label>
+                    <input type="number" id="suaTongTien" name="suaTongTien" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="suaTienCoc" class="block text-gray-700 text-sm font-medium mb-2">Tiền Cọc:</label>
+                    <input type="number" id="suaTienCoc" name="suaTienCoc" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="suaTienConLai" class="block text-gray-700 text-sm font-medium mb-2">Tiền Còn Lại:</label>
+                    <input type="number" id="suaTienConLai" name="suaTienConLai" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="suaTrangThai" class="block text-gray-700 text-sm font-medium mb-2">Trạng Thái:</label>
+                    <select id="suaTrangThai" name="suaTrangThai" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                        <option value="Chưa Thanh Toán">Chưa Thanh Toán</option>
+                        <option value="Đã Thanh Toán">Đã Thanh Toán</option>
+                        <option value="Trễ Hạn">Trễ Hạn</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-3">
+                    <button type="button" onclick="dongModalSuaHoaDon()" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-100 transition">Hủy</button>
+                    <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Sidebar toggle logic
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const content = document.getElementById('content');
+            sidebar.classList.toggle('collapsed');
+            content.classList.toggle('collapsed');
+        }
+
+        let danhSachHoaDon = [];
+        const danhSachHoaDonElement = document.getElementById('danhSachHoaDon');
+        const modalHoaDon = document.getElementById('modalHoaDon');
+        const modalXemHoaDon = document.getElementById('modalXemHoaDon');
+        const modalSuaHoaDon = document.getElementById('modalSuaHoaDon');
+        const formHoaDon = document.getElementById('formHoaDon');
+        const formSuaHoaDon = document.getElementById('formSuaHoaDon');
+        const paginationControlsHoaDon = document.getElementById('paginationControlsHoaDon');
+        const searchHoaDonInput = document.getElementById('searchHoaDonInput');
+        let isEditModeHoaDon = false;
+        let currentHoaDonId = null;
+        let currentPageHoaDon = 1;
+        const itemsPerPageHoaDon = 8;
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        async function goiAPI(method, url, data = null) {
+            try {
+                const options = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                };
+                if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method.toUpperCase())) {
+                    options.headers['X-CSRFToken'] = getCookie('csrftoken');
+                }
+                if (data) {
+                    options.body = JSON.stringify(data);
+                }
+                const response = await fetch(url, options);
+                let responseBody = null;
+                try {
+                    responseBody = await response.json();
+                } catch (e) {
+                    responseBody = await response.text();
+                }
+                if (!response.ok) {
+                    console.error('API error response:', responseBody);
+                    alert('Có lỗi khi gọi API. Vui lòng thử lại.\n' + JSON.stringify(responseBody));
+                    throw new Error(`Lỗi HTTP: ${response.status}`);
+                }
+                return responseBody;
+            } catch (error) {
+                console.error('Lỗi API:', error);
+                throw error;
+            }
+        }
+
+        async function hienThiDanhSachHoaDon(searchQuery = '') {
+            try {
+                const url = searchQuery
+                    ? `/api/hoadon/?search=${encodeURIComponent(searchQuery)}&page=${currentPageHoaDon}&limit=${itemsPerPageHoaDon}`
+                    : `/api/hoadon/?page=${currentPageHoaDon}&limit=${itemsPerPageHoaDon}`;
+                const response = await goiAPI('GET', url);
+                danhSachHoaDon = response.data || [];
+                danhSachHoaDonElement.innerHTML = '';
+
+                if (searchQuery) {
+                    document.getElementById('tongSoHoaDon').textContent = `Kết quả tìm kiếm: ${response.total || danhSachHoaDon.length}`;
+                } else {
+                    document.getElementById('tongSoHoaDon').textContent = `Tổng số hóa đơn: ${response.total || danhSachHoaDon.length}`;
+                }
+
+                const ngayHienTai = new Date();
+                danhSachHoaDon.forEach((hoadon, index) => {
+                    const stt = (currentPageHoaDon - 1) * itemsPerPageHoaDon + index + 1;
+                    const ngayThanhToan = hoadon.ngay_thanh_toan ? new Date(hoadon.ngay_thanh_toan) : null;
+                    const soNgayTre = ngayThanhToan && ngayThanhToan < ngayHienTai ? Math.ceil((ngayHienTai - ngayThanhToan) / (1000 * 60 * 60 * 24)) : 0;
+                    const tienPhat = soNgayTre > 0 ? soNgayTre * 50000 : 0; // Giả sử phạt 50,000 VNĐ/ngày trễ
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${hoadon.ma_hoa_don || ''}</td>
+                        <td>${hoadon.ma_tiec || ''}</td>
+                        <td>${hoadon.ngay_thanh_toan || 'Chưa có'}</td>
+                        <td>${hoadon.tong_tien || 0} VNĐ</td>
+                        <td>${hoadon.tien_coc || 0} VNĐ</td>
+                        <td>${hoadon.tien_con_lai || 0} VNĐ</td>
+                        <td>${soNgayTre}</td>
+                        <td>${tienPhat} VNĐ</td>
+                        <td>${hoadon.trang_thai || 'Chưa Thanh Toán'}</td>
+                        <td>
+                            <button class="action-button edit-button" onclick="xemHoaDon(${hoadon.id})">Xem</button>
+                            <button class="action-button edit-button" onclick="suaHoaDon(${hoadon.id})">Sửa</button>
+                            <button class="action-button delete-button" onclick="xoaHoaDon(${hoadon.id})">Xóa</button>
+                        </td>
+                    `;
+                    danhSachHoaDonElement.appendChild(row);
+                });
+
+                hienThiPhanTrangHoaDon(response.total || danhSachHoaDon.length);
+            } catch (error) {
+                console.error('Lỗi hiển thị danh sách hóa đơn:', error);
+            }
+        }
+
+        function hienThiPhanTrangHoaDon(totalItems) {
+            paginationControlsHoaDon.innerHTML = '';
+            const totalPages = Math.ceil(totalItems / itemsPerPageHoaDon);
+
+            const prevButton = document.createElement('button');
+            prevButton.textContent = '«';
+            prevButton.classList.add('pagination-button');
+            if (currentPageHoaDon === 1) {
+                prevButton.classList.add('disabled');
+                prevButton.disabled = true;
+            }
+            prevButton.onclick = () => chuyenTrangHoaDon(currentPageHoaDon - 1);
+            paginationControlsHoaDon.appendChild(prevButton);
+
+            for (let i = 1; i <= totalPages; i++) {
+                const pageButton = document.createElement('button');
+                pageButton.textContent = i;
+                pageButton.classList.add('pagination-button');
+                if (i === currentPageHoaDon) {
+                    pageButton.classList.add('active');
+                }
+                pageButton.onclick = () => chuyenTrangHoaDon(i);
+                paginationControlsHoaDon.appendChild(pageButton);
+            }
+
+            const nextButton = document.createElement('button');
+            nextButton.textContent = '»';
+            nextButton.classList.add('pagination-button');
+            if (currentPageHoaDon === totalPages || totalPages === 0) {
+                nextButton.classList.add('disabled');
+                nextButton.disabled = true;
+            }
+            nextButton.onclick = () => chuyenTrangHoaDon(currentPageHoaDon + 1);
+            paginationControlsHoaDon.appendChild(nextButton);
+        }
+
+        function chuyenTrangHoaDon(pageNumber) {
+            currentPageHoaDon = pageNumber;
+            hienThiDanhSachHoaDon(searchHoaDonInput.value);
+        }
+
+        function moFormThemHoaDon() {
+            isEditModeHoaDon = false;
+            document.getElementById('modalTitleHoaDon').textContent = 'Thêm Hóa Đơn Mới';
+            formHoaDon.reset();
+            modalHoaDon.classList.remove('hidden');
+        }
+
+        async function xemHoaDon(id) {
+            try {
+                const hoadon = await goiAPI('GET', `/api/hoadon/${id}/`);
+                const ngayHienTai = new Date();
+                const ngayThanhToan = hoadon.ngay_thanh_toan ? new Date(hoadon.ngay_thanh_toan) : null;
+                const soNgayTre = ngayThanhToan && ngayThanhToan < ngayHienTai ? Math.ceil((ngayHienTai - ngayThanhToan) / (1000 * 60 * 60 * 24)) : 0;
+                const tienPhat = soNgayTre > 0 ? soNgayTre * 50000 : 0;
+
+                document.getElementById('xemMaHoaDon').textContent = hoadon.ma_hoa_don || '';
+                document.getElementById('xemMaTiec').textContent = hoadon.ma_tiec || '';
+                document.getElementById('xemNgayThanhToan').textContent = hoadon.ngay_thanh_toan || 'Chưa có';
+                document.getElementById('xemTongTien').textContent = hoadon.tong_tien || 0;
+                document.getElementById('xemTienCoc').textContent = hoadon.tien_coc || 0;
+                document.getElementById('xemTienConLai').textContent = hoadon.tien_con_lai || 0;
+                document.getElementById('xemSoNgayTre').textContent = soNgayTre;
+                document.getElementById('xemTienPhat').textContent = tienPhat;
+                document.getElementById('xemTrangThai').textContent = hoadon.trang_thai || 'Chưa Thanh Toán';
+
+                modalXemHoaDon.classList.remove('hidden');
+            } catch (error) {
+                console.error('Lỗi lấy thông tin hóa đơn:', error);
+            }
+        }
+
+        async function suaHoaDon(id) {
+            try {
+                const hoadon = await goiAPI('GET', `/api/hoadon/${id}/`);
+                isEditModeHoaDon = true;
+                currentHoaDonId = id;
+                document.getElementById('modalTitleSuaHoaDon').textContent = 'Chỉnh Sửa Hóa Đơn';
+                document.getElementById('suaMaTiec').value = hoadon.ma_tiec || '';
+                document.getElementById('suaSoLuongBan').value = hoadon.so_luong_ban || 0;
+                document.getElementById('suaNgayThanhToan').value = hoadon.ngay_thanh_toan || '';
+                document.getElementById('suaTongTien').value = hoadon.tong_tien || 0;
+                document.getElementById('suaTienCoc').value = hoadon.tien_coc || 0;
+                document.getElementById('suaTienConLai').value = hoadon.tien_con_lai || 0;
+                document.getElementById('suaTrangThai').value = hoadon.trang_thai || 'Chưa Thanh Toán';
+                modalSuaHoaDon.classList.remove('hidden');
+            } catch (error) {
+                console.error('Lỗi lấy thông tin hóa đơn:', error);
+            }
+        }
+
+        function dongModalHoaDon() {
+            modalHoaDon.classList.add('hidden');
+        }
+
+        function dongModalXemHoaDon() {
+            modalXemHoaDon.classList.add('hidden');
+        }
+
+        function dongModalSuaHoaDon() {
+            modalSuaHoaDon.classList.add('hidden');
+        }
+
+        formHoaDon.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const newHoaDonData = {
+                ma_tiec: document.getElementById('maTiec').value,
+                so_luong_ban: parseInt(document.getElementById('soLuongBan').value),
+                ngay_thanh_toan: new Date().toISOString().split('T')[0],
+                tong_tien: parseInt(document.getElementById('soLuongBan').value) * 1000000, // Giả sử 1 bàn = 1,000,000 VNĐ
+                tien_coc: 0,
+                tien_con_lai: parseInt(document.getElementById('soLuongBan').value) * 1000000,
+                trang_thai: 'Chưa Thanh Toán'
+            };
+
+            try {
+                await goiAPI('POST', '/api/hoadon/', newHoaDonData);
+                const response = await goiAPI('GET', '/api/hoadon/count/');
+                const totalItems = response.total || 0;
+                currentPageHoaDon = Math.ceil(totalItems / itemsPerPageHoaDon);
+                hienThiDanhSachHoaDon(searchHoaDonInput.value);
+                dongModalHoaDon();
+            } catch (error) {
+                console.error('Lỗi lưu hóa đơn:', error);
+            }
+        });
+
+        formSuaHoaDon.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const updatedHoaDonData = {
+                ma_tiec: document.getElementById('suaMaTiec').value,
+                so_luong_ban: parseInt(document.getElementById('suaSoLuongBan').value),
+                ngay_thanh_toan: document.getElementById('suaNgayThanhToan').value,
+                tong_tien: parseInt(document.getElementById('suaTongTien').value),
+                tien_coc: parseInt(document.getElementById('suaTienCoc').value),
+                tien_con_lai: parseInt(document.getElementById('suaTienConLai').value),
+                trang_thai: document.getElementById('suaTrangThai').value
+            };
+
+            try {
+                await goiAPI('PUT', `/api/hoadon/${currentHoaDonId}/`, updatedHoaDonData);
+                hienThiDanhSachHoaDon(searchHoaDonInput.value);
+                dongModalSuaHoaDon();
+            } catch (error) {
+                console.error('Lỗi cập nhật hóa đơn:', error);
+            }
+        });
+
+        async function xoaHoaDon(id) {
+            if (confirm('Bạn có chắc chắn muốn xóa hóa đơn này không?')) {
+                try {
+                    await goiAPI('DELETE', `/api/hoadon/${id}/`);
+                    const response = await goiAPI('GET', '/api/hoadon/count/');
+                    const totalItems = response.total || 0;
+                    const totalPages = Math.ceil(totalItems / itemsPerPageHoaDon);
+                    if (currentPageHoaDon > totalPages && totalPages > 0) {
+                        currentPageHoaDon = totalPages;
+                    } else if (totalPages === 0) {
+                        currentPageHoaDon = 1;
+                    }
+                    hienThiDanhSachHoaDon(searchHoaDonInput.value);
+                } catch (error) {
+                    console.error('Lỗi xóa hóa đơn:', error);
+                }
+            }
+        }
+
+        searchHoaDonInput.addEventListener('input', function(event) {
+            currentPageHoaDon = 1;
+            hienThiDanhSachHoaDon(event.target.value);
+        });
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            hienThiDanhSachHoaDon();
+        });
+    </script>
+</body>
+</html>

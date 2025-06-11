@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Tài Khoản - Hệ thống Quản Lý Tiệc Cưới</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-rounded/css/uicons-solid-rounded.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-bold-rounded/css/uicons-bold-rounded.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-bold-straight/css/uicons-bold-straight.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-regular-straight/css/uicons-regular-straight.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-straight/css/uicons-solid-straight.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-chubby/css/uicons-solid-chubby.css'>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #eff7ff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            min-height: 100vh;  
+        }
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            background-color: #2c3e50;
+            color: white;
+            padding-top: 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-x: hidden;
+            z-index: 1000;
+        }
+        .sidebar.collapsed {
+            width: 70px;
+        }
+        .sidebar h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: 40px;
+            font-size: 22px;
+            font-weight: 700;
+            transition: opacity 0.3s ease;
+            white-space: nowrap;
+        }
+        .sidebar.collapsed h2 {
+            opacity: 0;
+            pointer-events: none;
+            user-select: none;
+        }
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            padding: 14px 24px;
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            transition: background-color 0.3s, padding 0.35s, border-radius 0.3s;
+            border-radius: 12px;
+            margin: 4px 12px;
+        }
+        .sidebar.collapsed a {
+            padding: 14px 15px;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        .sidebar a i {
+            font-size: 22px;
+            width: 24px;
+            height: 24px;
+            display: inline-block;
+            object-fit: contain;
+        }
+        .sidebar a span {
+            display: inline-block;
+            margin-left: 12px;
+            max-width: 180px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: max-width 0.35s, opacity 0.35s;
+            vertical-align: middle;
+        }
+        .sidebar.collapsed a span {
+            max-width: 0;
+            opacity: 0;
+            pointer-events: none;
+            user-select: none;
+            margin-left: 0;
+        }
+        .sidebar a:hover,
+        .sidebar a.active {
+            background-color: #34495e;
+        }
+        .toggle-btn {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            font-size: 20px;
+            cursor: pointer;
+            border-radius: 4px;
+            z-index: 1001;
+            transition: background-color 0.2s;
+        }
+        .toggle-btn:hover {
+            background-color: #34495e;
+        }
+        .content {
+            margin-left: 250px;
+            margin-right: 20px;
+            padding-left: 24px;
+            transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            width: calc(100% - 250px);
+            min-height: 100vh;
+        }
+        .content.collapsed {
+            margin-left: 70px;
+            width: calc(100% - 70px);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 1.5rem;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .search-input {
+            border: 1px solid #d1d5db;
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            width: 300px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .search-input:focus {
+            border-color: #2c3e50;
+        }
+        .add-button {
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            font-size: 16px;
+            background-color: #2c3e50;
+            color: #fff;
+            border-radius: 12px;
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        .add-button:hover {
+            background-color: #34495e;
+            transform: translateY(-1px);
+        }
+        .table-container {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 1rem 1.25rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        th {
+            background-color: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.05em;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        .action-button {
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        .edit-button {
+            background-color:  #e3ecfd;
+            color: #2c3e50;
+        }
+        .edit-button:hover {
+            background-color:  #e3ecfd;
+            transform: translateY(-1px);
+        }
+        .delete-button {
+            background-color: rgb(241, 215, 215);
+            color: #dc2626;
+            margin-left: 0.5rem;
+        }
+        .delete-button:hover {
+            background-color: #fecaca;
+            transform: translateY(-1px);
+        }
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 1.5rem;
+            gap: 0.5rem;
+        }
+        .pagination-button {
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            background-color:#e3ecfd;
+            color: #2c3e50;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .pagination-button:hover:not(.active) {
+            background-color: #e3ecfd;
+        }
+        .pagination-button.active {
+            background-color: #2c3e50;
+            color: white;
+            cursor: default;
+        }
+        .pagination-button.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .header-section h1 {
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            color: #2c3e50;      
+            background: none;    
+            padding: 0;         
+            border-radius: 0;  
+            margin: 0;
+            font-size: 2rem;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Nút toggle sidebar -->
+    <button class="toggle-btn" onclick="chuyenTrangThaiSidebar()">☰</button>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <h2>Quản lý Tiệc Cưới</h2>
+        <a href="{% url 'trangchu' %}">
+            <i class="fi fi-sr-house-chimney"></i>
+            <span>Trang Chủ</span>
+        </a>
+        <a href="{% url 'quanlytaikhoan' %}" class="active">
+            <i class="fi fi-sr-user"></i>
+            <span>Tài Khoản</span>
+        </a>
+        <a href="{% url 'quanlyhoadon' %}">
+            <i class="fi fi-bs-dollar"></i>
+            <span>Hóa Đơn</span>
+        </a>
+        <a href="{% url 'quanlysanh' %}">
+            <i class="fi fi-br-calendar-heart"></i>
+            <span>Sảnh</span>
+        </a>
+        <a href="{% url 'quanlythucdon' %}">
+            <i class="fi fi-sr-restaurant"></i>
+            <span>Thực Đơn</span>
+        </a>
+        <a href="{% url 'quanlydichvu' %}">
+            <i class="fi fi-sr-holding-hand-dinner"></i>
+            <span>Dịch Vụ</span>
+        </a>
+        <a href="{% url 'quanlytieccuoi' %}">
+            <i class="fi fi-rs-rings-wedding"></i>
+            <span>Tiệc Cưới</span>
+        </a>
+        <a href="{% url 'quanlyquydinh' %}">
+            <i class="fi fi-ss-rules"></i>
+            <span>Quy Định</span>
+        </a>
+        <a href="{% url 'xembaocao' %}">
+            <i class="fi fi-sr-big-data-analytics"></i>
+            <span>Xem Báo Cáo</span>
+        </a>
+    </div>
+
+    <div class="content" id="content"> 
+        <div class="container" id="mainContainer">
+            <div class="header-section">
+                <h1 class="text-2xl font-bold text-gray-800">QUẢN LÝ TÀI KHOẢN</h1>
+                <div class="flex items-center gap-3">
+                    <div class="relative">
+                        <input type="text" placeholder="Tìm kiếm tài khoản..." class="search-input" id="timKiemInput">
+                        <button class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                    <button class="add-button" onclick="moFormThemTaiKhoan()">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Thêm Tài Khoản
+                    </button>
+                </div>
+            </div>
+
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-semibold text-gray-700 mb-0">Danh sách tài khoản</h2>
+            <div id="tongSoTaiKhoan" class="text-gray-800 font-semibold text-base"></div>
+        </div>
+        <div class="table-container">
+            <table class="min-w-full bg-white">
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>Họ tên</th>
+                        <th>SĐT</th>
+                        <th>Email</th>
+                        <th>Vai trò</th>
+                        <th>Trạng thái</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+                <tbody id="danhSachTaiKhoan">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination-container" id="phanTrangTaiKhoan">
+        </div>
+    </div>
+
+    <div id="modalTaiKhoan" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
+            <h2 id="modalTieuDe" class="text-2xl font-bold mb-6 text-gray-800">Thêm Tài Khoản Mới</h2>
+            <form id="formTaiKhoan">
+                <div class="mb-4">
+                    <label for="hoVaTen" class="block text-gray-700 text-sm font-medium mb-2">Họ tên:</label>
+                    <input type="text" id="hoVaTen" name="hoVaTen" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="soDienThoai" class="block text-gray-700 text-sm font-medium mb-2">SĐT:</label>
+                    <input type="text" id="soDienThoai" name="soDienThoai" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="tenTaiKhoan" class="block text-gray-700 text-sm font-medium mb-2">Tên tài khoản:</label>
+                    <input type="text" id="tenTaiKhoan" name="tenTaiKhoan" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="matKhau" class="block text-gray-700 text-sm font-medium mb-2">Mật khẩu:</label>
+                    <input type="password" id="matKhau" name="matKhau" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="email" class="block text-gray-700 text-sm font-medium mb-2">Email:</label>
+                    <input type="email" id="email" name="email" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="vaiTro" class="block text-gray-700 text-sm font-medium mb-2">Vai trò:</label>
+                    <select id="vaiTro" name="vaiTro" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                        <option value="admin">Admin</option>
+                        <option value="user">User</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label for="trangThai" class="block text-gray-700 text-sm font-medium mb-2">Trạng thái:</label>
+                    <select id="trangThai" name="trangThai" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                        <option value="Active">Hoạt động</option>
+                        <option value="Block">Bị khoá</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-3">
+                    <button type="button" onclick="dongModalTaiKhoan()" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-100 transition">Hủy</button>
+                    <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Sidebar toggle logic
+        function chuyenTrangThaiSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const content = document.getElementById('content');
+            sidebar.classList.toggle('collapsed');
+            content.classList.toggle('collapsed');
+        }
+
+        let danhSachTaiKhoan = [];
+        const danhSachTaiKhoanElement = document.getElementById('danhSachTaiKhoan');
+        const modalTaiKhoan = document.getElementById('modalTaiKhoan');
+        const modalTieuDe = document.getElementById('modalTieuDe');
+        const formTaiKhoan = document.getElementById('formTaiKhoan');
+        const phanTrangTaiKhoan = document.getElementById('phanTrangTaiKhoan');
+        const timKiemInput = document.getElementById('timKiemInput');
+        const tongSoTaiKhoanElement = document.getElementById('tongSoTaiKhoan');
+
+        let cheDoSua = false;
+        let idTaiKhoanHienTai = null;
+        let trangHienTai = 1;
+        const soLuongMoiTrang = 8;
+
+        // Hàm gọi API
+        async function goiAPI(method, url, data = null) {
+            try {
+                const options = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                };
+                if (data) {
+                    options.body = JSON.stringify(data);
+                }
+                const response = await fetch(url, options);
+
+                let responseBody;
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    responseBody = await response.json();
+                } else {
+                    responseBody = await response.text();
+                }
+
+                if (!response.ok) {
+                    alert('Có lỗi khi gọi API. Vui lòng thử lại.\n' + JSON.stringify(responseBody));
+                    throw new Error(`Lỗi HTTP: ${response.status}`);
+                }
+                return responseBody;
+            } catch (error) {
+                console.error('Lỗi API:', error);
+                throw error;
+            }
+        } 
+
+        // Hàm hiển thị danh sách tài khoản
+        async function hienThiDanhSachTaiKhoan(searchQuery = '') {
+            try {
+                const url = searchQuery
+                    ? `http://localhost:8000/api/taikhoan/?search=${encodeURIComponent(searchQuery)}&page=${trangHienTai}&limit=${soLuongMoiTrang}`
+                    : `http://localhost:8000/api/taikhoan/?page=${trangHienTai}&limit=${soLuongMoiTrang}`;
+                const response = await goiAPI('GET', url);
+                danhSachTaiKhoan = response.data || [];
+                danhSachTaiKhoanElement.innerHTML = '';
+
+                if (searchQuery) {
+                    tongSoTaiKhoanElement.textContent = `Kết quả tìm kiếm: ${response.total || danhSachTaiKhoan.length}`;
+                } else {
+                    tongSoTaiKhoanElement.textContent = `Tổng số tài khoản: ${response.total || danhSachTaiKhoan.length}`;
+                }
+                danhSachTaiKhoan.forEach((tk, index) => {
+                    const stt = (trangHienTai - 1) * soLuongMoiTrang + index + 1;
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${stt}</td>
+                        <td>${tk.hovaten}</td>
+                        <td>${tk.sodienthoai}</td>
+                        <td>${tk.user && tk.user.email ? tk.user.email : ''}</td>
+                        <td>${tk.vaitro === 'admin' ? 'Admin' : 'User'}</td>
+                        <td>${tk.trangthai === 'Active' ? 'Hoạt động' : 'Bị khoá'}</td>
+                        <td>
+                            <button class="action-button edit-button" onclick="suaTaiKhoan(${tk.id})">Sửa</button>
+                            <button class="action-button delete-button" onclick="xoaTaiKhoan(${tk.id})">Xóa</button>
+                        </td>
+                    `;
+                    danhSachTaiKhoanElement.appendChild(row);
+                });
+
+                hienThiPhanTrangTaiKhoan(response.total || danhSachTaiKhoan.length);
+            } catch (error) {
+                console.error('Lỗi hiển thị danh sách tài khoản:', error);
+            }
+        }
+
+        // Hàm hiển thị phân trang
+        function hienThiPhanTrangTaiKhoan(tongSo) {
+            phanTrangTaiKhoan.innerHTML = '';
+            const tongSoTrang = Math.ceil(tongSo / soLuongMoiTrang);
+
+            const nutTruoc = document.createElement('button');
+            nutTruoc.textContent = '«';
+            nutTruoc.classList.add('pagination-button');
+            if (trangHienTai === 1) {
+                nutTruoc.classList.add('disabled');
+                nutTruoc.disabled = true;
+            }
+            nutTruoc.onclick = () => chuyenTrangTaiKhoan(trangHienTai - 1);
+            phanTrangTaiKhoan.appendChild(nutTruoc);
+
+            for (let i = 1; i <= tongSoTrang; i++) {
+                const nutTrang = document.createElement('button');
+                nutTrang.textContent = i;
+                nutTrang.classList.add('pagination-button');
+                if (i === trangHienTai) {
+                    nutTrang.classList.add('active');
+                }
+                nutTrang.onclick = () => chuyenTrangTaiKhoan(i);
+                phanTrangTaiKhoan.appendChild(nutTrang);
+            }
+
+            const nutSau = document.createElement('button');
+            nutSau.textContent = '»';
+            nutSau.classList.add('pagination-button');
+            if (trangHienTai === tongSoTrang || tongSoTrang === 0) {
+                nutSau.classList.add('disabled');
+                nutSau.disabled = true;
+            }
+            nutSau.onclick = () => chuyenTrangTaiKhoan(trangHienTai + 1);
+            phanTrangTaiKhoan.appendChild(nutSau);
+        }
+
+        // Hàm chuyển trang
+        function chuyenTrangTaiKhoan(trangMoi) {
+            trangHienTai = trangMoi;
+            hienThiDanhSachTaiKhoan(timKiemInput.value);
+        }
+
+        // Hàm mở form thêm tài khoản
+        function moFormThemTaiKhoan() {
+            cheDoSua = false;
+            modalTieuDe.textContent = 'Thêm Tài Khoản Mới';
+            formTaiKhoan.reset();
+            modalTaiKhoan.classList.remove('hidden');
+            document.getElementById('tenTaiKhoan').required = true;
+            document.getElementById('matKhau').required = true;
+        }
+
+        // Hàm mở form sửa tài khoản
+        async function suaTaiKhoan(id) {
+            try {
+                const tk = await goiAPI('GET', `http://localhost:8000/api/taikhoan/${id}/`);
+                cheDoSua = true;
+                idTaiKhoanHienTai = id;
+                modalTieuDe.textContent = 'Chỉnh Sửa Tài Khoản';
+                document.getElementById('hoVaTen').value = tk.hovaten;
+                document.getElementById('soDienThoai').value = tk.sodienthoai;
+                document.getElementById('email').value = tk.user && tk.user.email ? tk.user.email : '';
+                document.getElementById('vaiTro').value = tk.vaitro;
+                document.getElementById('trangThai').value = tk.trangthai;
+                document.getElementById('tenTaiKhoan').value = tk.user && tk.user.username ? tk.user.username : '';
+                document.getElementById('tenTaiKhoan').required = false;
+                document.getElementById('tenTaiKhoan').disabled = false;
+                document.getElementById('matKhau').value = '';
+                document.getElementById('matKhau').required = false;
+                document.getElementById('matKhau').disabled = false;
+                modalTaiKhoan.classList.remove('hidden');
+            } catch (error) {
+                console.error('Lỗi lấy thông tin tài khoản:', error);
+                alert('Lỗi lấy thông tin tài khoản: ' + error.message);
+            }
+        }
+
+        // Hàm đóng form
+        function dongModalTaiKhoan() {
+            modalTaiKhoan.classList.add('hidden');
+        }
+
+        // Xử lý submit form
+        formTaiKhoan.addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const soDienThoai = document.getElementById('soDienThoai').value;
+            const email = document.getElementById('email').value;
+            const phoneRegex = /^0\d{9,10}$/;
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (!phoneRegex.test(soDienThoai)) {
+                alert('Số điện thoại phải là số, có 10-11 chữ số và bắt đầu bằng 0.');
+                return;
+            }
+            if (!emailRegex.test(email)) {
+                alert('Email không hợp lệ.');
+                return;
+            }
+
+            const duLieuTaiKhoan = {
+                hovaten: document.getElementById('hoVaTen').value,
+                sodienthoai: soDienThoai,
+                email: email,
+                username: document.getElementById('tenTaiKhoan').value || null,
+                password: document.getElementById('matKhau').value || null,
+                first_name: document.getElementById('hoVaTen').value.split(' ').slice(0, -1).join(' ') || '',
+                last_name: document.getElementById('hoVaTen').value.split(' ').slice(-1)[0] || '',
+                vaitro: document.getElementById('vaiTro').value,
+                trangthai: document.getElementById('trangThai').value,
+            };
+            if (cheDoSua && !duLieuTaiKhoan.password) {
+                delete duLieuTaiKhoan.password;
+            }
+
+            try {
+                if (cheDoSua) {
+                    await goiAPI('PUT', `http://localhost:8000/api/taikhoan/${idTaiKhoanHienTai}/`, duLieuTaiKhoan);
+                } else {
+                    if (!duLieuTaiKhoan.username) {
+                        alert('Tên tài khoản là bắt buộc khi tạo mới.');
+                        return;
+                    }
+                    await goiAPI('POST', `http://localhost:8000/api/taikhoan/`, duLieuTaiKhoan);
+                }
+
+                if (!cheDoSua) {
+                    const response = await goiAPI('GET', 'http://localhost:8000/api/taikhoan/count/');
+                    const tongSo = response.total || 0;
+                    trangHienTai = Math.ceil(tongSo / soLuongMoiTrang);
+                }
+                hienThiDanhSachTaiKhoan(timKiemInput.value);
+                dongModalTaiKhoan();
+            } catch (error) {
+                console.error('Lỗi lưu tài khoản:', error);
+                alert('Lỗi lưu tài khoản: ' + error.message);
+            }
+        });
+
+        // Hàm xóa tài khoản
+        async function xoaTaiKhoan(id) {
+            if (confirm('Bạn có chắc chắn muốn xóa tài khoản này không?')) {
+                try {
+                    await goiAPI('DELETE', `http://localhost:8000/api/taikhoan/${id}/`);
+                    const response = await goiAPI('GET', 'http://localhost:8000/api/taikhoan/count/');
+                    const tongSo = response.total || 0;
+                    const tongSoTrang = Math.ceil(tongSo / soLuongMoiTrang);
+                    if (trangHienTai > tongSoTrang && tongSoTrang > 0) {
+                        trangHienTai = tongSoTrang;
+                    } else if (tongSoTrang === 0) {
+                        trangHienTai = 1;
+                    }
+                    hienThiDanhSachTaiKhoan(timKiemInput.value);
+                } catch (error) {
+                    console.error('Lỗi xóa tài khoản:', error);
+                    alert('Lỗi xóa tài khoản: ' + error.message);
+                }
+            }
+        }
+
+        // Xử lý tìm kiếm
+        timKiemInput.addEventListener('input', function(event) {
+            trangHienTai = 1;
+            hienThiDanhSachTaiKhoan(event.target.value);
+        });
+
+        // Hiển thị danh sách tài khoản khi trang tải
+        document.addEventListener('DOMContentLoaded', async () => {
+            hienThiDanhSachTaiKhoan();
+        });
+    </script>
+</body>
+</html>
