@@ -72,7 +72,7 @@ class QuyDinh(models.Model):
 class TiecCuoi(models.Model):
     CA_CHOICES = [('Trưa', 'Trưa'), ('Tối', 'Tối')]
 
-    tai_khoan = models.ForeignKey(TaiKhoan, on_delete=models.CASCADE)
+    tai_khoan = models.ForeignKey(TaiKhoan, on_delete=models.SET_NULL, null=True, blank=True)
     sanh = models.ForeignKey(Sanh, on_delete=models.CASCADE)
     ten_chu_re = models.CharField(max_length=50)
     ten_co_dau = models.CharField(max_length=50)
@@ -80,7 +80,7 @@ class TiecCuoi(models.Model):
     so_luong_ban = models.IntegerField()
     so_luong_ban_du_tru = models.IntegerField()
     ca = models.CharField(max_length=10, choices=CA_CHOICES)
-    tong_tien_tiec_cuoi = models.FloatField()
+    tong_tien_tiec_cuoi = models.FloatField(default=0)
     tien_dat_coc = models.FloatField()
     so_dien_thoai = models.CharField(max_length=15)
 

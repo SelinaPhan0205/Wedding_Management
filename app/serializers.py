@@ -116,6 +116,10 @@ class TiecCuoiSerializer(serializers.ModelSerializer):
     )
     mon_an = ChiTietThucDonSerializer(many=True, source='chitietthucdon_set', read_only=True)
     dich_vu = ChiTietDichVuSerializer(many=True, source='chitietdichvu_set', read_only=True)
+    tong_tien_tiec_cuoi = serializers.IntegerField(default=0, required=False)
+    tai_khoan = serializers.PrimaryKeyRelatedField(
+        queryset=TaiKhoan.objects.all(), required=False, allow_null=True
+    )
 
     class Meta:
         model = TiecCuoi
@@ -127,6 +131,11 @@ class TiecCuoiSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'mon_an', 'dich_vu']
 
     def create(self, validated_data):
+        # Đảm bảo tong_tien_tiec_cuoi mặc định là 0 nếu không truyền lên
+        if 'tong_tien_tiec_cuoi' not in validated_data:
+            validated_data['tong_tien_tiec_cuoi'] = 0
+        # Nếu không truyền tai_khoan thì bỏ khỏi validated_data
+        validated_data.pop('tai_khoan', None)
         mon_an_data = self.initial_data.get('mon_an', [])
         dich_vu_data = self.initial_data.get('dich_vu', [])
         tiec = TiecCuoi.objects.create(**validated_data)
