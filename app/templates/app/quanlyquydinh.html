@@ -467,7 +467,7 @@
                     tongSoQuyDinhDiv.textContent = `Tổng số quy định: ${response.total || danhSachQuyDinh.length}`;
                 }
                 if (danhSachQuyDinh.length === 0) {
-                    danhSachQuyDinhElement.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">Không tìm thấy quy định nào.</td></tr>`;
+                    danhSachQuyDinhElement.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">Không có quy định nào.</td></tr>`;
                     hienThiPhanTrang(response.total || 0);
                     return;
                 }

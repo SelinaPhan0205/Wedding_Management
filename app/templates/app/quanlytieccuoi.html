@@ -755,6 +755,9 @@
             } else {
                 document.getElementById('tongSoTiec').textContent = `Tổng số tiệc: ${response.total || danhSachTiec.length}`;
             }
+            if (danhSachTiec.length === 0) {
+                danhSachTiecElement.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-gray-500">Không có tiệc cưới nào.</td></tr>';
+            }
             danhSachTiec.forEach((tiec, index) => {
                 const stt = (currentPage - 1) * itemsPerPage + index + 1;
                 const row = document.createElement('tr');
