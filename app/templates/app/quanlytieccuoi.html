@@ -613,7 +613,17 @@
                     <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition">Tra cứu</button>
                 </div>
             </form>
-            <div id="ketQuaTraCuu" class="mt-4"></div>
+        </div>
+    </div>
+
+    <div id="modalKetQuaTraCuuSanh" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">Kết quả tra cứu</h2>
+            <div id="noiDungKetQuaTraCuu"></div>
+            <div class="flex justify-end gap-3 mt-6">
+                <button type="button" onclick="quayLaiTraCuu()" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-100 transition">Quay lại</button>
+                <button type="button" onclick="dongModalKetQuaTraCuu()" class="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition">Đóng</button>
+            </div>
         </div>
     </div>
 
@@ -645,6 +655,8 @@
     const danhSachMonAnElement = document.getElementById('danhSachMonAn');
     const danhSachDichVuElement = document.getElementById('danhSachDichVu');
     const tiecInfoSection = document.getElementById('tiecInfo');
+    const modalKetQuaTraCuuSanh = document.getElementById('modalKetQuaTraCuuSanh');
+    const noiDungKetQuaTraCuu = document.getElementById('noiDungKetQuaTraCuu');
 
     let isEditMode = false;
     let isViewMode = false;
@@ -757,14 +769,23 @@
             }
             danhSachTiec.forEach((tiec, index) => {
                 const stt = (currentPage - 1) * itemsPerPage + index + 1;
+                let ngayHienThi = '';
+                if (tiec.ngay_dai_tiec) {
+                    const parts = tiec.ngay_dai_tiec.split('-');
+                    if (parts.length === 3) {
+                        ngayHienThi = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                    } else {
+                        ngayHienThi = tiec.ngay_dai_tiec;
+                    }
+                }
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${tiec.ma_so_tiec}</td>
+                    <td>${tiec.id}</td>
                     <td>${tiec.ten_chu_re}</td>
                     <td>${tiec.ten_co_dau}</td>
                     <td>${tiec.so_dien_thoai}</td>
                     <td>${tiec.sanh ? tiec.sanh.ten_sanh : ''}</td>
-                    <td>${tiec.ngay_dai_tiec}</td>
+                    <td>${ngayHienThi}</td>
                     <td>${tiec.ca}</td>
                     <td>${tiec.so_luong_ban}</td>
                     <td>
@@ -861,6 +882,7 @@
             isViewMode = false;
             currentTiecId = id;
             modalTitle.textContent = 'Chỉnh Sửa Tiệc Cưới';
+            await layDanhSachSanh();
             loadTiecData(tiec);
             enableFormInputs(true);
             document.getElementById('submitButton').classList.remove('hidden');
@@ -909,7 +931,6 @@
     // Hàm mở form tra cứu sảnh trống
     function moFormTraCuuSanhTrong() {
         formTraCuuSanhTrong.reset();
-        ketQuaTraCuu.innerHTML = '';
         modalTraCuuSanhTrong.classList.remove('hidden');
     }
 
@@ -1180,7 +1201,7 @@
             ca: document.getElementById('ca').value,
             sanh_id: parseInt(selectedSanhId),
             so_luong_ban: soLuongBan,
-            so_ban_du_tru: parseInt(document.getElementById('soBanDuTru').value) || 0,
+            so_luong_ban_du_tru: parseInt(document.getElementById('soBanDuTru').value) || 0,
             tien_dat_coc: parseInt(document.getElementById('tienDatCoc').value),
             mon_an: danhSachMonAnDaChon,
             dich_vu: danhSachDichVuDaChon
@@ -1220,28 +1241,32 @@
         try {
             const response = await goiAPI('GET', `/api/sanh/tracuu/?ngay=${ngayTraCuu}&ca=${caTraCuu}`);
             const sanhTrong = response.data || [];
-            ketQuaTraCuu.innerHTML = '';
+            let html = '';
 
             if (sanhTrong.length === 0) {
-                ketQuaTraCuu.innerHTML = '<p class="text-red-500">Không có sảnh trống trong thời gian này.</p>';
+                html = '<p class="text-red-500">Không có sảnh trống trong thời gian này.</p>';
             } else {
-                ketQuaTraCuu.innerHTML = `<p class="text-green-500 font-semibold">Các sảnh trống vào ${ngayTraCuu} (${caTraCuu}):</p>`;
-                const ul = document.createElement('ul');
-                ul.classList.add('list-disc', 'pl-5');
+                html = `<p class="text-green-500 font-semibold">Các sảnh trống vào ${ngayTraCuu} (${caTraCuu}):</p>`;
+                html += '<ul class="list-disc pl-5">';
                 sanhTrong.forEach(sanh => {
-                    const li = document.createElement('li');
-                    li.innerHTML = `
-                        <strong>${sanh.ten_sanh}</strong><br>
-                        Loại sảnh: ${sanh.loai_sanh.ten_loai_sanh}<br>
-                        Số bàn tối đa: ${sanh.so_luong_ban_toi_da}
+                    html += `
+                        <li>
+                            <strong>${sanh.ten_sanh}</strong><br>
+                            Loại sảnh: ${sanh.loai_sanh.ten_loai_sanh}<br>
+                            Số bàn tối đa: ${sanh.so_luong_ban_toi_da}
+                        </li>
                     `;
-                    ul.appendChild(li);
                 });
-                ketQuaTraCuu.appendChild(ul);
+                html += '</ul>';
             }
+            noiDungKetQuaTraCuu.innerHTML = html;
+            modalTraCuuSanhTrong.classList.add('hidden');
+            modalKetQuaTraCuuSanh.classList.remove('hidden');
         } catch (error) {
             console.error('Lỗi tra cứu sảnh trống:', error);
-            ketQuaTraCuu.innerHTML = '<p class="text-red-500">Có lỗi khi tra cứu sảnh trống. Vui lòng thử lại.</p>';
+            noiDungKetQuaTraCuu.innerHTML = '<p class="text-red-500">Có lỗi khi tra cứu sảnh trống. Vui lòng thử lại.</p>';
+            modalTraCuuSanhTrong.classList.add('hidden');
+            modalKetQuaTraCuuSanh.classList.remove('hidden');
         }
     });
 
@@ -1274,8 +1299,20 @@
         document.getElementById('xemCa').textContent = tiec.ca || '';
         document.getElementById('xemSanh').textContent = tiec.sanh ? tiec.sanh.ten_sanh : '';
         document.getElementById('xemSoLuongBan').textContent = tiec.so_luong_ban || '';
-        document.getElementById('xemSoBanDuTru').textContent = tiec.so_ban_du_tru || '';
+        document.getElementById('xemSoBanDuTru').textContent = tiec.so_luong_ban_du_tru || '';
         document.getElementById('xemTienDatCoc').textContent = tiec.tien_dat_coc ? tiec.tien_dat_coc.toLocaleString('vi-VN') + ' VNĐ' : '';
+
+        // Reset bảng Thực đơn về trạng thái đóng
+        const bangMonAnSection = document.getElementById('bangMonAnSection');
+        const svgIconBangMonAn = document.getElementById('svgIconBangMonAn');
+        bangMonAnSection.style.display = 'none';
+        svgIconBangMonAn.style.transform = 'rotate(-90deg)';
+
+        // Reset bảng Dịch vụ về trạng thái đóng
+        const bangDichVuSection = document.getElementById('bangDichVuSection');
+        const svgIconBangDichVu = document.getElementById('svgIconBangDichVu');
+        bangDichVuSection.style.display = 'none';
+        svgIconBangDichVu.style.transform = 'rotate(-90deg)';
 
         // Hiển thị món ăn
         const monAnBody = document.getElementById('xemDanhSachMonAn');
@@ -1315,6 +1352,17 @@
         currentPage = 1;
         hienThiDanhSach(event.target.value);
     });
+
+    // Hàm quay lại tra cứu sảnh trống
+    function quayLaiTraCuu() {
+        modalKetQuaTraCuuSanh.classList.add('hidden');
+        modalTraCuuSanhTrong.classList.remove('hidden');
+    }
+
+    // Hàm đóng modal kết quả tra cứu
+    function dongModalKetQuaTraCuu() {
+        modalKetQuaTraCuuSanh.classList.add('hidden');
+    }
 
     // Hàm toggle chi tiết
     function toggleDetails(sectionId) {

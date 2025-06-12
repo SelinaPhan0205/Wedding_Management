@@ -121,6 +121,23 @@ class SanhViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(ten_sanh__istartswith=search_query)
 
         return Response({'total': queryset.count()})
+    
+    @action(detail=False, methods=['get'], url_path='tracuu')
+    def tra_cuu_sanh_trong(self, request):
+        """
+        API tra cứu sảnh trống theo ngày và ca.
+        GET /api/sanh/tracuu/?ngay=yyyy-mm-dd&ca=Trưa|Tối
+        """
+        ngay = request.query_params.get('ngay')
+        ca = request.query_params.get('ca')
+        if not ngay or not ca:
+            return Response({'error': 'Thiếu tham số ngày hoặc ca.'}, status=400)
+
+        tat_ca_sanh = Sanh.objects.filter(trang_thai='Active')
+        sanh_ban_ids = TiecCuoi.objects.filter(ngay_dai_tiec=ngay, ca=ca).values_list('sanh_id', flat=True)
+        sanh_trong = tat_ca_sanh.exclude(id__in=sanh_ban_ids)
+        serializer = SanhSerializer(sanh_trong, many=True)
+        return Response({'data': serializer.data})
 
 class TaiKhoanViewSet(viewsets.ModelViewSet):
     queryset = TaiKhoan.objects.all().select_related('user')
