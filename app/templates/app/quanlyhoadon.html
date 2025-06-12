@@ -522,42 +522,45 @@
                 danhSachHoaDon = response.data || [];
                 danhSachHoaDonElement.innerHTML = '';
 
+                if (danhSachHoaDon.length === 0) {
+                    danhSachHoaDonElement.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-gray-500">Không có hóa đơn nào.</td></tr>';
+                } else {
+                    const ngayHienTai = new Date();
+                    danhSachHoaDon.forEach((hoadon, index) => {
+                        const ngayThanhToan = hoadon.ngay_thanh_toan ? new Date(hoadon.ngay_thanh_toan) : null;
+                        const soNgayTre = ngayThanhToan && ngayThanhToan < ngayHienTai ? Math.ceil((ngayHienTai - ngayThanhToan) / (1000 * 60 * 60 * 24)) : 0;
+                        const tienPhat = soNgayTre > 0 ? soNgayTre * 50000 : 0;
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${hoadon.ma_hoa_don || ''}</td>
+                            <td>${hoadon.ma_tiec || ''}</td>
+                            <td>${hoadon.ngay_thanh_toan || 'Chưa có'}</td>
+                            <td>${hoadon.tong_tien || 0} VNĐ</td>
+                            <td>${hoadon.tien_coc || 0} VNĐ</td>
+                            <td>${hoadon.tien_con_lai || 0} VNĐ</td>
+                            <td>${soNgayTre}</td>
+                            <td>${tienPhat} VNĐ</td>
+                            <td>${hoadon.trang_thai || 'Chưa Thanh Toán'}</td>
+                            <td>
+                                <button class="action-button edit-button" onclick="xemHoaDon(${hoadon.id})">Xem</button>
+                                <button class="action-button edit-button" onclick="suaHoaDon(${hoadon.id})">Sửa</button>
+                                <button class="action-button delete-button" onclick="xoaHoaDon(${hoadon.id})">Xóa</button>
+                            </td>
+                        `;
+                        danhSachHoaDonElement.appendChild(row);
+                    });
+                }
+
                 if (searchQuery) {
                     document.getElementById('tongSoHoaDon').textContent = `Kết quả tìm kiếm: ${response.total || danhSachHoaDon.length}`;
                 } else {
                     document.getElementById('tongSoHoaDon').textContent = `Tổng số hóa đơn: ${response.total || danhSachHoaDon.length}`;
                 }
-
-                const ngayHienTai = new Date();
-                danhSachHoaDon.forEach((hoadon, index) => {
-                    const stt = (currentPageHoaDon - 1) * itemsPerPageHoaDon + index + 1;
-                    const ngayThanhToan = hoadon.ngay_thanh_toan ? new Date(hoadon.ngay_thanh_toan) : null;
-                    const soNgayTre = ngayThanhToan && ngayThanhToan < ngayHienTai ? Math.ceil((ngayHienTai - ngayThanhToan) / (1000 * 60 * 60 * 24)) : 0;
-                    const tienPhat = soNgayTre > 0 ? soNgayTre * 50000 : 0; // Giả sử phạt 50,000 VNĐ/ngày trễ
-
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${hoadon.ma_hoa_don || ''}</td>
-                        <td>${hoadon.ma_tiec || ''}</td>
-                        <td>${hoadon.ngay_thanh_toan || 'Chưa có'}</td>
-                        <td>${hoadon.tong_tien || 0} VNĐ</td>
-                        <td>${hoadon.tien_coc || 0} VNĐ</td>
-                        <td>${hoadon.tien_con_lai || 0} VNĐ</td>
-                        <td>${soNgayTre}</td>
-                        <td>${tienPhat} VNĐ</td>
-                        <td>${hoadon.trang_thai || 'Chưa Thanh Toán'}</td>
-                        <td>
-                            <button class="action-button edit-button" onclick="xemHoaDon(${hoadon.id})">Xem</button>
-                            <button class="action-button edit-button" onclick="suaHoaDon(${hoadon.id})">Sửa</button>
-                            <button class="action-button delete-button" onclick="xoaHoaDon(${hoadon.id})">Xóa</button>
-                        </td>
-                    `;
-                    danhSachHoaDonElement.appendChild(row);
-                });
-
                 hienThiPhanTrangHoaDon(response.total || danhSachHoaDon.length);
             } catch (error) {
                 console.error('Lỗi hiển thị danh sách hóa đơn:', error);
+                danhSachHoaDonElement.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-gray-500">Không tìm thấy hóa đơn nào.</td></tr>';
+                hienThiPhanTrangHoaDon(0); // Thêm gọi phân trang khi lỗi
             }
         }
 
@@ -568,7 +571,7 @@
             const prevButton = document.createElement('button');
             prevButton.textContent = '«';
             prevButton.classList.add('pagination-button');
-            if (currentPageHoaDon === 1) {
+            if (currentPageHoaDon === 1 || totalPages === 0) { // Cải thiện điều kiện vô hiệu hóa
                 prevButton.classList.add('disabled');
                 prevButton.disabled = true;
             }
@@ -670,7 +673,7 @@
                 ma_tiec: document.getElementById('maTiec').value,
                 so_luong_ban: parseInt(document.getElementById('soLuongBan').value),
                 ngay_thanh_toan: new Date().toISOString().split('T')[0],
-                tong_tien: parseInt(document.getElementById('soLuongBan').value) * 1000000, // Giả sử 1 bàn = 1,000,000 VNĐ
+                tong_tien: parseInt(document.getElementById('soLuongBan').value) * 1000000,
                 tien_coc: 0,
                 tien_con_lai: parseInt(document.getElementById('soLuongBan').value) * 1000000,
                 trang_thai: 'Chưa Thanh Toán'
@@ -734,6 +737,7 @@
         });
 
         document.addEventListener('DOMContentLoaded', async () => {
+            console.log("Đang tải danh sách hóa đơn");
             hienThiDanhSachHoaDon();
         });
     </script>

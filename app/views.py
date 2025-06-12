@@ -14,31 +14,31 @@ from django.contrib.auth.decorators import login_required
 ##### Code các yêu cầu #####
 
 ##### SẢNH #####
-@login_required
+#@login_required
 def trangchu(request):
     return render(request, 'app/trangchu.html')
-@login_required
+#@login_required
 def quanlytaikhoan(request):
     return render(request, 'app/quanlytaikhoan.html')
-@login_required
+#@login_required
 def quanlysanh(request):
     return render(request, 'app/quanlysanh.html')
-@login_required
+#@login_required
 def quanlytieccuoi(request):
     return render(request, 'app/quanlytieccuoi.html')
-@login_required
+#@login_required
 def quanlyhoadon(request):
     return render(request, 'app/quanlyhoadon.html')
-@login_required
+#@login_required
 def quanlythucdon(request):
     return render(request, 'app/quanlythucdon.html')
-@login_required
+#@login_required
 def quanlydichvu(request):
     return render(request, 'app/quanlydichvu.html')
-@login_required
+#@login_required
 def quanlyquydinh(request):
     return render(request, 'app/quanlyquydinh.html')
-@login_required
+#@login_required
 def xembaocao(request):
     return render(request, 'app/xembaocao.html')
 
