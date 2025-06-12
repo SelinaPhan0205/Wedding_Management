@@ -13,5 +13,8 @@ urlpatterns = [
     path('quanlydichvu/', views.quanlydichvu, name='quanlydichvu'),
     path('quanlyquydinh/', views.quanlyquydinh, name='quanlyquydinh'),
     path('xembaocao/', views.xembaocao, name='xembaocao'),
+    path('baocaodoanhthu/', views.baocaodoanhthu, name='baocaodoanhthu'),
+    path('baocaocongno/', views.baocaocongno, name='baocaocongno'),
+    path('baocaothucthu/', views.baocaothucthu, name='baocaothucthu'),
     path('api/', include('app.api')),
 ]

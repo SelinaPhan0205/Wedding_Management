@@ -1360,16 +1360,6 @@
         }
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        // Tự động đóng sidebar khi vào trang này
-        const sidebar = document.getElementById('sidebar');
-        const content = document.getElementById('content');
-        if (sidebar && content && sidebar.classList.contains('collapsed') === false) {
-            sidebar.classList.add('collapsed');
-            content.classList.add('collapsed');
-        }
-    });
-
     // Khởi tạo khi trang tải
     document.addEventListener('DOMContentLoaded', async () => {
         await Promise.all([
