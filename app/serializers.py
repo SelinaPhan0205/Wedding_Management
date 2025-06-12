@@ -55,10 +55,6 @@ class TaiKhoanSerializer(serializers.ModelSerializer):
         else:
             raise serializers.ValidationError({'username': 'Username là bắt buộc!'})
 
-        # Kiểm tra user này đã có TaiKhoan chưa
-        if TaiKhoan.objects.filter(user=user).exists():
-            raise serializers.ValidationError({'username': 'Tài khoản cho user này đã tồn tại!'})
-
         tai_khoan = TaiKhoan.objects.create(user=user, **validated_data)
         return tai_khoan
 
