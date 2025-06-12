@@ -41,7 +41,15 @@ def quanlyquydinh(request):
 #@login_required
 def xembaocao(request):
     return render(request, 'app/xembaocao.html')
-
+#@login_required
+def baocaodoanhthu(request):
+    return render(request, 'app/baocaodoanhthu.html')
+#@login_required
+def baocaocongno(request):
+    return render(request, 'app/baocaocongno.html')
+# @login_required
+def baocaothucthu(request):
+    return render(request, 'app/baocaothucthu.html')
 
 ##### LOGIN #####
 def login(request):

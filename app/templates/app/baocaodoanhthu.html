@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xem Báo Cáo - Hệ thống Quản Lý Tiệc Cưới</title>
+    <title>Báo Cáo Doanh Thu - Hệ thống Quản Lý Tiệc Cưới</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-rounded/css/uicons-solid-rounded.css'>
@@ -13,6 +13,7 @@
     <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-straight/css/uicons-solid-straight.css'>
     <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-chubby/css/uicons-solid-chubby.css'>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -158,49 +159,60 @@
         .report-btn:hover {
             filter: brightness(90%);
         }
-        .overview-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        .overview-card {
-            padding: 1.5rem;
-            border-radius: 0.75rem;
-            text-align: center;
-            background-color: #f8fafc;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .overview-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-        }
-        .main-content {
+        .filter-section {
             display: flex;
+            gap: 1rem;
+            align-items: center;
             flex-wrap: wrap;
-            gap: 2rem;
             margin-bottom: 2rem;
         }
-        .favorites-section {
-            flex: 1;
-            min-width: 300px;
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
+        .filter-section select {
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            background-color: #f9fafb;
+            font-size: 0.875rem;
+            min-width: 150px;
         }
         .chart-section {
-            flex: 1;
-            min-width: 300px;
-            max-width: 600px;
             padding: 1.5rem;
             border-radius: 0.75rem;
             background-color: white;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
         }
         .chart-container {
             position: relative;
-            height: 300px;
+            height: 400px;
             width: 100%;
+        }
+        .table-section {
+            max-height: 400px;
+            overflow-y: auto;
+            border-radius: 0.75rem;
+            background-color: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .table-section table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .table-section th, .table-section td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .table-section th {
+            background-color: #f9fafb;
+            font-weight: 600;
+            color: #2c3e50;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .table-section tr:last-child td {
+            font-weight: 600;
+            background-color: #f9fafb;
         }
         .loading {
             display: flex;
@@ -211,11 +223,15 @@
             font-weight: 600;
         }
         @media (max-width: 768px) {
-            .main-content {
+            .filter-section {
                 flex-direction: column;
+                align-items: stretch;
             }
-            .chart-section {
-                max-width: 100%;
+            .filter-section select, .filter-section button {
+                width: 100%;
+            }
+            .table-section {
+                overflow-x: auto;
             }
         }
     </style>
@@ -259,7 +275,7 @@
             <i class="fi fi-ss-rules"></i>
             <span>Quy Định</span>
         </a>
-        <a href="{% url 'xembaocao' %}" class="active">
+        <a href="{% url 'xembaocao' %}">
             <i class="fi fi-sr-big-data-analytics"></i>
             <span>Xem Báo Cáo</span>
         </a>
@@ -269,72 +285,53 @@
     <div class="content" id="content">
         <div class="container">
             <div class="header-section">
-                <h1>XEM BÁO CÁO</h1>
+                <h1>📊 BÁO CÁO DOANH THU</h1>
             </div>
 
-            <!-- Report Buttons -->
-            <div class="flex justify-center gap-4 mb-8 flex-wrap">
-                <button class="report-btn bg-blue-600 text-white" onclick="loadReport('baocaodoanhthu')">
-                    <i class="fi fi-sr-search"></i> Báo Cáo Doanh Thu
+            <!-- Filter & Buttons -->
+            <div class="filter-section">
+                <select id="timeFilter" onchange="updateReport()">
+                    <option value="2025-05">Tháng 5/2025</option>
+                    <option value="2025-04">Tháng 4/2025</option>
+                    <option value="2025-03">Tháng 3/2025</option>
+                    <!-- Add more options dynamically if needed -->
+                </select>
+                <button class="report-btn bg-blue-600 text-white" onclick="loadRevenueReport()">
+                    <i class="fi fi-sr-search"></i> Xem báo cáo
                 </button>
-                <button class="report-btn bg-green-600 text-white" onclick="loadReport('baocaocongno')">
-                    <i class="fi fi-sr-document"></i> Báo Cáo Công Nợ
-                </button>
-                <button class="report-btn bg-yellow-600 text-white" onclick="loadReport('baocaothucthu')">
-                    <i class="fi fi-sr-money"></i> Báo Cáo Thực Thu
+                <button class="report-btn bg-green-600 text-white" onclick="exportToExcel()">
+                    <i class="fi fi-sr-file-excel"></i> Xuất Excel
                 </button>
             </div>
 
-            <!-- Overview Section -->
-            <div class="overview-grid">
-                <div class="overview-card bg-blue-50">
-                    <div class="text-sm text-gray-600 mb-2">Tổng số tiệc cưới</div>
-                    <div class="text-2xl font-bold text-blue-700" id="totalTiec">24</div>
+            <!-- Chart Section -->
+            <div class="chart-section">
+                <div class="font-semibold text-lg mb-4 flex items-center gap-2">
+                    <i class="fi fi-sr-chart-line"></i> Biểu đồ Xu hướng Doanh thu theo thời gian
                 </div>
-                <div class="overview-card bg-green-50">
-                    <div class="text-sm text-gray-600 mb-2">Doanh thu dự kiến</div>
-                    <div class="text-2xl font-bold text-green-700" id="doanhThuDuKien">350,000,000</div>
-                </div>
-                <div class="overview-card bg-yellow-50">
-                    <div class="text-sm text-gray-600 mb-2">Công nợ</div>
-                    <div class="text-2xl font-bold text-yellow-700" id="congNo">70,000,000</div>
-                </div>
-                <div class="overview-card bg-indigo-50">
-                    <div class="text-sm text-gray-600 mb-2">Thực thu</div>
-                    <div class="text-2xl font-bold text-indigo-700" id="thucThu">280,000,000</div>
+                <div id="chartLoading" class="loading">Đang tải...</div>
+                <div class="chart-container hidden" id="chartContainer">
+                    <canvas id="revenueChart"></canvas>
                 </div>
             </div>
 
-            <!-- Main Content Layout -->
-            <div class="main-content">
-                <!-- Favorites Section -->
-                <div class="favorites-section">
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <div class="font-semibold text-lg mb-4 flex items-center gap-2">
-                            <i class="fi fi-sr-restaurant"></i> Món ăn ưa thích nhất (Tháng 6/2025)
-                        </div>
-                        <div id="topMonAnLoading" class="loading">Đang tải...</div>
-                        <ol id="topMonAn" class="list-decimal ml-5 text-gray-700 space-y-3 hidden"></ol>
-                    </div>
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <div class="font-semibold text-lg mb-4 flex items-center gap-2">
-                            <i class="fi fi-sr-holding-hand-dinner"></i> Dịch vụ ưa thích nhất (Tháng 6/2025)
-                        </div>
-                        <div id="topDichVuLoading" class="loading">Đang tải...</div>
-                        <ol id="topDichVu" class="list-decimal ml-5 text-gray-700 space-y-3 hidden"></ol>
-                    </div>
+            <!-- Table Section -->
+            <div class="table-section">
+                <div class="font-semibold text-lg mb-4 flex items-center gap-2 p-4">
+                    <i class="fi fi-sr-table"></i> Thống kê Chi tiết doanh thu
                 </div>
-
-                <!-- Hall Usage Chart -->
-                <div class="chart-section">
-                    <div class="font-semibold text-lg mb-4 flex items-center gap-2">
-                        <i class="fi fi-br-calendar-heart"></i> Biểu đồ sử dụng sảnh (Tháng 6/2025)
-                    </div>
-                    <div id="chartSanhsLoading" class="loading">Đang tải...</div>
-                    <div class="chart-container hidden" id="chartSanhsContainer">
-                        <canvas id="chartSanhs"></canvas>
-                    </div>
-                </div>
+                <div id="tableLoading" class="loading">Đang tải bảng...</div>
+                <table id="revenueTable" class="hidden">
+                    <thead>
+                        <tr>
+                            <th>Ngày</th>
+                            <th>Số Tiệc Cưới</th>
+                            <th>Doanh thu (VNĐ)</th>
+                            <th>Tỉ lệ (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="revenueTableBody"></tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -352,13 +349,11 @@
         // API call function
         async function goiAPI(endpoint) {
             try {
-                // Thay bằng URL API thực tế của bạn
                 const baseUrl = 'http://localhost:8000/api'; // Adjust to your API base URL
                 const response = await fetch(`${baseUrl}${endpoint}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
-                        // Thêm token nếu cần xác thực
                         // 'Authorization': `Bearer ${sessionStorage.getItem('token')}`
                     }
                 });
@@ -369,148 +364,163 @@
             } catch (error) {
                 console.error(`Lỗi gọi API ${endpoint}:`, error);
                 // Fallback mock data
-                if (endpoint.includes('/top-mon-an')) {
+                if (endpoint.includes('/revenue-report')) {
                     return [
-                        { ten_mon: "Gỏi ngó sen tôm thịt", so_luong: 12 },
-                        { ten_mon: "Bò nấu tiêu xanh", so_luong: 10 },
-                        { ten_mon: "Soup cua", so_luong: 8 }
-                    ];
-                } else if (endpoint.includes('/top-dich-vu')) {
-                    return [
-                        { ten_dich_vu: "Pháo hoa đêm", so_lan: 14 },
-                        { ten_dich_vu: "MC chuyên nghiệp", so_lan: 11 },
-                        { ten_dich_vu: "Múa lân", so_lan: 9 }
-                    ];
-                } else if (endpoint.includes('/sanh-usage')) {
-                    return [
-                        { ten_sanh: "Sảnh A", phan_tram: 35 },
-                        { ten_sanh: "Sảnh B", phan_tram: 25 },
-                        { ten_sanh: "Sảnh C", phan_tram: 40 }
+                        { ngay: "2025-05-01", so_tiec: 2, doanh_thu: 28000000, ti_le: 8 },
+                        { ngay: "2025-05-02", so_tiec: 1, doanh_thu: 15000000, ti_le: 4 },
+                        { ngay: "2025-05-03", so_tiec: 1, doanh_thu: 20000000, ti_le: 6 },
+                        { ngay: "2025-05-04", so_tiec: 3, doanh_thu: 45000000, ti_le: 13 },
+                        { ngay: "2025-05-05", so_tiec: 2, doanh_thu: 30000000, ti_le: 9 }
                     ];
                 }
                 return [];
             }
         }
 
-        // Load top dishes and services
-        async function loadFavorites() {
-            try {
-                const topMonAnLoading = document.getElementById('topMonAnLoading');
-                const topDichVuLoading = document.getElementById('topDichVuLoading');
-                const topMonAnElement = document.getElementById('topMonAn');
-                const topDichVuElement = document.getElementById('topDichVu');
-
-                const [topMonAn, topDichVu] = await Promise.all([
-                    goiAPI('/top-mon-an?month=6&year=2025'),
-                    goiAPI('/top-dich-vu?month=6&year=2025')
-                ]);
-
-                topMonAnElement.innerHTML = topMonAn.slice(0, 3).map(item => `
-                    <li class="flex justify-between items-center">
-                        <span class="truncate max-w-[70%]">${item.ten_mon}</span>
-                        <span class="font-bold text-blue-600">${item.so_luong} lượt</span>
-                    </li>
-                `).join('');
-                topDichVuElement.innerHTML = topDichVu.slice(0, 3).map(item => `
-                    <li class="flex justify-between items-center">
-                        <span class="truncate max-w-[70%]">${item.ten_dich_vu}</span>
-                        <span class="font-bold text-blue-600">${item.so_lan} lượt</span>
-                    </li>
-                `).join('');
-
-                // Hide loading and show data
-                topMonAnLoading.classList.add('hidden');
-                topDichVuLoading.classList.add('hidden');
-                topMonAnElement.classList.remove('hidden');
-                topDichVuElement.classList.remove('hidden');
-            } catch (error) {
-                console.error('Lỗi tải dữ liệu ưa thích:', error);
-                document.getElementById('topMonAnLoading').innerText = 'Lỗi tải dữ liệu';
-                document.getElementById('topDichVuLoading').innerText = 'Lỗi tải dữ liệu';
-            }
+        // Format number to VND
+        function formatVND(number) {
+            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(number);
         }
 
-        // Load hall usage chart
-        let chartSanhsInstance = null;
-        async function loadChartSanhs() {
+        // Load revenue report
+        let revenueChartInstance = null;
+        async function loadRevenueReport() {
             try {
-                const loading = document.getElementById('chartSanhsLoading');
-                const container = document.getElementById('chartSanhsContainer');
-                const sanhUsage = await goiAPI('/sanh-usage?month=6&year=2025');
-                const ctx = document.getElementById('chartSanhs').getContext('2d');
+                const timeFilter = document.getElementById('timeFilter').value;
+                const [year, month] = timeFilter.split('-');
+                const data = await goiAPI(`/revenue-report?month=${month}&year=${year}`);
 
-                // Xóa biểu đồ cũ nếu có
-                if (chartSanhsInstance) chartSanhsInstance.destroy();
-                chartSanhsInstance = new Chart(ctx, {
-                    type: 'pie',
+                // Update chart
+                const chartLoading = document.getElementById('chartLoading');
+                const chartContainer = document.getElementById('chartContainer');
+                const ctx = document.getElementById('revenueChart').getContext('2d');
+
+                if (revenueChartInstance) revenueChartInstance.destroy();
+                revenueChartInstance = new Chart(ctx, {
+                    type: 'line',
                     data: {
-                        labels: sanhUsage.map(s => s.ten_sanh),
+                        labels: data.map(item => item.ngay.split('-')[2]), // Extract day
                         datasets: [{
-                            data: sanhUsage.map(s => s.phan_tram),
-                            backgroundColor: ["#60a5fa", "#fbbf24", "#34d399"],
-                            borderColor: ["#ffffff", "#ffffff", "#ffffff"],
+                            label: 'Doanh thu (triệu VNĐ)',
+                            data: data.map(item => item.doanh_thu / 1000000), // Convert to million VND
+                            borderColor: '#60a5fa',
+                            backgroundColor: 'rgba(96, 165, 250, 0.2)',
+                            fill: true,
+                            tension: 0.4,
                             borderWidth: 2
                         }]
                     },
                     options: {
                         plugins: {
                             legend: {
-                                position: "bottom",
+                                position: 'top',
                                 labels: {
                                     font: {
                                         size: 14,
                                         family: "'Inter', sans-serif"
                                     },
-                                    padding: 20,
-                                    color: "#2c3e50"
+                                    color: '#2c3e50'
                                 }
                             },
                             tooltip: {
-                                backgroundColor: "#2c3e50",
-                                titleFont: {
-                                    size: 14,
-                                    family: "'Inter', sans-serif"
-                                },
-                                bodyFont: {
-                                    size: 12,
-                                    family: "'Inter', sans-serif"
-                                },
+                                backgroundColor: '#2c3e50',
+                                titleFont: { size: 14, family: "'Inter', sans-serif" },
+                                bodyFont: { size: 12, family: "'Inter', sans-serif" },
                                 callbacks: {
                                     label: function(context) {
-                                        let label = context.label || '';
-                                        let value = context.raw || 0;
-                                        return `${label}: ${value}%`;
+                                        return `Doanh thu: ${formatVND(context.raw * 1000000)}`;
                                     }
                                 }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Doanh thu (triệu VNĐ)',
+                                    font: { size: 14, family: "'Inter', sans-serif" }
+                                },
+                                ticks: { color: '#2c3e50' }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Ngày',
+                                    font: { size: 14, family: "'Inter', sans-serif" }
+                                },
+                                ticks: { color: '#2c3e50' }
                             }
                         },
                         responsive: true,
                         maintainAspectRatio: false,
                         animation: {
                             duration: 1000,
-                            easing: "easeOutQuart"
+                            easing: 'easeOutQuart'
                         }
                     }
                 });
 
-                // Hide loading and show chart
-                loading.classList.add('hidden');
-                container.classList.remove('hidden');
+                // Update table
+                const tableLoading = document.getElementById('tableLoading');
+                const table = document.getElementById('revenueTable');
+                const tbody = document.getElementById('revenueTableBody');
+                const totalTiec = data.reduce((sum, item) => sum + item.so_tiec, 0);
+                const totalDoanhThu = data.reduce((sum, item) => sum + item.doanh_thu, 0);
+
+                tbody.innerHTML = data.map(item => `
+                    <tr>
+                        <td>${item.ngay}</td>
+                        <td>${item.so_tiec}</td>
+                        <td>${formatVND(item.doanh_thu)}</td>
+                        <td>${item.ti_le}%</td>
+                    </tr>
+                `).join('') + `
+                    <tr>
+                        <td>Tổng cộng</td>
+                        <td>${totalTiec}</td>
+                        <td>${formatVND(totalDoanhThu)}</td>
+                        <td>100%</td>
+                    </tr>
+                `;
+
+                // Hide loading and show content
+                chartLoading.classList.add('hidden');
+                chartContainer.classList.remove('hidden');
+                tableLoading.classList.add('hidden');
+                table.classList.remove('hidden');
             } catch (error) {
-                console.error('Lỗi tải biểu đồ sảnh:', error);
-                document.getElementById('chartSanhsLoading').innerText = 'Lỗi tải biểu đồ';
+                console.error('Lỗi tải báo cáo doanh thu:', error);
+                document.getElementById('chartLoading').innerText = 'Lỗi tải biểu đồ';
+                document.getElementById('tableLoading').innerText = 'Lỗi tải bảng';
             }
         }
 
-        // Load report data
-        function loadReport(type) {
-            if (type === 'baocaodoanhthu') {
-                window.location.href = "{% url 'baocaodoanhthu' %}";
-            } else if (type === 'baocaocongno') {
-                window.location.href = "{% url 'baocaocongno' %}";
-            } else if (type === 'baocaothucthu') {
-                window.location.href = "{% url 'baocaothucthu' %}";
-            }
+        // Export to Excel
+        function exportToExcel() {
+            const table = document.getElementById('revenueTable');
+            const rows = table.querySelectorAll('tr');
+            const data = [];
+
+            // Extract headers
+            const headers = Array.from(rows[0].querySelectorAll('th')).map(th => th.innerText);
+            data.push(headers);
+
+            // Extract rows
+            rows.forEach((row, index) => {
+                if (index > 0) { // Skip header row
+                    const cells = Array.from(row.querySelectorAll('td')).map(td => td.innerText);
+                    data.push(cells);
+                }
+            });
+
+            // Create workbook and worksheet
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'BaoCaoDoanhThu');
+
+            // Export file
+            XLSX.write(wb, 'BaoCaoDoanhThu.xlsx');
         }
 
         // Initialize page
@@ -522,11 +532,14 @@
                 document.getElementById('content').classList.add('collapsed');
             }
 
-            await Promise.all([
-                loadFavorites(),
-                loadChartSanhs()
-            ]);
+            // Load initial report
+            await loadRevenueReport();
         });
+
+        // Update report on filter change
+        function updateReport() {
+            loadRevenueReport();
+        }
     </script>
 </body>
 </html>
