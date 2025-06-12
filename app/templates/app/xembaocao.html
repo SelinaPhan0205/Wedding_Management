@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xem Báo Cáo - Hệ thống Quản Lý Tiệc Cưới</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-rounded/css/uicons-solid-rounded.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-bold-rounded/css/uicons-bold-rounded.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-bold-straight/css/uicons-bold-straight.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-regular-straight/css/uicons-regular-straight.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-straight/css/uicons-solid-straight.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-chubby/css/uicons-solid-chubby.css'>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            background-color: #eff7ff;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            background-color: #2c3e50;
+            color: white;
+            padding-top: 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-x: hidden;
+            z-index: 1000;
+        }
+        .sidebar.collapsed {
+            width: 70px;
+        }
+        .sidebar h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: 40px;
+            font-size: 22px;
+            font-weight: 700;
+            transition: opacity 0.3s ease;
+            white-space: nowrap;
+        }
+        .sidebar.collapsed h2 {
+            opacity: 0;
+            pointer-events: none;
+            user-select: none;
+        }
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            padding: 14px 24px;
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            transition: background-color 0.3s, padding 0.35s, border-radius 0.3s;
+            border-radius: 12px;
+            margin: 4px 12px;
+        }
+        .sidebar.collapsed a {
+            padding: 14px 15px;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        .sidebar a i {
+            font-size: 22px;
+            width: 24px;
+            height: 24px;
+            display: inline-block;
+        }
+        .sidebar a span {
+            margin-left: 12px;
+            max-width: 180px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: max-width 0.35s, opacity 0.35s;
+        }
+        .sidebar.collapsed a span {
+            max-width: 0;
+            opacity: 0;
+            pointer-events: none;
+            user-select: none;
+            margin-left: 0;
+        }
+        .sidebar a:hover,
+        .sidebar a.active {
+            background-color: #34495e;
+        }
+        .toggle-btn {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            font-size: 20px;
+            cursor: pointer;
+            border-radius: 8px;
+            z-index: 1001;
+            transition: background-color 0.2s;
+        }
+        .toggle-btn:hover {
+            background-color: #34495e;
+        }
+        .content {
+            margin-left: 250px;
+            margin-right: 20px;
+            padding-left: 24px;
+            transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            width: calc(100% - 250px);
+            min-height: 100vh;
+        }
+        .content.collapsed {
+            margin-left: 70px;
+            width: calc(100% - 70px);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .header-section h1 {
+            font-weight: 700;
+            color: #2c3e50;
+            font-size: 1.75rem;
+        }
+        .report-btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .report-btn:hover {
+            filter: brightness(90%);
+        }
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .overview-card {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            text-align: center;
+            background-color: #f8fafc;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .overview-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+        .main-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        .favorites-section {
+            flex: 1;
+            min-width: 300px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .chart-section {
+            flex: 1;
+            min-width: 300px;
+            max-width: 600px;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            background-color: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            .chart-section {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Toggle Button -->
+    <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <h2>Quản lý Tiệc Cưới</h2>
+        <a href="{% url 'trangchu' %}">
+            <i class="fi fi-sr-house-chimney"></i>
+            <span>Trang Chủ</span>
+        </a>
+        <a href="{% url 'quanlytaikhoan' %}">
+            <i class="fi fi-sr-user"></i>
+            <span>Tài Khoản</span>
+        </a>
+        <a href="{% url 'quanlyhoadon' %}">
+            <i class="fi fi-bs-dollar"></i>
+            <span>Hóa Đơn</span>
+        </a>
+        <a href="{% url 'quanlysanh' %}">
+            <i class="fi fi-br-calendar-heart"></i>
+            <span>Sảnh</span>
+        </a>
+        <a href="{% url 'quanlythucdon' %}">
+            <i class="fi fi-sr-restaurant"></i>
+            <span>Thực Đơn</span>
+        </a>
+        <a href="{% url 'quanlydichvu' %}">
+            <i class="fi fi-sr-holding-hand-dinner"></i>
+            <span>Dịch Vụ</span>
+        </a>
+        <a href="{% url 'quanlytieccuoi' %}">
+            <i class="fi fi-rs-rings-wedding"></i>
+            <span>Tiệc Cưới</span>
+        </a>
+        <a href="{% url 'quanlyquydinh' %}">
+            <i class="fi fi-ss-rules"></i>
+            <span>Quy Định</span>
+        </a>
+        <a href="{% url 'xembaocao' %}" class="active">
+            <i class="fi fi-sr-big-data-analytics"></i>
+            <span>Xem Báo Cáo</span>
+        </a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content" id="content">
+        <div class="container">
+            <div class="header-section">
+                <h1>XEM BÁO CÁO</h1>
+            </div>
+
+            <!-- Report Buttons -->
+            <div class="flex justify-center gap-4 mb-8 flex-wrap">
+                <button class="report-btn bg-blue-600 text-white" onclick="loadReport('doanhso')">
+                    <i class="fi fi-sr-search"></i> Báo Cáo Doanh Số
+                </button>
+                <button class="report-btn bg-green-600 text-white" onclick="loadReport('congno')">
+                    <i class="fi fi-sr-document"></i> Báo Cáo Công Nợ
+                </button>
+                <button class="report-btn bg-yellow-600 text-white" onclick="loadReport('thucthu')">
+                    <i class="fi fi-sr-money"></i> Báo Cáo Thực Thu
+                </button>
+            </div>
+
+            <!-- Overview Section -->
+            <div class="overview-grid">
+                <div class="overview-card bg-blue-50">
+                    <div class="text-sm text-gray-600 mb-2">Tổng số tiệc cưới</div>
+                    <div class="text-2xl font-bold text-blue-700" id="totalTiec">24</div>
+                </div>
+                <div class="overview-card bg-green-50">
+                    <div class="text-sm text-gray-600 mb-2">Doanh thu dự kiến</div>
+                    <div class="text-2xl font-bold text-green-700" id="doanhThuDuKien">350,000,000</div>
+                </div>
+                <div class="overview-card bg-yellow-50">
+                    <div class="text-sm text-gray-600 mb-2">Công nợ</div>
+                    <div class="text-2xl font-bold text-yellow-700" id="congNo">70,000,000</div>
+                </div>
+                <div class="overview-card bg-indigo-50">
+                    <div class="text-sm text-gray-600 mb-2">Thực thu</div>
+                    <div class="text-2xl font-bold text-indigo-700" id="thucThu">280,000,000</div>
+                </div>
+            </div>
+
+            <!-- Main Content Layout -->
+            <div class="main-content">
+                <!-- Favorites Section -->
+                <div class="favorites-section">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="font-semibold text-lg mb-4 flex items-center gap-2">
+                            <i class="fi fi-sr-restaurant"></i> Món ăn ưa thích nhất (Tháng 6/2025)
+                        </div>
+                        <div id="topMonAnLoading" class="loading">Đang tải...</div>
+                        <ol id="topMonAn" class="list-decimal ml-5 text-gray-700 space-y-3 hidden"></ol>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="font-semibold text-lg mb-4 flex items-center gap-2">
+                            <i class="fi fi-sr-holding-hand-dinner"></i> Dịch vụ ưa thích nhất (Tháng 6/2025)
+                        </div>
+                        <div id="topDichVuLoading" class="loading">Đang tải...</div>
+                        <ol id="topDichVu" class="list-decimal ml-5 text-gray-700 space-y-3 hidden"></ol>
+                    </div>
+                </div>
+
+                <!-- Hall Usage Chart -->
+                <div class="chart-section">
+                    <div class="font-semibold text-lg mb-4 flex items-center gap-2">
+                        <i class="fi fi-br-calendar-heart"></i> Biểu đồ sử dụng sảnh (Tháng 6/2025)
+                    </div>
+                    <div id="chartSanhsLoading" class="loading">Đang tải...</div>
+                    <div class="chart-container hidden" id="chartSanhsContainer">
+                        <canvas id="chartSanhs"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sidebar toggle logic
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const content = document.getElementById('content');
+            sidebar.classList.toggle('collapsed');
+            content.classList.toggle('collapsed');
+            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+        }
+
+        // API call function
+        async function goiAPI(endpoint) {
+            try {
+                // Thay bằng URL API thực tế của bạn
+                const baseUrl = 'http://localhost:8000/api'; // Adjust to your API base URL
+                const response = await fetch(`${baseUrl}${endpoint}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // Thêm token nếu cần xác thực
+                        // 'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error(`Lỗi API: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error(`Lỗi gọi API ${endpoint}:`, error);
+                // Fallback mock data
+                if (endpoint.includes('/top-mon-an')) {
+                    return [
+                        { ten_mon: "Gỏi ngó sen tôm thịt", so_luong: 12 },
+                        { ten_mon: "Bò nấu tiêu xanh", so_luong: 10 },
+                        { ten_mon: "Soup cua", so_luong: 8 }
+                    ];
+                } else if (endpoint.includes('/top-dich-vu')) {
+                    return [
+                        { ten_dich_vu: "Pháo hoa đêm", so_lan: 14 },
+                        { ten_dich_vu: "MC chuyên nghiệp", so_lan: 11 },
+                        { ten_dich_vu: "Múa lân", so_lan: 9 }
+                    ];
+                } else if (endpoint.includes('/sanh-usage')) {
+                    return [
+                        { ten_sanh: "Sảnh A", phan_tram: 35 },
+                        { ten_sanh: "Sảnh B", phan_tram: 25 },
+                        { ten_sanh: "Sảnh C", phan_tram: 40 }
+                    ];
+                }
+                return [];
+            }
+        }
+
+        // Load top dishes and services
+        async function loadFavorites() {
+            try {
+                const topMonAnLoading = document.getElementById('topMonAnLoading');
+                const topDichVuLoading = document.getElementById('topDichVuLoading');
+                const topMonAnElement = document.getElementById('topMonAn');
+                const topDichVuElement = document.getElementById('topDichVu');
+
+                const [topMonAn, topDichVu] = await Promise.all([
+                    goiAPI('/top-mon-an?month=6&year=2025'),
+                    goiAPI('/top-dich-vu?month=6&year=2025')
+                ]);
+
+                topMonAnElement.innerHTML = topMonAn.slice(0, 3).map(item => `
+                    <li class="flex justify-between items-center">
+                        <span class="truncate max-w-[70%]">${item.ten_mon}</span>
+                        <span class="font-bold text-blue-600">${item.so_luong} lượt</span>
+                    </li>
+                `).join('');
+                topDichVuElement.innerHTML = topDichVu.slice(0, 3).map(item => `
+                    <li class="flex justify-between items-center">
+                        <span class="truncate max-w-[70%]">${item.ten_dich_vu}</span>
+                        <span class="font-bold text-blue-600">${item.so_lan} lượt</span>
+                    </li>
+                `).join('');
+
+                // Hide loading and show data
+                topMonAnLoading.classList.add('hidden');
+                topDichVuLoading.classList.add('hidden');
+                topMonAnElement.classList.remove('hidden');
+                topDichVuElement.classList.remove('hidden');
+            } catch (error) {
+                console.error('Lỗi tải dữ liệu ưa thích:', error);
+                document.getElementById('topMonAnLoading').innerText = 'Lỗi tải dữ liệu';
+                document.getElementById('topDichVuLoading').innerText = 'Lỗi tải dữ liệu';
+            }
+        }
+
+        // Load hall usage chart
+        let chartSanhsInstance = null;
+        async function loadChartSanhs() {
+            try {
+                const loading = document.getElementById('chartSanhsLoading');
+                const container = document.getElementById('chartSanhsContainer');
+                const sanhUsage = await goiAPI('/sanh-usage?month=6&year=2025');
+                const ctx = document.getElementById('chartSanhs').getContext('2d');
+
+                // Xóa biểu đồ cũ nếu có
+                if (chartSanhsInstance) chartSanhsInstance.destroy();
+                chartSanhsInstance = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: sanhUsage.map(s => s.ten_sanh),
+                        datasets: [{
+                            data: sanhUsage.map(s => s.phan_tram),
+                            backgroundColor: ["#60a5fa", "#fbbf24", "#34d399"],
+                            borderColor: ["#ffffff", "#ffffff", "#ffffff"],
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        plugins: {
+                            legend: {
+                                position: "bottom",
+                                labels: {
+                                    font: {
+                                        size: 14,
+                                        family: "'Inter', sans-serif"
+                                    },
+                                    padding: 20,
+                                    color: "#2c3e50"
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: "#2c3e50",
+                                titleFont: {
+                                    size: 14,
+                                    family: "'Inter', sans-serif"
+                                },
+                                bodyFont: {
+                                    size: 12,
+                                    family: "'Inter', sans-serif"
+                                },
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.label || '';
+                                        let value = context.raw || 0;
+                                        return `${label}: ${value}%`;
+                                    }
+                                }
+                            }
+                        },
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: {
+                            duration: 1000,
+                            easing: "easeOutQuart"
+                        }
+                    }
+                });
+
+                // Hide loading and show chart
+                loading.classList.add('hidden');
+                container.classList.remove('hidden');
+            } catch (error) {
+                console.error('Lỗi tải biểu đồ sảnh:', error);
+                document.getElementById('chartSanhsLoading').innerText = 'Lỗi tải biểu đồ';
+            }
+        }
+
+        // Load report data (placeholder)
+        function loadReport(type) {
+            alert(`Đang tải báo cáo ${type}! (Chưa triển khai đầy đủ)`);
+            // Add actual report loading logic here
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Restore sidebar state
+            const collapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            if (collapsed) {
+                document.getElementById('sidebar').classList.add('collapsed');
+                document.getElementById('content').classList.add('collapsed');
+            }
+
+            await Promise.all([
+                loadFavorites(),
+                loadChartSanhs()
+            ]);
+        });
+    </script>
+</body>
+</html>

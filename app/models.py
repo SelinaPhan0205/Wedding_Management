@@ -18,7 +18,7 @@ class TaiKhoan(models.Model):
         choices=[('admin', 'Admin'), ('user', 'User')],
         default='user'
     )
-    trangthai = models.CharField(max_length=20, choices=TRANG_THAI_CHOICES, default='Hoạt động')
+    trangthai = models.CharField(max_length=20, choices=TRANG_THAI_CHOICES, default='Active')
 
     def __str__(self):
         return self.user.username
