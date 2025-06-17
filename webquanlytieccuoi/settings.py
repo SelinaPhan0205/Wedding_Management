@@ -39,7 +39,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'Backend.urls'
+ROOT_URLCONF = 'webquanlytieccuoi.urls'
 
 TEMPLATES = [
     {
@@ -57,15 +57,15 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'Backend.wsgi.application'
+WSGI_APPLICATION = 'webquanlytieccuoi.wsgi.application'
 
 # Database
 DATABASES = {
     'default': {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": "Wedding_Management",
+        "NAME": "weddingdb",
         "USER": "postgres",
-        "PASSWORD": "8436530leo",
+        "PASSWORD": "NVTS220205s",
         "HOST": "localhost",
         "PORT": "5432",  # Thêm cổng mặc định của PostgreSQL
     }
