@@ -89,7 +89,7 @@ class TiecCuoi(models.Model):
 
 class HoaDon(models.Model):
     TRANG_THAI_CHOICES = [
-        ('Chưa đến hạn', 'Chưa đến hạn'),
+        ('Chưa Thanh Toán', 'Chưa Thanh Toán'),
         ('Đã thanh toán', 'Đã thanh toán'),
         ('Trễ hạn', 'Trễ hạn'),
     ]
@@ -97,7 +97,7 @@ class HoaDon(models.Model):
     tiec_cuoi = models.ForeignKey(TiecCuoi, on_delete=models.CASCADE)
     ngay_thanh_toan = models.DateField()
     so_ngay_tre = models.IntegerField(default=0)
-    trang_thai = models.CharField(max_length=30, choices=TRANG_THAI_CHOICES, default='Chưa đến hạn')
+    trang_thai = models.CharField(max_length=30, choices=TRANG_THAI_CHOICES, default='Chưa Thanh Toán')
     tien_phat = models.FloatField(default=0)
 
     def __str__(self):

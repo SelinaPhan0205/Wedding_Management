@@ -186,3 +186,23 @@ class TiecCuoiSerializer(serializers.ModelSerializer):
                     thanh_tien=dich_vu_obj.don_gia * so_luong
                 )
         return instance
+    
+class HoaDonSerializer(serializers.ModelSerializer):
+    # Trả về mã tiệc và các trường liên quan để frontend dễ dùng
+    ma_hoa_don = serializers.IntegerField(source='id', read_only=True)
+    ma_tiec = serializers.IntegerField(source='tiec_cuoi.id', read_only=True)
+    tong_tien = serializers.FloatField(source='tiec_cuoi.tong_tien_tiec_cuoi', read_only=True)
+    tien_coc = serializers.FloatField(source='tiec_cuoi.tien_dat_coc', read_only=True)
+    tien_con_lai = serializers.SerializerMethodField()
+
+    class Meta:
+        model = HoaDon
+        fields = [
+            'id', 'ma_hoa_don', 'ma_tiec', 'ngay_thanh_toan', 'so_ngay_tre',
+            'trang_thai', 'tien_phat', 'tong_tien', 'tien_coc', 'tien_con_lai', 'tiec_cuoi'
+        ]
+
+    def get_tien_con_lai(self, obj):
+        tong = obj.tiec_cuoi.tong_tien_tiec_cuoi if obj.tiec_cuoi else 0
+        coc = obj.tiec_cuoi.tien_dat_coc if obj.tiec_cuoi else 0
+        return tong - coc

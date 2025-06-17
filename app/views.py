@@ -328,3 +328,36 @@ class TiecCuoiViewSet(viewsets.ModelViewSet):
     def count(self, request):
         queryset = self.get_queryset()
         return Response({'total': queryset.count()})
+    
+class HoaDonViewSet(viewsets.ModelViewSet):
+    queryset = HoaDon.objects.all().select_related('tiec_cuoi')
+    serializer_class = HoaDonSerializer
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset().order_by('-ngay_thanh_toan')
+        search_query = request.query_params.get('search', '').strip().lower()
+        if search_query:
+            queryset = queryset.filter(
+                tiec_cuoi__ten_chu_re__icontains=search_query
+            ) | queryset.filter(
+                tiec_cuoi__ten_co_dau__icontains=search_query
+            ) | queryset.filter(
+                tiec_cuoi__id__icontains=search_query
+            ) | queryset.filter(
+                id__icontains=search_query
+            )
+        # Phân trang
+        page = int(request.query_params.get('page', 1))
+        limit = int(request.query_params.get('limit', 8))
+        paginator = Paginator(queryset, limit)
+        page_obj = paginator.page(page)
+        serializer = self.get_serializer(page_obj, many=True)
+        return Response({
+            'data': serializer.data,
+            'total': paginator.count
+        })
+
+    @action(detail=False, methods=['get'], url_path='count')
+    def count(self, request):
+        queryset = self.get_queryset()
+        return Response({'total': queryset.count()})
