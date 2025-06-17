@@ -43,9 +43,10 @@ class TaiKhoanSerializer(serializers.ModelSerializer):
         read_only_fields = ['user']
 
     def create(self, validated_data):
-        username = validated_data.pop('username')
-        password = validated_data.pop('password')
-        email = validated_data.pop('email', '')
+        username = validated_data.pop('username').strip()
+        password = validated_data.pop('password').strip()
+        email = validated_data.pop('email', '').strip()
+        validated_data['hovaten'] = validated_data.get('hovaten', '').strip()
 
         # Tìm hoặc tạo User
         user, user_created = User.objects.get_or_create(username=username, defaults={
@@ -65,14 +66,27 @@ class TaiKhoanSerializer(serializers.ModelSerializer):
         return tai_khoan
 
     def update(self, instance, validated_data):
-        validated_data.pop('username', None)
-        validated_data.pop('password', None)
-        validated_data.pop('email', None)
+        username = validated_data.pop('username', None)
+        password = validated_data.pop('password', None)
+        email = validated_data.pop('email', None)
 
+        # Cập nhật TaiKhoan
         for attr in ['hovaten', 'sodienthoai', 'vaitro', 'trangthai']:
             setattr(instance, attr, validated_data.get(attr, getattr(instance, attr)))
         instance.save()
+
+        # Cập nhật User nếu có dữ liệu
+        user = instance.user
+        if username:
+            user.username = username
+        if email:
+            user.email = email
+        if password:
+            user.set_password(password)
+        user.save()
+
         return instance
+
 
         
 class DichVuSerializer(serializers.ModelSerializer):
