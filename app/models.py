@@ -99,6 +99,7 @@ class HoaDon(models.Model):
     so_ngay_tre = models.IntegerField(default=0)
     trang_thai = models.CharField(max_length=30, choices=TRANG_THAI_CHOICES, default='Chưa Thanh Toán')
     tien_phat = models.FloatField(default=0)
+    so_luong_ban = models.IntegerField(default=0)
 
     def __str__(self):
         return f"HĐ - {self.tiec_cuoi}"

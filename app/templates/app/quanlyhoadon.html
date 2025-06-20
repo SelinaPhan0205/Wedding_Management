@@ -198,12 +198,32 @@
         tr:last-child td {
             border-bottom: none;
         }
+        table th:nth-child(1),
+        table th:nth-child(2),
+        table td:nth-child(1),
+        table td:nth-child(2) {
+            width: 70px;
+            min-width: 60px;
+            max-width: 90px;
+            text-align: center;
+            padding-left: 0;
+            padding-right: 0;
+        }
         .action-button {
             padding: 0.4rem 0.8rem;
             border-radius: 6px;
             font-size: 0.85rem;
             font-weight: 500;
             transition: background-color 0.2s, transform 0.1s;
+            margin-right: 0.2rem;
+        }
+        .view-button {
+            background-color: #e3ecfd;
+            color: #2c3e50;
+        }
+        .view-button:hover {
+            background-color: #d4e2fc;
+            transform: translateY(-1px);
         }
         .edit-button {
             background-color: #e3ecfd;
@@ -216,11 +236,17 @@
         .delete-button {
             background-color: rgb(241, 215, 215);
             color: #dc2626;
-            margin-left: 0.5rem;
         }
         .delete-button:hover {
             background-color: #fecaca;
             transform: translateY(-1px);
+        }
+        .autocomplete-item {
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+        .autocomplete-item:hover {
+            background: #f3f4f6;
         }
         .pagination-container {
             display: flex;
@@ -260,6 +286,29 @@
             margin: 0;
             font-size: 2rem;
             display: inline-block;
+        }
+        .autocomplete-item {
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+        .autocomplete-item:hover {
+            background: #f3f4f6;
+        }
+        .autocomplete-list {
+            position: absolute;
+            z-index: 10;
+            background: #fff;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            margin-top: 2px;
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .modal-content {
+            max-height: 90vh;
+            overflow-y: auto;
         }
     </style>
 </head>
@@ -361,10 +410,11 @@
     <div id="modalHoaDon" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
         <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
             <h2 id="modalTitleHoaDon" class="text-2xl font-bold mb-6 text-gray-800">Thêm Hóa Đơn Mới</h2>
-            <form id="formHoaDon">
-                <div class="mb-4">
-                    <label for="maTiec" class="block text-gray-700 text-sm font-medium mb-2">Mã Số Tiệc:</label>
-                    <input type="text" id="maTiec" name="maTiec" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+            <form id="formHoaDon" class="space-y-4" autocomplete="off">
+                <div class="relative mb-4">
+                    <label for="maTiecCuoi" class="block text-gray-700 text-sm font-medium mb-2">Mã Số Tiệc:</label>
+                    <input type="text" id="maTiecCuoi" name="maTiecCuoi" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Nhập hoặc chọn mã số tiệc..." required autocomplete="off">
+                    <div id="maTiecAutocomplete" class="autocomplete-list hidden"></div>
                 </div>
                 <div class="mb-4">
                     <label for="soLuongBan" class="block text-gray-700 text-sm font-medium mb-2">Số Lượng Bàn:</label>
@@ -378,28 +428,79 @@
         </div>
     </div>
 
-    <div id="modalXemHoaDon" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
-        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
-            <h2 id="modalTitleXemHoaDon" class="text-2xl font-bold mb-6 text-gray-800">Xem Hóa Đơn</h2>
-            <div id="chiTietHoaDon" class="space-y-4">
-                <p><strong>Mã Hóa Đơn:</strong> <span id="xemMaHoaDon"></span></p>
-                <p><strong>Mã Số Tiệc:</strong> <span id="xemMaTiec"></span></p>
-                <p><strong>Ngày Thanh Toán:</strong> <span id="xemNgayThanhToan"></span></p>
-                <p><strong>Tổng Tiền:</strong> <span id="xemTongTien"></span> VNĐ</p>
-                <p><strong>Tiền Cọc:</strong> <span id="xemTienCoc"></span> VNĐ</p>
-                <p><strong>Tiền Còn Lại:</strong> <span id="xemTienConLai"></span> VNĐ</p>
-                <p><strong>Số Ngày Trễ:</strong> <span id="xemSoNgayTre"></span></p>
-                <p><strong>Tiền Phạt:</strong> <span id="xemTienPhat"></span> VNĐ</p>
-                <p><strong>Trạng Thái:</strong> <span id="xemTrangThai"></span></p>
+    <!-- Modal xem hóa đơn -->
+    <div class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 hidden" id="modalXemHoaDon">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-2xl modal-content" style="max-height:90vh;overflow-y:auto;">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">Chi Tiết Hóa Đơn</h2>
+            <div class="grid grid-cols-2 gap-x-8 gap-y-4 mb-6">
+                <div>
+                    <span class="text-gray-500">Tên chú rể:</span>
+                    <span class="font-medium text-gray-900 ml-1" id="bmTenChuRe"></span>
+                </div>
+                <div>
+                    <span class="text-gray-500">Tên cô dâu:</span>
+                    <span class="font-medium text-gray-900 ml-1" id="bmTenCoDau"></span>
+                </div>
+                <div>
+                    <span class="text-gray-500">Ngày thanh toán:</span>
+                    <span class="font-medium text-gray-900 ml-1" id="bmNgayThanhToan"></span>
+                </div>
+                <div>
+                    <span class="text-gray-500">Số lượng bàn:</span>
+                    <span class="font-medium text-gray-900 ml-1" id="bmSoLuongBan"></span>
+                </div>
+                <div>
+                    <span class="text-gray-500">Đơn giá bàn:</span>
+                    <span class="font-medium text-gray-900 ml-1" id="bmDonGiaBan"></span>
+                </div>
+                <div>
+                    <span class="text-gray-500">Tổng tiền bàn:</span>
+                    <span class="font-medium text-gray-900 ml-1" id="bmTongTienBan"></span>
+                </div>
             </div>
-            <div class="flex justify-end mt-6">
+            <h3 class="text-xl font-semibold mb-4 mt-8 flex items-center gap-2">
+                Dịch vụ
+            </h3>
+            <div class="table-container mb-4" id="bangDichVuSection" style="display: none;">
+                <table class="w-full bg-white rounded-lg overflow-hidden">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th class="text-center pl-8 pr-2 py-3 font-semibold text-gray-600 w-12">STT</th>
+                            <th class="text-center px-2 py-3 font-semibold text-gray-600 w-2/5 min-w-[220px]">Tên dịch vụ</th>
+                            <th class="text-center px-2 py-3 font-semibold text-gray-600 w-32">Đơn giá</th>
+                            <th class="text-center px-2 py-3 font-semibold text-gray-600 w-8 min-w-[40px] max-w-[56px]">Số lượng</th>
+                            <th class="text-center pl-2 pr-8 py-3 font-semibold text-gray-600 w-32">Thành tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bmBangDichVu" class="divide-y divide-gray-200"></tbody>
+                </table>
+            </div>
+            <div class="grid grid-cols-2 gap-x-8 gap-y-2 mb-2">
+                <div>
+                    <span class="text-gray-500">Tổng tiền dịch vụ:</span>
+                    <span class="font-medium text-gray-900 ml-1" id="bmTongTienDichVu"></span>
+                </div>
+                <div>
+                    <span class="text-gray-500">Tổng tiền hóa đơn:</span>
+                    <span class="font-medium text-gray-900 ml-1" id="bmTongTienHoaDon"></span>
+                </div>
+                <div>
+                    <span class="text-gray-500">Tiền đặt cọc:</span>
+                    <span class="font-medium text-gray-900 ml-1" id="bmTienCoc"></span>
+                </div>
+                <div>
+                    <span class="text-gray-500">Còn lại:</span>
+                    <span class="font-medium text-gray-900 ml-1" id="bmTienConLai"></span>
+                </div>
+            </div>
+            <div class="flex justify-end gap-3 mt-6">
                 <button type="button" onclick="dongModalXemHoaDon()" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-100 transition">Đóng</button>
             </div>
         </div>
     </div>
 
     <div id="modalSuaHoaDon" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
-        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md" style="max-height: 90vh; overflow-y: auto;">
             <h2 id="modalTitleSuaHoaDon" class="text-2xl font-bold mb-6 text-gray-800">Chỉnh Sửa Hóa Đơn</h2>
             <form id="formSuaHoaDon">
                 <div class="mb-4">
@@ -412,7 +513,7 @@
                 </div>
                 <div class="mb-4">
                     <label for="suaNgayThanhToan" class="block text-gray-700 text-sm font-medium mb-2">Ngày Thanh Toán:</label>
-                    <input type="date" id="suaNgayThanhToan" name="suaNgayThanhToan" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                    <input type="text" id="suaNgayThanhToan" name="suaNgayThanhToan" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="dd/mm/yyyy" required>
                 </div>
                 <div class="mb-4">
                     <label for="suaTongTien" class="block text-gray-700 text-sm font-medium mb-2">Tổng Tiền:</label>
@@ -430,8 +531,8 @@
                     <label for="suaTrangThai" class="block text-gray-700 text-sm font-medium mb-2">Trạng Thái:</label>
                     <select id="suaTrangThai" name="suaTrangThai" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
                         <option value="Chưa Thanh Toán">Chưa Thanh Toán</option>
-                        <option value="Đã Thanh Toán">Đã Thanh Toán</option>
-                        <option value="Trễ Hạn">Trễ Hạn</option>
+                        <option value="Đã thanh toán">Đã Thanh Toán</option>
+                        <option value="Trễ hạn">Trễ Hạn</option>
                     </select>
                 </div>
                 <div class="flex justify-end gap-3">
@@ -460,6 +561,8 @@
         const formSuaHoaDon = document.getElementById('formSuaHoaDon');
         const paginationControlsHoaDon = document.getElementById('paginationControlsHoaDon');
         const searchHoaDonInput = document.getElementById('searchHoaDonInput');
+        const maTiecInput = document.getElementById('maTiecCuoi');
+        const autocompleteList = document.getElementById('maTiecAutocomplete');
         let isEditModeHoaDon = false;
         let currentHoaDonId = null;
         let currentPageHoaDon = 1;
@@ -528,13 +631,29 @@
                     const ngayHienTai = new Date();
                     danhSachHoaDon.forEach((hoadon, index) => {
                         const ngayThanhToan = hoadon.ngay_thanh_toan ? new Date(hoadon.ngay_thanh_toan) : null;
-                        const soNgayTre = ngayThanhToan && ngayThanhToan < ngayHienTai ? Math.ceil((ngayHienTai - ngayThanhToan) / (1000 * 60 * 60 * 24)) : 0;
+                        let ngayDaiTiec = null;
+                        if (hoadon.tiec_cuoi && hoadon.tiec_cuoi.ngay_dai_tiec) {
+                            ngayDaiTiec = new Date(hoadon.tiec_cuoi.ngay_dai_tiec.split('-').reverse().join('-'));
+                        }
+                        let soNgayTre = 0;
+                        if (ngayThanhToan && ngayDaiTiec && ngayThanhToan > ngayDaiTiec) {
+                            soNgayTre = Math.ceil((ngayThanhToan - ngayDaiTiec) / (1000 * 60 * 60 * 24));
+                        }
                         const tienPhat = soNgayTre > 0 ? soNgayTre * 50000 : 0;
+                        let ngayHienThi = '';
+                        if (hoadon.ngay_thanh_toan) {
+                            const parts = hoadon.ngay_thanh_toan.split('-');
+                            if (parts.length === 3) {
+                                ngayHienThi = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                            } else {
+                                ngayHienThi = hoadon.ngay_thanh_toan;
+                            }
+                        }
                         const row = document.createElement('tr');
                         row.innerHTML = `
                             <td>${hoadon.ma_hoa_don || ''}</td>
                             <td>${hoadon.ma_tiec || ''}</td>
-                            <td>${hoadon.ngay_thanh_toan || 'Chưa có'}</td>
+                            <td>${ngayHienThi || 'Chưa có'}</td>
                             <td>${hoadon.tong_tien || 0} VNĐ</td>
                             <td>${hoadon.tien_coc || 0} VNĐ</td>
                             <td>${hoadon.tien_con_lai || 0} VNĐ</td>
@@ -542,9 +661,11 @@
                             <td>${tienPhat} VNĐ</td>
                             <td>${hoadon.trang_thai || 'Chưa Thanh Toán'}</td>
                             <td>
-                                <button class="action-button edit-button" onclick="xemHoaDon(${hoadon.id})">Xem</button>
-                                <button class="action-button edit-button" onclick="suaHoaDon(${hoadon.id})">Sửa</button>
-                                <button class="action-button delete-button" onclick="xoaHoaDon(${hoadon.id})">Xóa</button>
+                                <div style="display: flex; gap: 0.05rem;">
+                                    <button class="action-button view-button" onclick="xemHoaDon(${hoadon.id})">Xem</button>
+                                    <button class="action-button edit-button" onclick="suaHoaDon(${hoadon.id})">Sửa</button>
+                                    <button class="action-button delete-button" onclick="xoaHoaDon(${hoadon.id})">Xóa</button>
+                                </div>
                             </td>
                         `;
                         danhSachHoaDonElement.appendChild(row);
@@ -617,20 +738,68 @@
                 const hoadon = await goiAPI('GET', `/api/hoadon/${id}/`);
                 const ngayHienTai = new Date();
                 const ngayThanhToan = hoadon.ngay_thanh_toan ? new Date(hoadon.ngay_thanh_toan) : null;
-                const soNgayTre = ngayThanhToan && ngayThanhToan < ngayHienTai ? Math.ceil((ngayHienTai - ngayThanhToan) / (1000 * 60 * 60 * 24)) : 0;
+                let ngayDaiTiec = null;
+                if (hoadon.tiec_cuoi && hoadon.tiec_cuoi.ngay_dai_tiec) {
+                    ngayDaiTiec = new Date(hoadon.tiec_cuoi.ngay_dai_tiec.split('-').reverse().join('-'));
+                }
+                let soNgayTre = 0;
+                if (ngayThanhToan && ngayDaiTiec && ngayThanhToan > ngayDaiTiec) {
+                    soNgayTre = Math.ceil((ngayThanhToan - ngayDaiTiec) / (1000 * 60 * 60 * 24));
+                }
                 const tienPhat = soNgayTre > 0 ? soNgayTre * 50000 : 0;
 
-                document.getElementById('xemMaHoaDon').textContent = hoadon.ma_hoa_don || '';
-                document.getElementById('xemMaTiec').textContent = hoadon.ma_tiec || '';
-                document.getElementById('xemNgayThanhToan').textContent = hoadon.ngay_thanh_toan || 'Chưa có';
-                document.getElementById('xemTongTien').textContent = hoadon.tong_tien || 0;
-                document.getElementById('xemTienCoc').textContent = hoadon.tien_coc || 0;
-                document.getElementById('xemTienConLai').textContent = hoadon.tien_con_lai || 0;
-                document.getElementById('xemSoNgayTre').textContent = soNgayTre;
-                document.getElementById('xemTienPhat').textContent = tienPhat;
-                document.getElementById('xemTrangThai').textContent = hoadon.trang_thai || 'Chưa Thanh Toán';
+                let tiec = hoadon.tiec_cuoi;
 
-                modalXemHoaDon.classList.remove('hidden');
+                // Nếu chỉ là id, gọi API lấy chi tiết tiệc cưới
+                if (tiec && typeof tiec === 'number') {
+                    tiec = await goiAPI('GET', `/api/tieccuoi/${tiec}/`);
+                }
+
+                // Tính tổng tiền bàn nếu có
+                const soLuongBan = hoadon.so_luong_ban || 0;
+                const donGiaBan = tiec.don_gia_ban || 0;
+                const tongTienBan = soLuongBan * donGiaBan;
+
+                // Hiển thị thông tin hóa đơn theo bố cục 2 cột
+                document.getElementById('bmTenChuRe').textContent = tiec.ten_chu_re || '';
+                document.getElementById('bmTenCoDau').textContent = tiec.ten_co_dau || '';
+                let ngayThanhToanStr = hoadon.ngay_thanh_toan || '';
+                if (ngayThanhToanStr && ngayThanhToanStr.includes('-')) {
+                    const parts = ngayThanhToanStr.split('-');
+                    if (parts.length === 3) {
+                        ngayThanhToanStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                    }
+                }
+                document.getElementById('bmNgayThanhToan').textContent = ngayThanhToanStr || 'Chưa có';
+                document.getElementById('bmSoLuongBan').textContent = soLuongBan;
+                document.getElementById('bmDonGiaBan').textContent = donGiaBan ? donGiaBan.toLocaleString('vi-VN') + ' VNĐ' : '';
+                document.getElementById('bmTongTienBan').textContent = tongTienBan ? tongTienBan.toLocaleString('vi-VN') + ' VNĐ' : '';
+
+                // Render bảng dịch vụ
+                const dichVuBody = document.getElementById('bmBangDichVu');
+                dichVuBody.innerHTML = '';
+                let stt = 1;
+                let tongTienDichVu = 0;
+                (hoadon.dich_vu || []).forEach(dv => {
+                    tongTienDichVu += dv.don_gia * dv.so_luong;
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="pl-8 pr-2 py-4 w-12 text-center">${stt++}</td>
+                        <td class="px-2 py-4 w-2/5 min-w-[220px] text-left">${dv.ten_dich_vu}</td>
+                        <td class="px-2 py-4 w-32 text-right">${dv.don_gia.toLocaleString('vi-VN')} VNĐ</td>
+                        <td class="px-2 py-4 w-8 min-w-[40px] max-w-[56px] text-center">${dv.so_luong}</td>
+                        <td class="pl-2 pr-8 py-4 w-32 text-right">${(dv.so_luong * dv.don_gia).toLocaleString('vi-VN')} VNĐ</td>
+                    `;
+                    dichVuBody.appendChild(row);
+                });
+                document.getElementById('bmTongTienDichVu').textContent = tongTienDichVu.toLocaleString('vi-VN') + ' VNĐ';
+                document.getElementById('bmTongTienHoaDon').textContent = (hoadon.tong_tien || 0).toLocaleString('vi-VN') + ' VNĐ';
+                document.getElementById('bmTienCoc').textContent = (hoadon.tien_coc || 0).toLocaleString('vi-VN') + ' VNĐ';
+                document.getElementById('bmTienConLai').textContent = (hoadon.tien_con_lai || 0).toLocaleString('vi-VN') + ' VNĐ';
+                document.getElementById('bangDichVuSection').style.display = '';
+
+                // Hiện modal
+                document.getElementById('modalXemHoaDon').classList.remove('hidden');
             } catch (error) {
                 console.error('Lỗi lấy thông tin hóa đơn:', error);
             }
@@ -644,7 +813,16 @@
                 document.getElementById('modalTitleSuaHoaDon').textContent = 'Chỉnh Sửa Hóa Đơn';
                 document.getElementById('suaMaTiec').value = hoadon.ma_tiec || '';
                 document.getElementById('suaSoLuongBan').value = hoadon.so_luong_ban || 0;
-                document.getElementById('suaNgayThanhToan').value = hoadon.ngay_thanh_toan || '';
+
+                let ngayThanhToanInput = hoadon.ngay_thanh_toan || '';
+                if (ngayThanhToanInput && ngayThanhToanInput.includes('-')) {
+                    const parts = ngayThanhToanInput.split('-');
+                    if (parts.length === 3) {
+                        ngayThanhToanInput = `${parts[2]}/${parts[1]}/${parts[0]}`; // dd/mm/yyyy
+                    }
+                }
+                document.getElementById('suaNgayThanhToan').value = ngayThanhToanInput;
+
                 document.getElementById('suaTongTien').value = hoadon.tong_tien || 0;
                 document.getElementById('suaTienCoc').value = hoadon.tien_coc || 0;
                 document.getElementById('suaTienConLai').value = hoadon.tien_con_lai || 0;
@@ -660,7 +838,7 @@
         }
 
         function dongModalXemHoaDon() {
-            modalXemHoaDon.classList.add('hidden');
+            document.getElementById('modalXemHoaDon').classList.add('hidden');
         }
 
         function dongModalSuaHoaDon() {
@@ -670,7 +848,7 @@
         formHoaDon.addEventListener('submit', async function(event) {
             event.preventDefault();
             const newHoaDonData = {
-                ma_tiec: document.getElementById('maTiec').value,
+                tiec_cuoi: maTiecInput.value,
                 so_luong_ban: parseInt(document.getElementById('soLuongBan').value),
                 ngay_thanh_toan: new Date().toISOString().split('T')[0],
                 tong_tien: parseInt(document.getElementById('soLuongBan').value) * 1000000,
@@ -693,10 +871,21 @@
 
         formSuaHoaDon.addEventListener('submit', async function(event) {
             event.preventDefault();
+            let ngayThanhToanStr = document.getElementById('suaNgayThanhToan').value;
+            let ngayThanhToanServer = '';
+            if (ngayThanhToanStr && ngayThanhToanStr.includes('/')) {
+                const parts = ngayThanhToanStr.split('/');
+                if (parts.length === 3) {
+                    ngayThanhToanServer = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                }
+            } else {
+                ngayThanhToanServer = ngayThanhToanStr;
+            }
+
             const updatedHoaDonData = {
-                ma_tiec: document.getElementById('suaMaTiec').value,
+                tiec_cuoi: document.getElementById('suaMaTiec').value,
                 so_luong_ban: parseInt(document.getElementById('suaSoLuongBan').value),
-                ngay_thanh_toan: document.getElementById('suaNgayThanhToan').value,
+                ngay_thanh_toan: ngayThanhToanServer,
                 tong_tien: parseInt(document.getElementById('suaTongTien').value),
                 tien_coc: parseInt(document.getElementById('suaTienCoc').value),
                 tien_con_lai: parseInt(document.getElementById('suaTienConLai').value),
@@ -731,10 +920,79 @@
             }
         }
 
+        let danhSachTiecCuoi = [];
+
+        async function layDanhSachTiecCuoi() {
+            try {
+                // Sửa lại đường dẫn API nếu cần
+                const res = await fetch('/api/tieccuoi/?limit=1000');
+                const data = await res.json();
+                danhSachTiecCuoi = data.data || data || [];
+            } catch (e) {
+                danhSachTiecCuoi = [];
+            }
+        }
+
+        layDanhSachTiecCuoi();
+
+        if (maTiecInput) {
+            maTiecInput.addEventListener('focus', function() {
+                hienAutocompleteMaTiec('');
+            });
+            maTiecInput.addEventListener('input', function(e) {
+                hienAutocompleteMaTiec(e.target.value);
+            });
+        }
+
+        function hienAutocompleteMaTiec(query) {
+            if (!autocompleteList) return;
+            autocompleteList.innerHTML = '';
+            const filtered = danhSachTiecCuoi.filter(tiec =>
+                tiec.id.toString().includes(query) ||
+                (tiec.ten_chu_re && tiec.ten_chu_re.toLowerCase().includes(query.toLowerCase())) ||
+                (tiec.ten_co_dau && tiec.ten_co_dau.toLowerCase().includes(query.toLowerCase()))
+            );
+            filtered.forEach(tiec => {
+                const item = document.createElement('div');
+                item.classList.add('autocomplete-item');
+                item.textContent = `${tiec.id} - ${tiec.ten_chu_re} & ${tiec.ten_co_dau}`;
+                item.onclick = () => {
+                    maTiecInput.value = tiec.id;
+                    autocompleteList.classList.add('hidden');
+                };
+                autocompleteList.appendChild(item);
+            });
+            if (filtered.length > 0) {
+                autocompleteList.classList.remove('hidden');
+            } else {
+                autocompleteList.classList.add('hidden');
+            }
+        }
+
+        // Ẩn autocomplete khi click ra ngoài
+        document.addEventListener('click', function(event) {
+            if (autocompleteList && !autocompleteList.contains(event.target) && event.target !== maTiecInput) {
+                autocompleteList.classList.add('hidden');
+            }
+        });
+
+
         searchHoaDonInput.addEventListener('input', function(event) {
             currentPageHoaDon = 1;
             hienThiDanhSachHoaDon(event.target.value);
         });
+
+        function toggleBangDichVu() {
+            const section = document.getElementById('bangDichVuSection');
+            const svgIcon = document.getElementById('svgIconBangDichVu');
+            if (section.style.display === 'none') {
+                section.style.display = '';
+                svgIcon.style.transform = 'rotate(0deg)';
+            } else {
+                section.style.display = 'none';
+                svgIcon.style.transform = 'rotate(-90deg)';
+            }
+        }
 
         document.addEventListener('DOMContentLoaded', async () => {
             console.log("Đang tải danh sách hóa đơn");
