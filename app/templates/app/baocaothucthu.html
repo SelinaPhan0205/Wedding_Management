@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💵 Báo Cáo Thực Thu - Hệ thống Quản Lý Tiệc Cưới</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-rounded/css/uicons-solid-rounded.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-bold-rounded/css/uicons-bold-rounded.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-bold-straight/css/uicons-bold-straight.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-regular-straight/css/uicons-regular-straight.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-straight/css/uicons-solid-straight.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-chubby/css/uicons-solid-chubby.css'>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            background-color: #eff7ff;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            background-color: #2c3e50;
+            color: white;
+            padding-top: 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-x: hidden;
+            z-index: 1000;
+        }
+        .sidebar.collapsed {
+            width: 70px;
+        }
+        .sidebar h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: 40px;
+            font-size: 22px;
+            font-weight: 700;
+            transition: opacity 0.3s ease;
+            white-space: nowrap;
+        }
+        .sidebar.collapsed h2 {
+            opacity: 0;
+            pointer-events: none;
+            user-select: none;
+        }
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            padding: 14px 24px;
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            transition: background-color 0.3s, padding 0.35s, border-radius 0.3s;
+            border-radius: 12px;
+            margin: 4px 12px;
+        }
+        .sidebar.collapsed a {
+            padding: 14px 15px;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        .sidebar a i {
+            font-size: 22px;
+            width: 24px;
+            height: 24px;
+            display: inline-block;
+        }
+        .sidebar a span {
+            margin-left: 12px;
+            max-width: 180px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: max-width 0.35s, opacity 0.35s;
+        }
+        .sidebar.collapsed a span {
+            max-width: 0;
+            opacity: 0;
+            pointer-events: none;
+            user-select: none;
+            margin-left: 0;
+        }
+        .sidebar a:hover,
+        .sidebar a.active {
+            background-color: #34495e;
+        }
+        .toggle-btn {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            font-size: 20px;
+            cursor: pointer;
+            border-radius: 8px;
+            z-index: 1001;
+            transition: background-color 0.2s;
+        }
+        .toggle-btn:hover {
+            background-color: #34495e;
+        }
+        .content {
+            margin-left: 250px;
+            margin-right: 20px;
+            padding-left: 24px;
+            transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            width: calc(100% - 250px);
+            min-height: 100vh;
+        }
+        .content.collapsed {
+            margin-left: 70px;
+            width: calc(100% - 70px);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .header-section h1 {
+            font-weight: 700;
+            color: #2c3e50;
+            font-size: 1.75rem;
+        }
+        .report-btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .report-btn:hover {
+            filter: brightness(90%);
+        }
+        .filter-section {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+        .filter-section select, .filter-section input {
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            background-color: #f9fafb;
+            font-size: 0.875rem;
+            min-width: 150px;
+        }
+        .chart-section {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            background-color: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
+        .table-section {
+            max-height: 400px;
+            overflow-y: auto;
+            border-radius: 0.75rem;
+            background-color: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .table-section table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .table-section th, .table-section td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .table-section th {
+            background-color: #f9fafb;
+            font-weight: 600;
+            color: #2c3e50;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .table-section tr:last-child td {
+            font-weight: 600;
+            background-color: #f9fafb;
+        }
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        @media (max-width: 768px) {
+            .filter-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .filter-section select, .filter-section button, .filter-section input {
+                width: 100%;
+            }
+            .table-section {
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Toggle Button -->
+    <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <h2>Quản lý Tiệc Cưới</h2>
+        <a href="{% url 'trangchu' %}">
+            <i class="fi fi-sr-house-chimney"></i>
+            <span>Trang Chủ</span>
+        </a>
+        <a href="{% url 'quanlytaikhoan' %}">
+            <i class="fi fi-sr-user"></i>
+            <span>Tài Khoản</span>
+        </a>
+        <a href="{% url 'quanlyhoadon' %}">
+            <i class="fi fi-bs-dollar"></i>
+            <span>Hóa Đơn</span>
+        </a>
+        <a href="{% url 'quanlysanh' %}">
+            <i class="fi fi-br-calendar-heart"></i>
+            <span>Sảnh</span>
+        </a>
+        <a href="{% url 'quanlythucdon' %}">
+            <i class="fi fi-sr-restaurant"></i>
+            <span>Thực Đơn</span>
+        </a>
+        <a href="{% url 'quanlydichvu' %}">
+            <i class="fi fi-sr-holding-hand-dinner"></i>
+            <span>Dịch Vụ</span>
+        </a>
+        <a href="{% url 'quanlytieccuoi' %}">
+            <i class="fi fi-rs-rings-wedding"></i>
+            <span>Tiệc Cưới</span>
+        </a>
+        <a href="{% url 'quanlyquydinh' %}">
+            <i class="fi fi-ss-rules"></i>
+            <span>Quy Định</span>
+        </a>
+        <a href="{% url 'xembaocao' %}">
+            <i class="fi fi-sr-big-data-analytics"></i>
+            <span>Xem Báo Cáo</span>
+        </a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content" id="content">
+        <div class="container">
+            <div class="header-section">
+                <h1>💵 BÁO CÁO THỰC THU</h1>
+            </div>
+
+            <!-- Filter & Buttons -->
+            <div class="filter-section">
+                <select id="timeFilter" onchange="loadReportData()">
+                    <option value="2025-05">Tháng 5/2025</option>
+                    <option value="2025-04">Tháng 4/2025</option>
+                    <option value="2025-03">Tháng 3/2025</option>
+                </select>
+                <button class="report-btn bg-blue-600 text-white" onclick="loadReportData()">
+                    <i class="fi fi-sr-search"></i> Xem báo cáo
+                </button>
+                <button class="report-btn bg-green-600 text-white" onclick="exportToExcel()">
+                    <i class="fi fi-sr-file-excel"></i> Xuất Excel
+                </button>
+            </div>
+
+            <!-- Chart Section -->
+            <div class="chart-section">
+                <div class="font-semibold text-lg mb-4 flex items-center gap-2">
+                    <i class="fi fi-sr-chart-line"></i> Dòng tiền Thực thu theo Thời gian
+                </div>
+                <div id="chartLoading" class="loading">Đang tải...</div>
+                <div class="chart-container hidden" id="chartContainer">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Table Section -->
+            <div class="table-section">
+                <div class="font-semibold text-lg mb-4 flex items-center gap-2 p-4">
+                    <i class="fi fi-sr-table"></i> Lịch sử Chi tiết Giao dịch Thực thu
+                </div>
+                <div id="tableLoading" class="loading">Đang tải bảng...</div>
+                <table id="revenueTable" class="hidden">
+                    <thead>
+                        <tr>
+                            <th>Mã Giao dịch</th>
+                            <th>Mã Tiệc</th>
+                            <th>Tên Khách hàng</th>
+                            <th>Ngày Thực thu</th>
+                            <th>Số tiền Thực thu (VNĐ)</th>
+                            <th>Phương thức Thanh toán</th>
+                            <th>Nội dung Thanh toán</th>
+                        </tr>
+                    </thead>
+                    <tbody id="revenueTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sidebar toggle logic
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const content = document.getElementById('content');
+            sidebar.classList.toggle('collapsed');
+            content.classList.toggle('collapsed');
+            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+        }
+
+        // API call function
+        async function goiAPI(endpoint) {
+            try {
+                const baseUrl = 'http://localhost:8000/api';
+                const time = document.getElementById('timeFilter').value;
+                const params = new URLSearchParams({
+                    time: time || ''
+                }).toString();
+                const response = await fetch(`${baseUrl}${endpoint}?${params}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error(`Lỗi API: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error(`Lỗi gọi API ${endpoint}:`, error);
+                return {
+                    chartData: {
+                        labels: ['01/05', '05/05', '10/05', '15/05', '20/05'],
+                        data: [5, 10, 8, 20, 15]
+                    },
+                    tableData: [
+                        { ma_giao_dich: 'TT001', ma_tiec: 'TC001', ten_khach_hang: 'Nguyễn Văn A', ngay_thuc_thu: '05/05/2025', so_tien: 10000000, phuong_thuc: 'Chuyển khoản', noi_dung: 'Đặt cọc lần 1' },
+                        { ma_giao_dich: 'TT002', ma_tiec: 'TC002', ten_khach_hang: 'Trần Thị B', ngay_thuc_thu: '15/05/2025', so_tien: 20000000, phuong_thuc: 'Tiền mặt', noi_dung: 'Thanh toán đợt cuối' },
+                        { ma_giao_dich: 'TT003', ma_tiec: 'TC003', ten_khach_hang: 'Lê Văn C', ngay_thuc_thu: '10/05/2025', so_tien: 15000000, phuong_thuc: 'Chuyển khoản', noi_dung: 'Thanh toán đợt 2' },
+                        { ma_giao_dich: 'TT004', ma_tiec: 'TC004', ten_khach_hang: 'Phạm Thị D', ngay_thuc_thu: '20/05/2025', so_tien: 8000000, phuong_thuc: 'Tiền mặt', noi_dung: 'Đặt cọc' }
+                    ]
+                };
+            }
+        }
+
+        // Format number to VND
+        function formatVND(number) {
+            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(number);
+        }
+
+        // Load revenue report
+        let revenueChartInstance = null;
+        async function loadReportData() {
+            try {
+                const data = await goiAPI('/revenue-report');
+
+                // Update chart
+                const chartLoading = document.getElementById('chartLoading');
+                const chartContainer = document.getElementById('chartContainer');
+                const ctx = document.getElementById('revenueChart').getContext('2d');
+
+                if (revenueChartInstance) revenueChartInstance.destroy();
+
+                revenueChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.chartData.labels,
+                        datasets: [{
+                            label: 'Tổng số tiền Thực thu (triệu VNĐ)',
+                            data: data.chartData.data,
+                            borderColor: '#2c3e50',
+                            backgroundColor: 'rgba(44, 62, 80, 0.2)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 2,
+                            pointRadius: 5,
+                            pointHoverRadius: 7
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Số tiền (triệu VNĐ)',
+                                    font: { size: 16, weight: 'bold', family: "'Inter', sans-serif" },
+                                    color: '#2c3e50'
+                                },
+                                ticks: {
+                                    color: '#2c3e50',
+                                    font: { size: 12 },
+                                    callback: function(value) { return value + 'M'; }
+                                },
+                                grid: {
+                                    color: 'rgba(44, 62, 80, 0.1)',
+                                    borderDash: [8, 4]
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Thời gian',
+                                    font: { size: 16, weight: 'bold', family: "'Inter', sans-serif" },
+                                    color: '#2c3e50'
+                                },
+                                ticks: { color: '#2c3e50', font: { size: 12 } },
+                                grid: { display: false }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    font: { size: 14, family: "'Inter', sans-serif" },
+                                    color: '#2c3e50',
+                                    boxWidth: 20,
+                                    padding: 15
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: '#2c3e50',
+                                titleFont: { size: 14, family: "'Inter', sans-serif", weight: 'bold' },
+                                bodyFont: { size: 12, family: "'Inter', sans-serif" },
+                                borderColor: '#3498db',
+                                borderWidth: 2,
+                                padding: 12,
+                                callbacks: {
+                                    label: function(context) {
+                                        return `Số tiền: ${formatVND(context.raw * 1000000)}`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Update table
+                const tableLoading = document.getElementById('tableLoading');
+                const table = document.getElementById('revenueTable');
+                const tbody = document.getElementById('revenueTableBody');
+                const totalRevenue = data.tableData.reduce((sum, item) => sum + (item.so_tien || 0), 0);
+
+                tbody.innerHTML = data.tableData.map(item => `
+                    <tr>
+                        <td>${item.ma_giao_dich || '-'}</td>
+                        <td>${item.ma_tiec || '-'}</td>
+                        <td>${item.ten_khach_hang || '-'}</td>
+                        <td>${item.ngay_thuc_thu || '-'}</td>
+                        <td>${formatVND(item.so_tien || 0)}</td>
+                        <td>${item.phuong_thuc || '-'}</td>
+                        <td>${item.noi_dung || '-'}</td>
+                    </tr>
+                `).join('') + `
+                    <tr>
+                        <td>Tổng cộng</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>${formatVND(totalRevenue)}</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                `;
+
+                // Hide loading and show content
+                chartLoading.classList.add('hidden');
+                chartContainer.classList.remove('hidden');
+                tableLoading.classList.add('hidden');
+                table.classList.remove('hidden');
+            } catch (error) {
+                console.error('Lỗi tải báo cáo thực thu:', error);
+                document.getElementById('chartLoading').innerText = 'Lỗi tải biểu đồ';
+                document.getElementById('tableLoading').innerText = 'Lỗi tải bảng';
+            }
+        }
+
+        // Export to Excel
+        function exportToExcel() {
+            const table = document.getElementById('revenueTable');
+            const rows = table.querySelectorAll('tr');
+            const data = [];
+
+            const headers = Array.from(rows[0].querySelectorAll('th')).map(th => th.innerText);
+            data.push(headers);
+
+            rows.forEach((row, index) => {
+                if (index > 0) {
+                    const cells = Array.from(row.querySelectorAll('td')).map(td => td.innerText);
+                    data.push(cells);
+                }
+            });
+
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'BaoCaoThucThu');
+            XLSX.writeFile(wb, 'BaoCaoThucThu.xlsx');
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', async () => {
+            const collapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            if (collapsed) {
+                document.getElementById('sidebar').classList.add('collapsed');
+                document.getElementById('content').classList.add('collapsed');
+            }
+            await loadReportData();
+        });
+    </script>
+</body>
+</html>

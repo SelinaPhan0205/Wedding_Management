@@ -48,19 +48,20 @@ class TaiKhoanSerializer(serializers.ModelSerializer):
         read_only_fields = ['user']
 
     def create(self, validated_data):
-        username = validated_data.pop('username', None)
-        password = validated_data.pop('password', None)
+        username = validated_data.pop('username')
+        password = validated_data.pop('password')
         email = validated_data.pop('email', '')
 
-        # Nếu user đã tồn tại thì lấy user đó, không tạo mới
-        user = None
-        if username:
-            try:
-                user = User.objects.get(username=username)
-            except User.DoesNotExist:
-                if not password:
-                    raise serializers.ValidationError({'password': 'Password là bắt buộc khi tạo user mới!'})
-                user = User.objects.create_user(username=username, password=password, email=email)
+        # Tìm hoặc tạo User
+        user, user_created = User.objects.get_or_create(username=username, defaults={
+            'email': email
+        })
+
+        if not user_created:
+            # Nếu user đã tồn tại thì kiểm tra xem đã có TaiKhoan chưa
+            if TaiKhoan.objects.filter(user=user).exists():
+                raise serializers.ValidationError({'user': f"Tài khoản đã tồn tại cho user '{username}'."})
+
         else:
             raise serializers.ValidationError({'username': 'Username là bắt buộc!'})
 
@@ -68,17 +69,27 @@ class TaiKhoanSerializer(serializers.ModelSerializer):
         return tai_khoan
 
     def update(self, instance, validated_data):
-        # Không cho update username, password, email qua TaiKhoanSerializer
-        validated_data.pop('username', None)
-        validated_data.pop('password', None)
-        validated_data.pop('email', None)
+        username = validated_data.pop('username', None)
+        password = validated_data.pop('password', None)
+        email = validated_data.pop('email', None)
 
-        instance.hovaten = validated_data.get('hovaten', instance.hovaten)
-        instance.sodienthoai = validated_data.get('sodienthoai', instance.sodienthoai)
-        instance.vaitro = validated_data.get('vaitro', instance.vaitro)
-        instance.trangthai = validated_data.get('trangthai', instance.trangthai)
+        # Cập nhật TaiKhoan
+        for attr in ['hovaten', 'sodienthoai', 'vaitro', 'trangthai']:
+            setattr(instance, attr, validated_data.get(attr, getattr(instance, attr)))
         instance.save()
+
+        # Cập nhật User nếu có dữ liệu
+        user = instance.user
+        if username:
+            user.username = username
+        if email:
+            user.email = email
+        if password:
+            user.set_password(password)
+        user.save()
+
         return instance
+
 
         
 class DichVuSerializer(serializers.ModelSerializer):

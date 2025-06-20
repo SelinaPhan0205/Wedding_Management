@@ -288,14 +288,13 @@
                 <h1>📄 BÁO CÁO CÔNG NỢ</h1>
             </div>
 
-            <!-- Filter & Buttons -->
+            <!-- Filter & Buttons (Đã thay đổi để giống Báo Cáo Doanh Thu) -->
             <div class="filter-section">
-                <select id="statusFilter" onchange="loadReportData()">
-                    <option value="all">Trạng thái công nợ: Tất cả</option>
-                    <option value="pending">Đang chờ</option>
-                    <option value="overdue">Quá hạn</option>
+                <select id="timeFilter" onchange="loadReportData()">
+                    <option value="2025-05">Tháng 5/2025</option>
+                    <option value="2025-04">Tháng 4/2025</option>
+                    <option value="2025-03">Tháng 3/2025</option>
                 </select>
-                <input type="text" id="searchInput" placeholder="Tên khách hàng/Mã hóa đơn" class="border-gray-300" oninput="loadReportData()">
                 <button class="report-btn bg-blue-600 text-white" onclick="loadReportData()">
                     <i class="fi fi-sr-search"></i> Xem báo cáo
                 </button>
@@ -353,14 +352,21 @@
         // API call function
         async function goiAPI(endpoint) {
             try {
-                const baseUrl = 'http://localhost:8000/api'; // Adjust to your API base URL
-                const status = document.getElementById('statusFilter').value;
-                const search = document.getElementById('searchInput').value;
-                const response = await fetch(`${baseUrl}${endpoint}?status=${status}&search=${encodeURIComponent(search)}`, {
+                const baseUrl = 'http://localhost:8000/api';
+                const time = document.getElementById('timeFilter').value;
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+                const paymentMethod = document.getElementById('paymentMethodFilter').value;
+                const params = new URLSearchParams({
+                    time: time || '',
+                    start_date: startDate || '',
+                    end_date: endDate || '',
+                    payment_method: paymentMethod || 'all'
+                }).toString();
+                const response = await fetch(`${baseUrl}${endpoint}?${params}`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
-                        // 'Authorization': `Bearer ${sessionStorage.getItem('token')}`
                     }
                 });
                 if (!response.ok) {
@@ -369,22 +375,18 @@
                 return await response.json();
             } catch (error) {
                 console.error(`Lỗi gọi API ${endpoint}:`, error);
-                // Fallback mock data
-                if (endpoint.includes('/debt-report')) {
-                    return {
-                        chartData: {
-                            labels: ['Chưa Quá Hạn', 'Quá Hạn < 7 ngày', 'Quá Hạn 7-30 ngày', 'Quá Hạn > 30 ngày'],
-                            data: [50, 15, 8, 3]
-                        },
-                        tableData: [
-                            { ma_tiec: 'TC001', ten_khach_hang: 'Nguyễn Văn A', ngay_tiec: '10/05/2025', ngay_dao_han: '20/05/2025', so_tien_con_lai: 10000000, so_ngay_qua_han: null, tien_phat: 0, trang_thai: 'Đang chờ' },
-                            { ma_tiec: 'TC002', ten_khach_hang: 'Trần Thị B', ngay_tiec: '01/05/2025', ngay_dao_han: '10/05/2025', so_tien_con_lai: 5000000, so_ngay_qua_han: 15, tien_phat: 500000, trang_thai: 'Quá hạn' },
-                            { ma_tiec: 'TC003', ten_khach_hang: 'Lê Văn C', ngay_tiec: '20/04/2025', ngay_dao_han: '01/05/2025', so_tien_con_lai: 20000000, so_ngay_qua_han: 24, tien_phat: 2000000, trang_thai: 'Quá hạn' },
-                            { ma_tiec: 'TC004', ten_khach_hang: 'Phạm Thị D', ngay_tiec: '15/03/2025', ngay_dao_han: '15/04/2025', so_tien_con_lai: 8000000, so_ngay_qua_han: 40, tien_phat: 1600000, trang_thai: 'Quá hạn' }
-                        ]
-                    };
-                }
-                return { chartData: { labels: [], data: [] }, tableData: [] };
+                return {
+                    chartData: {
+                        labels: ['Chưa Quá Hạn', 'Quá Hạn < 7 ngày', 'Quá Hạn 7-30 ngày', 'Quá Hạn > 30 ngày'],
+                        data: [50, 15, 8, 3]
+                    },
+                    tableData: [
+                        { ma_tiec: 'TC001', ten_khach_hang: 'Nguyễn Văn A', ngay_tiec: '10/05/2025', ngay_dao_han: '20/05/2025', so_tien_con_lai: 10000000, so_ngay_qua_han: null, tien_phat: 0, trang_thai: 'Đang chờ' },
+                        { ma_tiec: 'TC002', ten_khach_hang: 'Trần Thị B', ngay_tiec: '01/05/2025', ngay_dao_han: '10/05/2025', so_tien_con_lai: 5000000, so_ngay_qua_han: 15, tien_phat: 500000, trang_thai: 'Quá hạn' },
+                        { ma_tiec: 'TC003', ten_khach_hang: 'Lê Văn C', ngay_tiec: '20/04/2025', ngay_dao_han: '01/05/2025', so_tien_con_lai: 20000000, so_ngay_qua_han: 24, tien_phat: 2000000, trang_thai: 'Quá hạn' },
+                        { ma_tiec: 'TC004', ten_khach_hang: 'Phạm Thị D', ngay_tiec: '15/03/2025', ngay_dao_han: '15/04/2025', so_tien_con_lai: 8000000, so_ngay_qua_han: 40, tien_phat: 1600000, trang_thai: 'Quá hạn' }
+                    ]
+                };
             }
         }
 
@@ -540,37 +542,29 @@
             const rows = table.querySelectorAll('tr');
             const data = [];
 
-            // Extract headers
             const headers = Array.from(rows[0].querySelectorAll('th')).map(th => th.innerText);
             data.push(headers);
 
-            // Extract rows
             rows.forEach((row, index) => {
-                if (index > 0) { // Skip header row
+                if (index > 0) {
                     const cells = Array.from(row.querySelectorAll('td')).map(td => td.innerText);
                     data.push(cells);
                 }
             });
 
-            // Create workbook and worksheet
             const ws = XLSX.utils.aoa_to_sheet(data);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'BaoCaoCongNo');
-
-            // Export file
             XLSX.writeFile(wb, 'BaoCaoCongNo.xlsx');
         }
 
         // Initialize page
         document.addEventListener('DOMContentLoaded', async () => {
-            // Restore sidebar state
             const collapsed = localStorage.getItem('sidebarCollapsed') === 'true';
             if (collapsed) {
                 document.getElementById('sidebar').classList.add('collapsed');
                 document.getElementById('content').classList.add('collapsed');
             }
-
-            // Load initial report
             await loadReportData();
         });
     </script>
