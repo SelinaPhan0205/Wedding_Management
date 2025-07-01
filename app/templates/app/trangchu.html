@@ -243,49 +243,119 @@
             flex-shrink: 0;
             color:rgb(8, 7, 7);
         }
+        .account-modal {
+        position: fixed;
+        inset: 0;
+        background-color: rgba(0,0,0,0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+        }
+
+        .account-modal.hidden {
+        display: none;
+        }
+
+        .account-modal-content {
+        background: white;
+        border-radius: 10px;
+        padding: 30px 40px;
+        width: 600px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .modal-title {
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 20px;
+        color: #2c3e50;
+        }
+
+        .account-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px 30px;
+        font-size: 16px;
+        color: #333;
+        }
+
+        .account-modal-footer {
+        margin-top: 25px;
+        text-align: right;
+        }
+
+        .close-btn {
+        background: #f1f1f1;
+        border: 1px solid #ccc;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 15px;
+        transition: background-color 0.2s, border-color 0.2s;
+        }
+
+        .close-btn:hover {
+        background: #e0e0e0;
+        border-color: #999;
+        }
     </style>
 </head>
 <body>
     <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
 
+    <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <h2>Quản lý Tiệc Cưới</h2>
+
+        <!-- Luôn hiển thị -->
         <a href="{% url 'trangchu' %}" class="active">
             <i class="fi fi-sr-house-chimney"></i>
             <span>Trang Chủ</span>
         </a>
-        <a href="{% url 'quanlytaikhoan' %}">
-            <i class="fi fi-sr-user"></i>
-            <span>Tài Khoản</span>
-        </a>
+
+        {% if request.user.is_staff %}
+            <a href="{% url 'quanlytaikhoan' %}">
+                <i class="fi fi-sr-user"></i>
+                <span>Tài Khoản</span>
+            </a>
+        {% endif %}
+
         <a href="{% url 'quanlyhoadon' %}">
             <i class="fi fi-bs-dollar"></i>
             <span>Hóa Đơn</span>
         </a>
-        <a href="{% url 'quanlysanh' %}">
-            <i class="fi fi-br-calendar-heart"></i>
-            <span>Sảnh</span>
-        </a>
-        <a href="{% url 'quanlythucdon' %}">
-            <i class="fi fi-sr-restaurant"></i>
-            <span>Thực Đơn</span>
-        </a>
-        <a href="{% url 'quanlydichvu' %}">
-            <i class="fi fi-sr-holding-hand-dinner"></i>
-            <span>Dịch Vụ</span>
-        </a>
+
+        {% if request.user.is_staff %}
+            <a href="{% url 'quanlysanh' %}">
+                <i class="fi fi-br-calendar-heart"></i>
+                <span>Sảnh</span>
+            </a>
+            <a href="{% url 'quanlythucdon' %}">
+                <i class="fi fi-sr-restaurant"></i>
+                <span>Thực Đơn</span>
+            </a>
+            <a href="{% url 'quanlydichvu' %}">
+                <i class="fi fi-sr-holding-hand-dinner"></i>
+                <span>Dịch Vụ</span>
+            </a>
+        {% endif %}
+
         <a href="{% url 'quanlytieccuoi' %}">
             <i class="fi fi-rs-rings-wedding"></i>
             <span>Tiệc Cưới</span>
         </a>
-        <a href="{% url 'quanlyquydinh' %}">
-            <i class="fi fi-ss-rules"></i>
-            <span>Quy Định</span>
-        </a>
-        <a href="{% url 'xembaocao' %}">
-            <i class="fi fi-sr-big-data-analytics"></i>
-            <span>Xem Báo Cáo</span>
-        </a>
+
+        {% if request.user.is_staff %}
+            <a href="{% url 'quanlyquydinh' %}">
+                <i class="fi fi-ss-rules"></i>
+                <span>Quy Định</span>
+            </a>
+            <a href="{% url 'xembaocao' %}">
+                <i class="fi fi-sr-big-data-analytics"></i>
+                <span>Xem Báo Cáo</span>
+            </a>
+        {% endif %}
     </div>
 
     <div class="content" id="content">
@@ -301,7 +371,7 @@
                 </div>
                 <div class="dropdown-arrow">▼</div>
                 <div class="profile-dropdown" id="dropdown">
-                    <button><i class="fi fi-sr-user icon"></i> Xem tài khoản</button>
+                    <button onclick="openModal()"><i class="fi fi-sr-user icon"></i> Xem tài khoản</button>
                     <button><i class="fi fi-sr-settings icon"></i> Cài đặt</button>
                     <button onclick="window.location.href='dangnhap.html'"><i class="fi fi-sr-sign-out-alt icon"></i> Đăng xuất</button>
                 </div>
@@ -312,7 +382,57 @@
         </p>
     </div>
 
+    <div id="modalXemTaiKhoan" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-2xl">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">Chi Tiết Tài Khoản</h2>
+            <div class="grid grid-cols-1 gap-4 mb-4">
+                <div class="mb-2">
+                    <span class="font-medium text-gray-700">Họ tên:</span>
+                    <span id="xemHoTen"></span>
+                </div>
+                <div class="mb-2">
+                    <span class="font-medium text-gray-700">Số điện thoại:</span>
+                    <span id="xemSoDienThoai"></span>
+                </div>
+                <div class="mb-2">
+                    <span class="font-medium text-gray-700">Tên tài khoản:</span>
+                    <span id="xemTenTaiKhoan"></span>
+                </div>
+                <div class="mb-2">
+                    <span class="font-medium text-gray-700">Email:</span>
+                    <span id="xemEmail"></span>
+                </div>
+                <div class="mb-2">
+                    <span class="font-medium text-gray-700">Vai trò:</span>
+                    <span id="xemVaiTro"></span>
+                </div>
+                <div class="mb-2">
+                    <span class="font-medium text-gray-700">Trạng thái:</span>
+                    <span id="xemTrangThai"></span>
+                </div>
+            </div>
+            <div class="flex justify-end gap-3">
+                <button type="button" onclick="dongModalXemTaiKhoan()" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-100 transition">Đóng</button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        function openModal() {
+        document.getElementById('modalXemTaiKhoan').classList.remove('hidden');
+        }
+
+        function dongModalXemTaiKhoan() {
+            document.getElementById('modalXemTaiKhoan').classList.add('hidden');
+        }
+
+        // Bấm ra ngoài modal để đóng
+        window.onclick = function(event) {
+            const modal = document.getElementById('modalXemTaiKhoan');
+            if (event.target === modal) {
+                dongModalXemTaiKhoan();
+            }
+        };
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const content = document.getElementById('content');

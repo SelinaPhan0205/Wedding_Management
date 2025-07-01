@@ -296,23 +296,9 @@
                     <option value="2025-03">Tháng 3/2025</option>
                     <!-- Add more options dynamically if needed -->
                 </select>
-                <button class="report-btn bg-blue-600 text-white" onclick="loadRevenueReport()">
-                    <i class="fi fi-sr-search"></i> Xem báo cáo
-                </button>
                 <button class="report-btn bg-green-600 text-white" onclick="exportToExcel()">
                     <i class="fi fi-sr-file-excel"></i> Xuất Excel
                 </button>
-            </div>
-
-            <!-- Chart Section -->
-            <div class="chart-section">
-                <div class="font-semibold text-lg mb-4 flex items-center gap-2">
-                    <i class="fi fi-sr-chart-line"></i> Biểu đồ Xu hướng Doanh thu theo thời gian
-                </div>
-                <div id="chartLoading" class="loading">Đang tải...</div>
-                <div class="chart-container hidden" id="chartContainer">
-                    <canvas id="revenueChart"></canvas>
-                </div>
             </div>
 
             <!-- Table Section -->
@@ -332,6 +318,17 @@
                     </thead>
                     <tbody id="revenueTableBody"></tbody>
                 </table>
+            </div>
+            
+            <!-- Chart Section -->
+            <div class="chart-section">
+                <div class="font-semibold text-lg mb-4 flex items-center gap-2">
+                    <i class="fi fi-sr-chart-line"></i> Biểu đồ Xu hướng Doanh thu theo thời gian
+                </div>
+                <div id="chartLoading" class="loading">Đang tải...</div>
+                <div class="chart-container hidden" id="chartContainer">
+                    <canvas id="revenueChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
