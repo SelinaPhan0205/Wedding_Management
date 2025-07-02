@@ -502,10 +502,11 @@
     <div id="modalSuaHoaDon" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
         <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md" style="max-height: 90vh; overflow-y: auto;">
             <h2 id="modalTitleSuaHoaDon" class="text-2xl font-bold mb-6 text-gray-800">Chỉnh Sửa Hóa Đơn</h2>
-            <form id="formSuaHoaDon">
+            <form id="formSuaHoaDon" autocomplete="off">
                 <div class="mb-4">
                     <label for="suaMaTiec" class="block text-gray-700 text-sm font-medium mb-2">Mã Số Tiệc:</label>
-                    <input type="text" id="suaMaTiec" name="suaMaTiec" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                    <input type="text" id="suaMaTiec" name="suaMaTiec" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Nhập hoặc chọn mã số tiệc..." required autocomplete="off">
+                    <div id="maTiecAutocomplete" class="autocomplete-list hidden"></div>
                 </div>
                 <div class="mb-4">
                     <label for="suaSoLuongBan" class="block text-gray-700 text-sm font-medium mb-2">Số Lượng Bàn:</label>
@@ -883,7 +884,7 @@
             }
 
             const updatedHoaDonData = {
-                tiec_cuoi: document.getElementById('suaMaTiec').value,
+                tiec_cuoi: maTiecInput.value,
                 so_luong_ban: parseInt(document.getElementById('suaSoLuongBan').value),
                 ngay_thanh_toan: ngayThanhToanServer,
                 tong_tien: parseInt(document.getElementById('suaTongTien').value),
