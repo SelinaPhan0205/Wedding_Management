@@ -307,42 +307,55 @@
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <h2>Quản lý Tiệc Cưới</h2>
-        <a href="{% url 'trangchu' %}">
+
+        <!-- Luôn hiển thị -->
+        <a href="{% url 'trangchu' %}" class="active">
             <i class="fi fi-sr-house-chimney"></i>
             <span>Trang Chủ</span>
         </a>
-        <a href="{% url 'quanlytaikhoan' %}">
-            <i class="fi fi-sr-user"></i>
-            <span>Tài Khoản</span>
-        </a>
+
+        {% if request.user.is_staff %}
+            <a href="{% url 'quanlytaikhoan' %}">
+                <i class="fi fi-sr-user"></i>
+                <span>Tài Khoản</span>
+            </a>
+        {% endif %}
+
         <a href="{% url 'quanlyhoadon' %}">
             <i class="fi fi-bs-dollar"></i>
             <span>Hóa Đơn</span>
         </a>
-        <a href="{% url 'quanlysanh' %}">
-            <i class="fi fi-br-calendar-heart"></i>
-            <span>Sảnh</span>
-        </a>
-        <a href="{% url 'quanlythucdon' %}">
-            <i class="fi fi-sr-restaurant"></i>
-            <span>Thực Đơn</span>
-        </a>
-        <a href="{% url 'quanlydichvu' %}">
-            <i class="fi fi-sr-holding-hand-dinner"></i>
-            <span>Dịch Vụ</span>
-        </a>
-        <a href="{% url 'quanlytieccuoi' %}" class="active">
+
+        {% if request.user.is_staff %}
+            <a href="{% url 'quanlysanh' %}">
+                <i class="fi fi-br-calendar-heart"></i>
+                <span>Sảnh</span>
+            </a>
+            <a href="{% url 'quanlythucdon' %}">
+                <i class="fi fi-sr-restaurant"></i>
+                <span>Thực Đơn</span>
+            </a>
+            <a href="{% url 'quanlydichvu' %}">
+                <i class="fi fi-sr-holding-hand-dinner"></i>
+                <span>Dịch Vụ</span>
+            </a>
+        {% endif %}
+
+        <a href="{% url 'quanlytieccuoi' %}">
             <i class="fi fi-rs-rings-wedding"></i>
             <span>Tiệc Cưới</span>
         </a>
-        <a href="{% url 'quanlyquydinh' %}">
-            <i class="fi fi-ss-rules"></i>
-            <span>Quy Định</span>
-        </a>
-        <a href="{% url 'xembaocao' %}">
-            <i class="fi fi-sr-big-data-analytics"></i>
-            <span>Xem Báo Cáo</span>
-        </a>
+
+        {% if request.user.is_staff %}
+            <a href="{% url 'quanlyquydinh' %}">
+                <i class="fi fi-ss-rules"></i>
+                <span>Quy Định</span>
+            </a>
+            <a href="{% url 'xembaocao' %}">
+                <i class="fi fi-sr-big-data-analytics"></i>
+                <span>Xem Báo Cáo</span>
+            </a>
+        {% endif %}
     </div>
 
     <div class="content" id="content">
