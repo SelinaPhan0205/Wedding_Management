@@ -308,53 +308,26 @@
     <div class="sidebar" id="sidebar">
         <h2>Quản lý Tiệc Cưới</h2>
 
-        <!-- Luôn hiển thị -->
-        <a href="{% url 'trangchu' %}" class="active">
-            <i class="fi fi-sr-house-chimney"></i>
-            <span>Trang Chủ</span>
-        </a>
-
-        {% if request.user.is_staff %}
-            <a href="{% url 'quanlytaikhoan' %}">
-                <i class="fi fi-sr-user"></i>
-                <span>Tài Khoản</span>
-            </a>
-        {% endif %}
-
-        <a href="{% url 'quanlyhoadon' %}">
-            <i class="fi fi-bs-dollar"></i>
-            <span>Hóa Đơn</span>
-        </a>
-
-        {% if request.user.is_staff %}
-            <a href="{% url 'quanlysanh' %}">
-                <i class="fi fi-br-calendar-heart"></i>
-                <span>Sảnh</span>
-            </a>
-            <a href="{% url 'quanlythucdon' %}">
-                <i class="fi fi-sr-restaurant"></i>
-                <span>Thực Đơn</span>
-            </a>
-            <a href="{% url 'quanlydichvu' %}">
-                <i class="fi fi-sr-holding-hand-dinner"></i>
-                <span>Dịch Vụ</span>
-            </a>
-        {% endif %}
-
-        <a href="{% url 'quanlytieccuoi' %}">
-            <i class="fi fi-rs-rings-wedding"></i>
-            <span>Tiệc Cưới</span>
-        </a>
-
-        {% if request.user.is_staff %}
-            <a href="{% url 'quanlyquydinh' %}">
-                <i class="fi fi-ss-rules"></i>
-                <span>Quy Định</span>
-            </a>
-            <a href="{% url 'xembaocao' %}">
-                <i class="fi fi-sr-big-data-analytics"></i>
-                <span>Xem Báo Cáo</span>
-            </a>
+        {% if request.user.is_authenticated %}
+            {% with vaitro=request.user.taikhoan.vaitro|default_if_none:'' %}
+                {% if vaitro == 'admin' %}
+                    <!-- Admin: Hiển thị tất cả -->
+                    <a href="{% url 'trangchu' %}" class="{% if request.resolver_match.url_name == 'trangchu' %}active{% endif %}"><i class="fi fi-sr-house-chimney"></i><span>Trang Chủ</span></a>
+                    <a href="{% url 'quanlytaikhoan' %}" class="{% if request.resolver_match.url_name == 'quanlytaikhoan' %}active{% endif %}"><i class="fi fi-sr-user"></i><span>Tài Khoản</span></a>
+                    <a href="{% url 'quanlyhoadon' %}" class="{% if request.resolver_match.url_name == 'quanlyhoadon' %}active{% endif %}"><i class="fi fi-bs-dollar"></i><span>Hóa Đơn</span></a>
+                    <a href="{% url 'quanlytieccuoi' %}" class="{% if request.resolver_match.url_name == 'quanlytieccuoi' %}active{% endif %}"><i class="fi fi-rs-rings-wedding"></i><span>Tiệc Cưới</span></a>
+                    <a href="{% url 'quanlysanh' %}" class="{% if request.resolver_match.url_name == 'quanlysanh' %}active{% endif %}"><i class="fi fi-br-calendar-heart"></i><span>Sảnh</span></a>
+                    <a href="{% url 'quanlythucdon' %}" class="{% if request.resolver_match.url_name == 'quanlythucdon' %}active{% endif %}"><i class="fi fi-sr-restaurant"></i><span>Thực Đơn</span></a>
+                    <a href="{% url 'quanlydichvu' %}" class="{% if request.resolver_match.url_name == 'quanlydichvu' %}active{% endif %}"><i class="fi fi-sr-holding-hand-dinner"></i><span>Dịch Vụ</span></a>
+                    <a href="{% url 'quanlyquydinh' %}" class="{% if request.resolver_match.url_name == 'quanlyquydinh' %}active{% endif %}"><i class="fi fi-ss-rules"></i><span>Quy Định</span></a>
+                    <a href="{% url 'xembaocao' %}" class="{% if request.resolver_match.url_name == 'xembaocao' %}active{% endif %}"><i class="fi fi-sr-big-data-analytics"></i><span>Xem Báo Cáo</span></a>
+                {% else %}
+                    <!-- User: Chỉ hiển thị Trang chủ, Hóa đơn, Tiệc cưới -->
+                    <a href="{% url 'trangchu' %}" class="{% if request.resolver_match.url_name == 'trangchu' %}active{% endif %}"><i class="fi fi-sr-house-chimney"></i><span>Trang Chủ</span></a>
+                    <a href="{% url 'quanlyhoadon' %}" class="{% if request.resolver_match.url_name == 'quanlyhoadon' %}active{% endif %}"><i class="fi fi-bs-dollar"></i><span>Hóa Đơn</span></a>
+                    <a href="{% url 'quanlytieccuoi' %}" class="{% if request.resolver_match.url_name == 'quanlytieccuoi' %}active{% endif %}"><i class="fi fi-rs-rings-wedding"></i><span>Tiệc Cưới</span></a>
+                {% endif %}
+            {% endwith %}
         {% endif %}
     </div>
 
@@ -362,18 +335,18 @@
         <div class="dashboard-header">
             <h1>Trang chủ</h1>
             <div class="profile" onclick="toggleDropdown(event)">
-                <div class="profile-img">
-                    <span>S</span>
+                <div class="profile-img" id="profileImg">
+                    <span id="profileInitial">?</span>
                 </div>
                 <div class="profile-info">
-                    <div class="profile-name">Sơn Nguyễn Văn Thanh</div>
-                    <div class="profile-fullname">23521358@gm.uit.edu.vn</div>
+                    <div class="profile-name" id="profileName">...</div>
+                    <div class="profile-fullname" id="profileEmail">...</div>
                 </div>
                 <div class="dropdown-arrow">▼</div>
                 <div class="profile-dropdown" id="dropdown">
                     <button onclick="openModal()"><i class="fi fi-sr-user icon"></i> Xem tài khoản</button>
                     <button><i class="fi fi-sr-settings icon"></i> Cài đặt</button>
-                    <button onclick="window.location.href='dangnhap.html'"><i class="fi fi-sr-sign-out-alt icon"></i> Đăng xuất</button>
+                    <button onclick="logoutRedirect()"><i class="fi fi-sr-sign-out-alt icon"></i> Đăng xuất</button>
                 </div>
             </div>
         </div>
@@ -418,9 +391,64 @@
     </div>
 
     <script>
-        function openModal() {
-        document.getElementById('modalXemTaiKhoan').classList.remove('hidden');
+        function logoutRedirect() {
+            window.location.href = "{% url 'dangnhap' %}";
         }
+
+        // Hàm mở modal và lấy thông tin tài khoản động từ backend
+        function openModal() {
+            document.getElementById('modalXemTaiKhoan').classList.remove('hidden');
+            fetchAccountInfo();
+        }
+
+        // Hàm fetch và cập nhật thông tin tài khoản cho cả profile bar và modal
+        function fetchAccountInfo() {
+            fetch('/api/thong-tin-tai-khoan/', {
+                method: 'GET',
+                credentials: 'same-origin',
+                headers: {
+                    'Accept': 'application/json',
+                }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Lỗi khi lấy thông tin tài khoản');
+                return response.json();
+            })
+            .then(data => {
+                // Modal
+                document.getElementById('xemHoTen').innerText = data.ho_ten || '';
+                document.getElementById('xemSoDienThoai').innerText = data.so_dien_thoai || '';
+                document.getElementById('xemTenTaiKhoan').innerText = data.ten_tai_khoan || '';
+                document.getElementById('xemEmail').innerText = data.email || '';
+                document.getElementById('xemVaiTro').innerText = data.vai_tro || '';
+                document.getElementById('xemTrangThai').innerText = data.trang_thai || '';
+                // Profile bar
+                document.getElementById('profileName').innerText = data.ho_ten || data.ten_tai_khoan || '';
+                document.getElementById('profileEmail').innerText = data.email || '';
+                // Lấy ký tự đầu tiên cho avatar
+                let initial = '?';
+                if (data.ho_ten && data.ho_ten.trim().length > 0) {
+                    initial = data.ho_ten.trim()[0].toUpperCase();
+                } else if (data.ten_tai_khoan && data.ten_tai_khoan.length > 0) {
+                    initial = data.ten_tai_khoan[0].toUpperCase();
+                }
+                document.getElementById('profileInitial').innerText = initial;
+            })
+            .catch(error => {
+                document.getElementById('xemHoTen').innerText = 'Không lấy được thông tin';
+                document.getElementById('xemSoDienThoai').innerText = '';
+                document.getElementById('xemTenTaiKhoan').innerText = '';
+                document.getElementById('xemEmail').innerText = '';
+                document.getElementById('xemVaiTro').innerText = '';
+                document.getElementById('xemTrangThai').innerText = '';
+                document.getElementById('profileName').innerText = 'Không rõ';
+                document.getElementById('profileEmail').innerText = '';
+                document.getElementById('profileInitial').innerText = '?';
+            });
+        }
+
+        // Tự động cập nhật thông tin profile bar khi load trang
+        document.addEventListener('DOMContentLoaded', fetchAccountInfo);
 
         function dongModalXemTaiKhoan() {
             document.getElementById('modalXemTaiKhoan').classList.add('hidden');

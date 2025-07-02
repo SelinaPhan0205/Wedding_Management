@@ -1,3 +1,8 @@
+# Đăng nhập view
+from django.shortcuts import render
+
+def dangnhap(request):
+    return render(request, 'app/dangnhap.html')
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.http import HttpResponse

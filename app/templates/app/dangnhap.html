@@ -121,8 +121,34 @@
   </div>
 
   <script>
-    document.querySelector('.login-button').addEventListener('click', function () {
-      window.location.href = "trangchu.html";
+    document.querySelector('.login-button').addEventListener('click', function (e) {
+      e.preventDefault();
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      if (!username || !password) {
+        alert('Vui lòng nhập đầy đủ tài khoản và mật khẩu!');
+        return;
+      }
+      fetch('/api/dangnhap/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({ username, password })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          window.location.href = '/';
+        } else {
+          alert(data.message || 'Đăng nhập thất bại!');
+        }
+      })
+      .catch(() => {
+        alert('Lỗi kết nối máy chủ!');
+      });
     });
   </script>
 </body>
