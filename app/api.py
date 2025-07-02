@@ -31,7 +31,6 @@ def dangnhap_api(request):
 
 from rest_framework.routers import DefaultRouter
 from .views import *
-from .reports import ReportViewSet
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from .models import TaiKhoan
@@ -70,8 +69,6 @@ router.register(r'monan', MonAnViewSet, basename='monan')
 router.register(r'quydinh', QuyDinhViewSet, basename='quydinh')
 router.register(r'tieccuoi', TiecCuoiViewSet, basename='tieccuoi')
 router.register(r'hoadon', HoaDonViewSet, basename='hoadon')
-
-# Đăng ký API báo cáo
 router.register(r'report', ReportViewSet, basename='report')
 
 urlpatterns = router.urls
