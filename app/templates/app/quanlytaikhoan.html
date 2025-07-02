@@ -272,13 +272,13 @@
         <h2>Quản lý Tiệc Cưới</h2>
 
         <!-- Luôn hiển thị -->
-        <a href="{% url 'trangchu' %}" class="active">
+        <a href="{% url 'trangchu' %}">
             <i class="fi fi-sr-house-chimney"></i>
             <span>Trang Chủ</span>
         </a>
 
         {% if request.user.is_staff %}
-            <a href="{% url 'quanlytaikhoan' %}">
+            <a href="{% url 'quanlytaikhoan' %}" class="active">
                 <i class="fi fi-sr-user"></i>
                 <span>Tài Khoản</span>
             </a>
