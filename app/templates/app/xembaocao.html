@@ -228,61 +228,55 @@
     <div class="sidebar" id="sidebar">
         <h2>Quản lý Tiệc Cưới</h2>
 
-        <!-- Luôn hiển thị -->
-        <a href="{% url 'trangchu' %}" class="active">
-            <i class="fi fi-sr-house-chimney"></i>
-            <span>Trang Chủ</span>
-        </a>
-
-        {% if request.user.is_staff %}
-            <a href="{% url 'quanlytaikhoan' %}">
-                <i class="fi fi-sr-user"></i>
-                <span>Tài Khoản</span>
-            </a>
-        {% endif %}
-
-        <a href="{% url 'quanlyhoadon' %}">
-            <i class="fi fi-bs-dollar"></i>
-            <span>Hóa Đơn</span>
-        </a>
-
-        {% if request.user.is_staff %}
-            <a href="{% url 'quanlysanh' %}">
-                <i class="fi fi-br-calendar-heart"></i>
-                <span>Sảnh</span>
-            </a>
-            <a href="{% url 'quanlythucdon' %}">
-                <i class="fi fi-sr-restaurant"></i>
-                <span>Thực Đơn</span>
-            </a>
-            <a href="{% url 'quanlydichvu' %}">
-                <i class="fi fi-sr-holding-hand-dinner"></i>
-                <span>Dịch Vụ</span>
-            </a>
-        {% endif %}
-
-        <a href="{% url 'quanlytieccuoi' %}">
-            <i class="fi fi-rs-rings-wedding"></i>
-            <span>Tiệc Cưới</span>
-        </a>
-
-        {% if request.user.is_staff %}
-            <a href="{% url 'quanlyquydinh' %}">
-                <i class="fi fi-ss-rules"></i>
-                <span>Quy Định</span>
-            </a>
-            <a href="{% url 'xembaocao' %}">
-                <i class="fi fi-sr-big-data-analytics"></i>
-                <span>Xem Báo Cáo</span>
-            </a>
+        {% if request.user.is_authenticated %}
+            {% with vaitro=request.user.taikhoan.vaitro|default_if_none:'' %}
+                {% if vaitro == 'admin' %}
+                    <!-- Admin: Hiển thị tất cả -->
+                    <a href="{% url 'trangchu' %}" class="{% if request.resolver_match.url_name == 'trangchu' %}active{% endif %}"><i class="fi fi-sr-house-chimney"></i><span>Trang Chủ</span></a>
+                    <a href="{% url 'quanlytaikhoan' %}" class="{% if request.resolver_match.url_name == 'quanlytaikhoan' %}active{% endif %}"><i class="fi fi-sr-user"></i><span>Tài Khoản</span></a>
+                    <a href="{% url 'quanlyhoadon' %}" class="{% if request.resolver_match.url_name == 'quanlyhoadon' %}active{% endif %}"><i class="fi fi-bs-dollar"></i><span>Hóa Đơn</span></a>
+                    <a href="{% url 'quanlytieccuoi' %}" class="{% if request.resolver_match.url_name == 'quanlytieccuoi' %}active{% endif %}"><i class="fi fi-rs-rings-wedding"></i><span>Tiệc Cưới</span></a>
+                    <a href="{% url 'quanlysanh' %}" class="{% if request.resolver_match.url_name == 'quanlysanh' %}active{% endif %}"><i class="fi fi-br-calendar-heart"></i><span>Sảnh</span></a>
+                    <a href="{% url 'quanlythucdon' %}" class="{% if request.resolver_match.url_name == 'quanlythucdon' %}active{% endif %}"><i class="fi fi-sr-restaurant"></i><span>Thực Đơn</span></a>
+                    <a href="{% url 'quanlydichvu' %}" class="{% if request.resolver_match.url_name == 'quanlydichvu' %}active{% endif %}"><i class="fi fi-sr-holding-hand-dinner"></i><span>Dịch Vụ</span></a>
+                    <a href="{% url 'quanlyquydinh' %}" class="{% if request.resolver_match.url_name == 'quanlyquydinh' %}active{% endif %}"><i class="fi fi-ss-rules"></i><span>Quy Định</span></a>
+                    <a href="{% url 'xembaocao' %}" class="{% if request.resolver_match.url_name == 'xembaocao' %}active{% endif %}"><i class="fi fi-sr-big-data-analytics"></i><span>Xem Báo Cáo</span></a>
+                {% else %}
+                    <!-- User: Chỉ hiển thị Trang chủ, Hóa đơn, Tiệc cưới -->
+                    <a href="{% url 'trangchu' %}" class="{% if request.resolver_match.url_name == 'trangchu' %}active{% endif %}"><i class="fi fi-sr-house-chimney"></i><span>Trang Chủ</span></a>
+                    <a href="{% url 'quanlyhoadon' %}" class="{% if request.resolver_match.url_name == 'quanlyhoadon' %}active{% endif %}"><i class="fi fi-bs-dollar"></i><span>Hóa Đơn</span></a>
+                    <a href="{% url 'quanlytieccuoi' %}" class="{% if request.resolver_match.url_name == 'quanlytieccuoi' %}active{% endif %}"><i class="fi fi-rs-rings-wedding"></i><span>Tiệc Cưới</span></a>
+                {% endif %}
+            {% endwith %}
         {% endif %}
     </div>
 
     <!-- Main Content -->
     <div class="content" id="content">
         <div class="container">
+
             <div class="header-section">
                 <h1>XEM BÁO CÁO</h1>
+                <div class="flex items-center gap-4">
+                    <div class="relative">
+                        <label for="selectMonth" class="font-medium mr-2">Tháng:</label>
+                        <select id="selectMonth" class="appearance-none border border-blue-400 focus:border-blue-600 rounded-lg px-4 py-2 pr-8 bg-white shadow-sm focus:outline-none transition-colors duration-200">
+                            <!-- Option sẽ được render bằng JS -->
+                        </select>
+                        <span class="pointer-events-none absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-500">
+                            <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" d="M6 9l6 6 6-6"/></svg>
+                        </span>
+                    </div>
+                    <div class="relative">
+                        <label for="selectYear" class="font-medium mr-2">Năm:</label>
+                        <select id="selectYear" class="appearance-none border border-blue-400 focus:border-blue-600 rounded-lg px-4 py-2 pr-8 bg-white shadow-sm focus:outline-none transition-colors duration-200">
+                            <!-- Option sẽ được render bằng JS -->
+                        </select>
+                        <span class="pointer-events-none absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-500">
+                            <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" d="M6 9l6 6 6-6"/></svg>
+                        </span>
+                    </div>
+                </div>
             </div>
 
             <!-- Report Buttons -->
@@ -302,7 +296,7 @@
             <div class="overview-grid">
                 <div class="overview-card bg-blue-50">
                     <div class="text-sm text-gray-600 mb-2">Tổng số tiệc cưới</div>
-                    <div class="text-2xl font-bold text-blue-700" id="totalTiec">24</div>
+                    <div class="text-2xl font-bold text-blue-700" id="totalTiec">-</div>
                 </div>
                 <div class="overview-card bg-green-50">
                     <div class="text-sm text-gray-600 mb-2">Doanh thu dự kiến</div>
@@ -324,14 +318,14 @@
                 <div class="favorites-section">
                     <div class="bg-white rounded-lg shadow p-6">
                         <div class="font-semibold text-lg mb-4 flex items-center gap-2">
-                            <i class="fi fi-sr-restaurant"></i> Món ăn ưa thích nhất (Tháng 6/2025)
+                            <i class="fi fi-sr-restaurant"></i> <span id="monAnTitle">Món ăn ưa thích nhất</span>
                         </div>
                         <div id="topMonAnLoading" class="loading">Đang tải...</div>
                         <ol id="topMonAn" class="list-decimal ml-5 text-gray-700 space-y-3 hidden"></ol>
                     </div>
                     <div class="bg-white rounded-lg shadow p-6">
                         <div class="font-semibold text-lg mb-4 flex items-center gap-2">
-                            <i class="fi fi-sr-holding-hand-dinner"></i> Dịch vụ ưa thích nhất (Tháng 6/2025)
+                            <i class="fi fi-sr-holding-hand-dinner"></i> <span id="dichVuTitle">Dịch vụ ưa thích nhất</span>
                         </div>
                         <div id="topDichVuLoading" class="loading">Đang tải...</div>
                         <ol id="topDichVu" class="list-decimal ml-5 text-gray-700 space-y-3 hidden"></ol>
@@ -341,7 +335,7 @@
                 <!-- Hall Usage Chart -->
                 <div class="chart-section">
                     <div class="font-semibold text-lg mb-4 flex items-center gap-2">
-                        <i class="fi fi-br-calendar-heart"></i> Biểu đồ sử dụng sảnh (Tháng 6/2025)
+                        <i class="fi fi-br-calendar-heart"></i> <span id="sanhChartTitle">Biểu đồ sử dụng sảnh</span>
                     </div>
                     <div id="chartSanhsLoading" class="loading">Đang tải...</div>
                     <div class="chart-container hidden" id="chartSanhsContainer">
@@ -353,6 +347,28 @@
     </div>
 
     <script>
+        // --- Hàm cập nhật tổng số tiệc cưới ---
+        async function updateTotalTiecCuoi() {
+            try {
+                const res = await goiAPI(`/report/total-tiec-cuoi/?month=${selectedMonth}&year=${selectedYear}`);
+                document.getElementById('totalTiec').textContent = (res && typeof res.total_tiec_cuoi !== 'undefined') ? res.total_tiec_cuoi : '-';
+            } catch (e) {
+                document.getElementById('totalTiec').textContent = '-';
+            }
+        }
+
+        // Hàm cập nhật tiêu đề tháng/năm động
+        function updateSectionTitles() {
+            const month = selectedMonth;
+            const year = selectedYear;
+            const monthYearStr = `(Tháng ${month}/${year})`;
+            const monAnTitle = document.getElementById('monAnTitle');
+            const dichVuTitle = document.getElementById('dichVuTitle');
+            const sanhChartTitle = document.getElementById('sanhChartTitle');
+            if (monAnTitle) monAnTitle.textContent = `Món ăn ưa thích nhất ${monthYearStr}`;
+            if (dichVuTitle) dichVuTitle.textContent = `Dịch vụ ưa thích nhất ${monthYearStr}`;
+            if (sanhChartTitle) sanhChartTitle.textContent = `Biểu đồ sử dụng sảnh ${monthYearStr}`;
+        }
         // Sidebar toggle logic
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
@@ -361,6 +377,53 @@
             content.classList.toggle('collapsed');
             localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
         }
+
+        // --- Thay đổi tháng/năm động ---
+        let selectedMonth = new Date().getMonth() + 1;
+        let selectedYear = new Date().getFullYear();
+
+        function renderMonthYearOptions() {
+            const monthSelect = document.getElementById('selectMonth');
+            const yearSelect = document.getElementById('selectYear');
+            monthSelect.innerHTML = '';
+            for (let m = 1; m <= 12; m++) {
+                const opt = document.createElement('option');
+                opt.value = m;
+                opt.textContent = m;
+                if (m === selectedMonth) opt.selected = true;
+                monthSelect.appendChild(opt);
+            }
+            yearSelect.innerHTML = '';
+            const thisYear = new Date().getFullYear();
+            for (let y = thisYear - 5; y <= thisYear + 2; y++) {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = y;
+                if (y === selectedYear) opt.selected = true;
+                yearSelect.appendChild(opt);
+            }
+        }
+
+        document.addEventListener('change', function(e) {
+            if (e.target.id === 'selectMonth' || e.target.id === 'selectYear') {
+                selectedMonth = parseInt(document.getElementById('selectMonth').value);
+                selectedYear = parseInt(document.getElementById('selectYear').value);
+                updateSectionTitles();
+                updateTotalTiecCuoi();
+                loadFavorites();
+                loadChartSanhs();
+            }
+        });
+
+        // Tự động reload dữ liệu khi chuyển sang tab này (khi user quay lại tab)
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') {
+                updateSectionTitles();
+                updateTotalTiecCuoi();
+                loadFavorites();
+                loadChartSanhs();
+            }
+        });
 
         // API call function
         async function goiAPI(endpoint) {
@@ -413,21 +476,28 @@
                 const topMonAnElement = document.getElementById('topMonAn');
                 const topDichVuElement = document.getElementById('topDichVu');
 
-                const [topMonAn, topDichVu] = await Promise.all([
-                    goiAPI('/top-mon-an?month=6&year=2025'),
-                    goiAPI('/top-dich-vu?month=6&year=2025')
+                topMonAnLoading.classList.remove('hidden');
+                topDichVuLoading.classList.remove('hidden');
+                topMonAnElement.classList.add('hidden');
+                topDichVuElement.classList.add('hidden');
+
+                const [topMonAnRes, topDichVuRes] = await Promise.all([
+                    goiAPI(`/report/top-mon-an/?month=${selectedMonth}&year=${selectedYear}`),
+                    goiAPI(`/report/top-dich-vu/?month=${selectedMonth}&year=${selectedYear}`)
                 ]);
+                const topMonAn = (topMonAnRes && topMonAnRes.top_mon_an) ? topMonAnRes.top_mon_an : [];
+                const topDichVu = (topDichVuRes && topDichVuRes.top_dich_vu) ? topDichVuRes.top_dich_vu : [];
 
                 topMonAnElement.innerHTML = topMonAn.slice(0, 3).map(item => `
                     <li class="flex justify-between items-center">
-                        <span class="truncate max-w-[70%]">${item.ten_mon}</span>
-                        <span class="font-bold text-blue-600">${item.so_luong} lượt</span>
+                        <span class="truncate max-w-[70%]">${item.mon_an__ten_mon_an || item.ten_mon}</span>
+                        <span class="font-bold text-blue-600">${item.total || item.so_luong} lượt</span>
                     </li>
                 `).join('');
                 topDichVuElement.innerHTML = topDichVu.slice(0, 3).map(item => `
                     <li class="flex justify-between items-center">
-                        <span class="truncate max-w-[70%]">${item.ten_dich_vu}</span>
-                        <span class="font-bold text-blue-600">${item.so_lan} lượt</span>
+                        <span class="truncate max-w-[70%]">${item.dich_vu__ten_dich_vu || item.ten_dich_vu}</span>
+                        <span class="font-bold text-blue-600">${item.total || item.so_lan} lượt</span>
                     </li>
                 `).join('');
 
@@ -449,17 +519,30 @@
             try {
                 const loading = document.getElementById('chartSanhsLoading');
                 const container = document.getElementById('chartSanhsContainer');
-                const sanhUsage = await goiAPI('/sanh-usage?month=6&year=2025');
+                loading.classList.remove('hidden');
+                container.classList.add('hidden');
+                const sanhUsageRes = await goiAPI(`/report/sanh-usage/?month=${selectedMonth}&year=${selectedYear}`);
+                const sanhUsage = (sanhUsageRes && sanhUsageRes.sanh_usage) ? sanhUsageRes.sanh_usage : [];
                 const ctx = document.getElementById('chartSanhs').getContext('2d');
 
                 // Xóa biểu đồ cũ nếu có
                 if (chartSanhsInstance) chartSanhsInstance.destroy();
+
+                // Nếu không có dữ liệu thì báo không có dữ liệu
+                if (sanhUsage.length === 0) {
+                    loading.innerText = 'Không có dữ liệu sảnh trong tháng này!';
+                    container.classList.add('hidden');
+                    return;
+                }
+
+                // Tính tổng số lần sử dụng để ra phần trăm
+                const totalUsage = sanhUsage.reduce((sum, s) => sum + (s.total || 0), 0) || 1;
                 chartSanhsInstance = new Chart(ctx, {
                     type: 'pie',
                     data: {
-                        labels: sanhUsage.map(s => s.ten_sanh),
+                        labels: sanhUsage.map(s => s.sanh__ten_sanh || s.ten_sanh),
                         datasets: [{
-                            data: sanhUsage.map(s => s.phan_tram),
+                            data: sanhUsage.map(s => Math.round((s.total || s.phan_tram || 0) * 100 / totalUsage)),
                             backgroundColor: ["#60a5fa", "#fbbf24", "#34d399"],
                             borderColor: ["#ffffff", "#ffffff", "#ffffff"],
                             borderWidth: 2
@@ -534,8 +617,10 @@
                 document.getElementById('sidebar').classList.add('collapsed');
                 document.getElementById('content').classList.add('collapsed');
             }
-
+            renderMonthYearOptions();
+            updateSectionTitles();
             await Promise.all([
+                updateTotalTiecCuoi(),
                 loadFavorites(),
                 loadChartSanhs()
             ]);
