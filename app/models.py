@@ -22,6 +22,11 @@ class TaiKhoan(models.Model):
 
     def __str__(self):
         return self.user.username
+    def delete(self, *args, **kwargs):
+        # Xóa luôn user liên kết khi xóa TaiKhoan
+        user = self.user
+        super().delete(*args, **kwargs)
+        user.delete()
     
 class LoaiSanh(models.Model):
     ten_loai_sanh = models.CharField(max_length=50)

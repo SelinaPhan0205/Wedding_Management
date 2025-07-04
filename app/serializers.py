@@ -48,22 +48,28 @@ class TaiKhoanSerializer(serializers.ModelSerializer):
         read_only_fields = ['user']
 
     def create(self, validated_data):
-        username = validated_data.pop('username')
-        password = validated_data.pop('password')
+        username = validated_data.pop('username', None)
+        password = validated_data.pop('password', None)
         email = validated_data.pop('email', '')
 
-        # Tìm hoặc tạo User
-        user, user_created = User.objects.get_or_create(username=username, defaults={
-            'email': email
-        })
+        if not username or not password:
+            raise serializers.ValidationError({'username': 'Username và password là bắt buộc!'})
 
-        if not user_created:
-            # Nếu user đã tồn tại thì kiểm tra xem đã có TaiKhoan chưa
+        # Kiểm tra user đã tồn tại chưa
+        user_qs = User.objects.filter(username=username)
+        if user_qs.exists():
+            user = user_qs.first()
+            # Nếu đã có TaiKhoan cho user này thì báo lỗi
             if TaiKhoan.objects.filter(user=user).exists():
                 raise serializers.ValidationError({'user': f"Tài khoản đã tồn tại cho user '{username}'."})
-
+            # Nếu chưa có TaiKhoan thì có thể cập nhật password nếu muốn
+            user.set_password(password)
+            user.email = email
+            user.save()
         else:
-            raise serializers.ValidationError({'username': 'Username là bắt buộc!'})
+            user = User(username=username, email=email)
+            user.set_password(password)
+            user.save()
 
         tai_khoan = TaiKhoan.objects.create(user=user, **validated_data)
         return tai_khoan
