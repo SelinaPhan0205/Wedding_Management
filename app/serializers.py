@@ -153,6 +153,13 @@ class TiecCuoiSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'mon_an', 'dich_vu']
 
+    def tinh_tong_tien(self, tiec):
+        tong_mon_an = sum(ct.thanh_tien for ct in tiec.chitietthucdon_set.all())
+        tong_dich_vu = sum(ct.thanh_tien for ct in tiec.chitietdichvu_set.all())
+        tong = (tong_mon_an) * tiec.so_luong_ban + tong_dich_vu
+        tiec.tong_tien_tiec_cuoi = tong
+        tiec.save()
+
     def create(self, validated_data):
         # Đảm bảo tong_tien_tiec_cuoi mặc định là 0 nếu không truyền lên
         if 'tong_tien_tiec_cuoi' not in validated_data:
@@ -182,6 +189,7 @@ class TiecCuoiSerializer(serializers.ModelSerializer):
                 so_luong=so_luong,
                 thanh_tien=dich_vu_obj.don_gia * so_luong
             )
+        self.tinh_tong_tien(tiec)
         return tiec
 
     def update(self, instance, validated_data):
@@ -212,6 +220,7 @@ class TiecCuoiSerializer(serializers.ModelSerializer):
                     so_luong=so_luong,
                     thanh_tien=dich_vu_obj.don_gia * so_luong
                 )
+        self.tinh_tong_tien(instance)
         return instance
     
 class HoaDonSerializer(serializers.ModelSerializer):

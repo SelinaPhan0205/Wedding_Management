@@ -290,11 +290,22 @@
 
             <!-- Filter & Buttons -->
             <div class="filter-section">
-                <select id="timeFilter" onchange="updateReport()">
-                    <option value="2025-05">Tháng 5/2025</option>
-                    <option value="2025-04">Tháng 4/2025</option>
-                    <option value="2025-03">Tháng 3/2025</option>
-                    <!-- Add more options dynamically if needed -->
+                <select id="monthFilter" onchange="updateReport()">
+                    <option value="1">Tháng 1</option>
+                    <option value="2">Tháng 2</option>
+                    <option value="3">Tháng 3</option>
+                    <option value="4">Tháng 4</option>
+                    <option value="5">Tháng 5</option>
+                    <option value="6">Tháng 6</option>
+                    <option value="7">Tháng 7</option>
+                    <option value="8">Tháng 8</option>
+                    <option value="9">Tháng 9</option>
+                    <option value="10">Tháng 10</option>
+                    <option value="11">Tháng 11</option>
+                    <option value="12">Tháng 12</option>
+                </select>
+                <select id="yearFilter" onchange="updateReport()">
+                    <!-- Năm sẽ được render động bằng JS -->
                 </select>
                 <button class="report-btn bg-green-600 text-white" onclick="exportToExcel()">
                     <i class="fi fi-sr-file-excel"></i> Xuất Excel
@@ -310,8 +321,11 @@
                 <table id="revenueTable" class="hidden">
                     <thead>
                         <tr>
-                            <th>Ngày</th>
-                            <th>Số Tiệc Cưới</th>
+                            <th>Mã Tiệc</th>
+                            <th>Tên Khách Hàng</th>
+                            <th>Ngày Tiệc</th>
+                            <th>Ngày Thanh Toán</th>
+                            <th>Trạng Thái Thanh Toán</th>
                             <th>Doanh thu (VNĐ)</th>
                             <th>Tỉ lệ (%)</th>
                         </tr>
@@ -379,13 +393,46 @@
             return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(number);
         }
 
+        // --- Render năm động ---
+        function renderYearOptions() {
+            const yearFilter = document.getElementById('yearFilter');
+            const thisYear = new Date().getFullYear();
+            yearFilter.innerHTML = '';
+            for (let y = thisYear - 5; y <= thisYear + 2; y++) {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = y;
+                if (y === thisYear) opt.selected = true;
+                yearFilter.appendChild(opt);
+            }
+        }
+
         // Load revenue report
         let revenueChartInstance = null;
         async function loadRevenueReport() {
             try {
-                const timeFilter = document.getElementById('timeFilter').value;
-                const [year, month] = timeFilter.split('-');
-                const data = await goiAPI(`/revenue-report?month=${month}&year=${year}`);
+                const month = document.getElementById('monthFilter').value;
+                const year = document.getElementById('yearFilter').value;
+                // Gọi endpoint đúng với backend Django
+                const data = await goiAPI(`/report/revenue?month=${month}&year=${year}`);
+
+                // Chuẩn bị dữ liệu cho biểu đồ đường
+                let labels = [];
+                let values = [];
+                if (data.details && data.details.length > 0) {
+                    // Sắp xếp data.details theo ngày tăng dần (ưu tiên ngày thanh toán, nếu không có thì ngày tiệc)
+                    data.details.sort((a, b) => {
+                        const dateA = new Date(a.ngay_thanh_toan || a.ngay_tiec);
+                        const dateB = new Date(b.ngay_thanh_toan || b.ngay_tiec);
+                        return dateA - dateB;
+                    });
+                    // Ưu tiên lấy ngày thanh toán nếu có, nếu không lấy ngày tiệc
+                    labels = data.details.map(item => item.ngay_thanh_toan || item.ngay_tiec);
+                    values = data.details.map(item => item.doanh_thu ? item.doanh_thu / 1000000 : 0);
+                } else {
+                    labels = [`Tháng ${month}/${year}`];
+                    values = [data.total_revenue ? data.total_revenue / 1000000 : 0];
+                }
 
                 // Update chart
                 const chartLoading = document.getElementById('chartLoading');
@@ -396,14 +443,21 @@
                 revenueChartInstance = new Chart(ctx, {
                     type: 'line',
                     data: {
-                        labels: data.map(item => item.ngay.split('-')[2]), // Extract day
+                        labels: labels,
                         datasets: [{
-                            label: 'Doanh thu (triệu VNĐ)',
-                            data: data.map(item => item.doanh_thu / 1000000), // Convert to million VND
-                            borderColor: '#60a5fa',
-                            backgroundColor: 'rgba(96, 165, 250, 0.2)',
-                            fill: true,
-                            tension: 0.4,
+                            label: 'Tổng doanh thu (triệu VNĐ)',
+                            data: values,
+                            borderColor: '#f59e42', // cam đậm
+                            backgroundColor: 'rgba(245, 158, 66, 0.25)', // cam nhạt fill
+                            fill: {
+                                target: 'origin',
+                                above: 'rgba(245, 158, 66, 0.25)', // cam nhạt fill
+                            },
+                            tension: 0.5, // cong hơn
+                            pointRadius: 6,
+                            pointBackgroundColor: '#fff',
+                            pointBorderColor: '#f59e42',
+                            pointBorderWidth: 3,
                             borderWidth: 2
                         }]
                     },
@@ -443,7 +497,7 @@
                             x: {
                                 title: {
                                     display: true,
-                                    text: 'Ngày',
+                                    text: 'Thời gian',
                                     font: { size: 14, family: "'Inter', sans-serif" }
                                 },
                                 ticks: { color: '#2c3e50' }
@@ -462,24 +516,19 @@
                 const tableLoading = document.getElementById('tableLoading');
                 const table = document.getElementById('revenueTable');
                 const tbody = document.getElementById('revenueTableBody');
-                const totalTiec = data.reduce((sum, item) => sum + item.so_tiec, 0);
-                const totalDoanhThu = data.reduce((sum, item) => sum + item.doanh_thu, 0);
-
-                tbody.innerHTML = data.map(item => `
-                    <tr>
-                        <td>${item.ngay}</td>
-                        <td>${item.so_tiec}</td>
-                        <td>${formatVND(item.doanh_thu)}</td>
-                        <td>${item.ti_le}%</td>
-                    </tr>
-                `).join('') + `
-                    <tr>
-                        <td>Tổng cộng</td>
-                        <td>${totalTiec}</td>
-                        <td>${formatVND(totalDoanhThu)}</td>
-                        <td>100%</td>
-                    </tr>
-                `;
+                tbody.innerHTML = (data.details && data.details.length)
+                  ? data.details.map(item => `
+                        <tr>
+                          <td>${item.ma_tiec}</td>
+                          <td>${item.ten_khach_hang}</td>
+                          <td>${item.ngay_tiec}</td>
+                          <td>${item.ngay_thanh_toan || '-'}</td>
+                          <td>${item.trang_thai_thanh_toan || '-'}</td>
+                          <td>${formatVND(item.doanh_thu)}</td>
+                          <td>${item.ti_le != null ? item.ti_le : ''}</td>
+                        </tr>
+                    `).join('')
+                  : '<tr><td colspan="7" class="text-center">Không có dữ liệu</td></tr>';
 
                 // Hide loading and show content
                 chartLoading.classList.add('hidden');
@@ -529,6 +578,11 @@
                 document.getElementById('content').classList.add('collapsed');
             }
 
+            renderYearOptions();
+            // Set tháng hiện tại
+            const now = new Date();
+            document.getElementById('monthFilter').value = now.getMonth() + 1;
+            document.getElementById('yearFilter').value = now.getFullYear();
             // Load initial report
             await loadRevenueReport();
         });

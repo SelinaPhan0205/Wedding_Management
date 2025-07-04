@@ -446,35 +446,78 @@ class ReportViewSet(viewsets.ViewSet):
         """Báo cáo doanh thu theo tháng/năm (truyền ?month=7&year=2025)"""
         month = int(request.query_params.get('month', datetime.date.today().month))
         year = int(request.query_params.get('year', datetime.date.today().year))
-        hoadons = HoaDon.objects.filter(ngay_thanh_toan__month=month, ngay_thanh_toan__year=year)
+        hoadons = HoaDon.objects.filter(ngay_thanh_toan__month=month, ngay_thanh_toan__year=year).select_related('tiec_cuoi')
         total = hoadons.aggregate(total=Sum('tiec_cuoi__tong_tien_tiec_cuoi'))['total'] or 0
+
+        details = []
+        for hd in hoadons:
+            tc = hd.tiec_cuoi
+            doanh_thu = tc.tong_tien_tiec_cuoi if tc else 0
+            ti_le = round(doanh_thu / total * 100, 2) if total > 0 else 0
+            details.append({
+                'ma_tiec': tc.id if tc else '',
+                'ten_khach_hang': f"{tc.ten_chu_re} & {tc.ten_co_dau}" if tc else '',
+                'ngay_tiec': tc.ngay_dai_tiec.strftime('%Y-%m-%d') if tc and tc.ngay_dai_tiec else '',
+                'ngay_thanh_toan': hd.ngay_thanh_toan.strftime('%Y-%m-%d') if hd.ngay_thanh_toan else '-',
+                'trang_thai_thanh_toan': hd.trang_thai if hasattr(hd, 'trang_thai') else '-',
+                'doanh_thu': doanh_thu,
+                'ti_le': ti_le,
+            })
+
         return Response({
             'month': month,
             'year': year,
             'total_revenue': total,
             'count': hoadons.count(),
+            'details': details,
         })
 
     @action(detail=False, methods=['get'], url_path='debt')
     def debt_report(self, request):
-        """Báo cáo công nợ: tổng các hóa đơn chưa thanh toán"""
-        hoadons = HoaDon.objects.filter(trang_thai='Chưa Thanh Toán')
+        """Báo cáo công nợ: tổng các hóa đơn chưa thanh toán, trả về details"""
+        month = int(request.query_params.get('month', datetime.date.today().month))
+        year = int(request.query_params.get('year', datetime.date.today().year))
+        hoadons = HoaDon.objects.filter(trang_thai='Chưa Thanh Toán', tiec_cuoi__ngay_dai_tiec__month=month, tiec_cuoi__ngay_dai_tiec__year=year).select_related('tiec_cuoi')
         total_debt = hoadons.aggregate(total=Sum(F('tiec_cuoi__tong_tien_tiec_cuoi')-F('tiec_cuoi__tien_dat_coc')))['total'] or 0
+        details = []
+        for hd in hoadons:
+            tc = hd.tiec_cuoi
+            so_con_no = (tc.tong_tien_tiec_cuoi - tc.tien_dat_coc) if tc else 0
+            details.append({
+                'ma_tiec': tc.id if tc else '',
+                'ten_khach_hang': f"{tc.ten_chu_re} & {tc.ten_co_dau}" if tc else '',
+                'ngay_tiec': tc.ngay_dai_tiec.strftime('%Y-%m-%d') if tc and tc.ngay_dai_tiec else '',
+                'so_con_no': so_con_no,
+            })
         return Response({
+            'month': month,
+            'year': year,
             'total_debt': total_debt,
             'count': hoadons.count(),
+            'details': details,
         })
 
     @action(detail=False, methods=['get'], url_path='actual-receipt')
     def actual_receipt_report(self, request):
-        """Báo cáo thực thu: tổng tiền đã thu (đã thanh toán) theo tháng/năm"""
+        """Báo cáo thực thu: tổng tiền đã thu (đã thanh toán) theo tháng/năm, trả về details"""
         month = int(request.query_params.get('month', datetime.date.today().month))
         year = int(request.query_params.get('year', datetime.date.today().year))
-        hoadons = HoaDon.objects.filter(trang_thai='Đã thanh toán', ngay_thanh_toan__month=month, ngay_thanh_toan__year=year)
+        hoadons = HoaDon.objects.filter(trang_thai='Đã thanh toán', ngay_thanh_toan__month=month, ngay_thanh_toan__year=year).select_related('tiec_cuoi')
         total = hoadons.aggregate(total=Sum('tiec_cuoi__tong_tien_tiec_cuoi'))['total'] or 0
+        details = []
+        for hd in hoadons:
+            tc = hd.tiec_cuoi
+            so_thuc_thu = tc.tong_tien_tiec_cuoi if tc else 0
+            details.append({
+                'ma_tiec': tc.id if tc else '',
+                'ten_khach_hang': f"{tc.ten_chu_re} & {tc.ten_co_dau}" if tc else '',
+                'ngay_tiec': tc.ngay_dai_tiec.strftime('%Y-%m-%d') if tc and tc.ngay_dai_tiec else '',
+                'so_thuc_thu': so_thuc_thu,
+            })
         return Response({
             'month': month,
             'year': year,
             'total_actual_receipt': total,
             'count': hoadons.count(),
+            'details': details,
         })
