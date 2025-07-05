@@ -144,16 +144,17 @@
             border-bottom: 1px solid #e5e7eb;
         }
         .search-input {
+            padding: 0.75rem;
             border: 1px solid #d1d5db;
-            padding: 0.6rem 1rem;
-            border-radius: 8px;
-            width: 300px;
+            border-radius: 0.5rem;
+            background-color: #f9fafb;
             font-size: 0.95rem;
-            outline: none;
-            transition: border-color 0.2s;
+            min-width: 100px;
         }
         .search-input:focus {
             border-color: #2c3e50;
+            box-shadow: 0 2px 8px rgba(44,62,80,0.10);
+            outline: none;
         }
         .add-button {
             font-family: 'Inter', sans-serif;
@@ -311,6 +312,35 @@
             max-height: 90vh;
             overflow-y: auto;
         }
+        .search-input {
+            padding: 0.75rem;
+            padding-right: 0px;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            background-color: #f9fafb;
+            font-size: 0.95rem;
+            min-width: 300px;
+        }
+        .search-input:focus {
+            border-color: #2c3e50;
+            box-shadow: 0 2px 8px rgba(44,62,80,0.10);
+            outline: none;
+        }
+        .filter-select {
+            padding: 0.75rem;
+            padding-right: 0px;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            background-color: #f9fafb;
+            font-size: 0.95rem;
+            min-width: 90px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .filter-select:focus {
+            border-color: #2c3e50;
+            box-shadow: 0 2px 8px rgba(44,62,80,0.10);
+            outline: none;
+        }
     </style>
 </head>
 <body>
@@ -356,6 +386,27 @@
                                 <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
                             </svg>
                         </button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i class="fi fi-sr-filter text-gray-600"></i>
+                        <select id="filterThang" class="filter-select" style="width: 80px;">
+                            <option value="">Tháng</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10</option>
+                            <option value="11">11</option>
+                            <option value="12">12</option>
+                        </select>
+                        <select id="filterNam" class="filter-select" style="width: 80px;">
+                            <option value="">Năm</option>
+                        </select>
                     </div>
                     <button class="add-button" onclick="moFormThemHoaDon()">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -556,6 +607,8 @@
         const formSuaHoaDon = document.getElementById('formSuaHoaDon');
         const paginationControlsHoaDon = document.getElementById('paginationControlsHoaDon');
         const searchHoaDonInput = document.getElementById('searchHoaDonInput');
+        const filterThang = document.getElementById('filterThang');
+        const filterNam = document.getElementById('filterNam');
         const maTiecInput = document.getElementById('maTiecCuoi');
         const autocompleteList = document.getElementById('maTiecAutocomplete');
         let isEditModeHoaDon = false;
@@ -584,6 +637,7 @@
                     method,
                     headers: {
                         'Content-Type': 'application/json',
+                        'Cache-Control': 'no-cache'
                     },
                 };
                 if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method.toUpperCase())) {
@@ -636,7 +690,28 @@
         // Hiển thị danh sách hóa đơn trong bảng
         async function hienThiDanhSachHoaDon(searchQuery = '') {
             try {
-                const response = await goiAPI('GET', '/api/hoadon/?search=' + encodeURIComponent(searchQuery));
+                // Tạo URL với tất cả tham số: search, tháng, năm, page, limit
+                const params = new URLSearchParams();
+                params.append('page', currentPageHoaDon);
+                params.append('limit', itemsPerPageHoaDon);
+                
+                // Thêm search nếu có
+                if (searchQuery) {
+                    params.append('search', searchQuery);
+                }
+                
+                // Thêm filter tháng/năm nếu có
+                const thang = filterThang.value;
+                const nam = filterNam.value;
+                if (thang) {
+                    params.append('thang', thang);
+                }
+                if (nam) {
+                    params.append('nam', nam);
+                }
+                
+                const url = `/api/hoadon/?${params.toString()}`;
+                const response = await goiAPI('GET', url);
                 console.log('API /api/hoadon/ trả về:', response);
                 let ds = [];
                 if (Array.isArray(response)) {
@@ -650,6 +725,7 @@
                         if (Array.isArray(v)) { ds = v; break; }
                     }
                 }
+                
                 danhSachHoaDon = ds;
                 let html = '';
                 (danhSachHoaDon || []).forEach(hoadon => {
@@ -673,7 +749,19 @@
                     </tr>`;
                 });
                 document.getElementById('danhSachHoaDon').innerHTML = html;
-                hienThiPhanTrangHoaDon(ds.length);
+                
+                // Hiển thị tổng số hóa đơn
+                if (searchQuery) {
+                    document.getElementById('tongSoHoaDon').textContent = `Kết quả tìm kiếm: ${response.total || danhSachHoaDon.length}`;
+                } else {
+                    document.getElementById('tongSoHoaDon').textContent = `Tổng số hóa đơn: ${response.total || danhSachHoaDon.length}`;
+                }
+                
+                hienThiPhanTrangHoaDon(response.total || danhSachHoaDon.length);
+
+                if (danhSachHoaDon.length === 0) {
+                    document.getElementById('danhSachHoaDon').innerHTML = '<tr><td colspan="10" class="text-center py-4 text-gray-500">Không tìm thấy hóa đơn phù hợp.</td></tr>';
+                }
             } catch (error) {
                 console.error('Lỗi hiển thị danh sách hóa đơn:', error);
                 document.getElementById('danhSachHoaDon').innerHTML = '<tr><td colspan="10" class="text-center py-4 text-gray-500">Không tìm thấy hóa đơn nào.</td></tr>';
@@ -805,8 +893,9 @@
                 }
                 // Tính tổng tiền bàn nếu có
                 const soLuongBan = hoadon.so_luong_ban || 0;
-                const donGiaBan = tiec.don_gia_ban || 0;
-                const tongTienBan = soLuongBan * donGiaBan;
+                // Đơn giá bàn = tổng tiền món ăn
+                const donGiaBan = (tiec.mon_an || []).reduce((sum, mon) => sum + (mon.don_gia || 0), 0);
+                const tongTienBan = donGiaBan * soLuongBan;
                 // Hiển thị thông tin hóa đơn theo bố cục 2 cột
                 document.getElementById('bmTenChuRe').textContent = tiec.ten_chu_re || '';
                 document.getElementById('bmTenCoDau').textContent = tiec.ten_co_dau || '';
@@ -847,16 +936,7 @@
                 document.getElementById('bmTienConLai').textContent = (hoadon.tien_con_lai || 0).toLocaleString('vi-VN') + ' VNĐ';
                 document.getElementById('bangDichVuSection').style.display = '';
 
-                // Hiển thị trạng thái, số ngày trễ, tiền phạt trong modal
-                let infoDiv = document.getElementById('bmTrangThaiInfo');
-                if (!infoDiv) {
-                    infoDiv = document.createElement('div');
-                    infoDiv.id = 'bmTrangThaiInfo';
-                    infoDiv.style.marginTop = '12px';
-                    infoDiv.style.fontWeight = 'bold';
-                    document.querySelector('#modalXemHoaDon .modal-content').appendChild(infoDiv);
-                }
-                infoDiv.innerHTML = `<span style='color:#2c3e50;'>Trạng thái:</span> <span style='color:${hoadon.trang_thai==="Thanh toán trễ hạn"?"#dc2626":"#059669"};'>${hoadon.trang_thai}</span> | <span style='color:#2c3e50;'>Số ngày trễ:</span> <span>${hoadon.so_ngay_tre || 0}</span> | <span style='color:#2c3e50;'>Tiền phạt:</span> <span>${(hoadon.tien_phat || 0).toLocaleString('vi-VN')} VNĐ</span>`;
+                
                 document.getElementById('modalXemHoaDon').classList.remove('hidden');
             } catch (error) {
                 console.error('Lỗi lấy thông tin hóa đơn:', error);
@@ -865,13 +945,25 @@
 
         formHoaDon.addEventListener('submit', async function(event) {
             event.preventDefault();
+            const maTiec = maTiecInput.value;
+            const soLuongBanNhap = parseInt(document.getElementById('soLuongBan').value);
+            // Lấy số lượng bàn thực tế của tiệc cưới
+            const tiec = danhSachTiecCuoi.find(t => String(t.id) === String(maTiec));
+            if (!tiec) {
+                alert('Không tìm thấy thông tin tiệc cưới!');
+                return;
+            }
+            if (soLuongBanNhap < tiec.so_luong_ban) {
+                alert(`Số lượng bàn không được nhỏ hơn số lượng bàn đã đặt trong tiệc cưới. Vui lòng nhập số bàn lớn hơn hoặc bằng ${tiec.so_luong_ban}.`);
+                return;
+            }
             const newHoaDonData = {
                 tiec_cuoi: maTiecInput.value,
-                so_luong_ban: parseInt(document.getElementById('soLuongBan').value),
+                so_luong_ban: soLuongBanNhap,
                 ngay_thanh_toan: new Date().toISOString().split('T')[0],
-                tong_tien: parseInt(document.getElementById('soLuongBan').value) * 1000000,
+                tong_tien: soLuongBanNhap * 1000000,
                 tien_coc: 0,
-                tien_con_lai: parseInt(document.getElementById('soLuongBan').value) * 1000000,
+                tien_con_lai: soLuongBanNhap * 1000000,
                 trang_thai: 'Chưa Thanh Toán'
             };
 
@@ -905,6 +997,17 @@
                 alert('Mã số tiệc không hợp lệ. Vui lòng chọn lại!');
                 return;
             }
+            // Kiểm tra số lượng bàn không nhỏ hơn số lượng bàn tiệc cưới
+            const soLuongBanNhap = parseInt(document.getElementById('suaSoLuongBan').value);
+            const tiec = danhSachTiecCuoi.find(t => String(t.id) === String(tiecCuoiId));
+            if (!tiec) {
+                alert('Không tìm thấy thông tin tiệc cưới!');
+                return;
+            }
+            if (soLuongBanNhap < tiec.so_luong_ban) {
+                alert(`Số lượng bàn không được nhỏ hơn số lượng bàn đã đặt trong tiệc cưới. Vui lòng nhập số bàn lớn hơn hoặc bằng ${tiec.so_luong_ban}.`);
+                return;
+            }
             const updatedHoaDonData = {
                 tiec_cuoi: tiecCuoiId,
                 so_luong_ban: parseInt(document.getElementById('suaSoLuongBan').value),
@@ -932,10 +1035,13 @@
                     const totalPages = Math.ceil(totalItems / itemsPerPageHoaDon);
                     if (currentPageHoaDon > totalPages && totalPages > 0) {
                         currentPageHoaDon = totalPages;
-                    } else if (totalPages === 0) {
+                    }
+                    // Nếu không còn hóa đơn nào, về trang 1
+                    if (totalPages === 0) {
                         currentPageHoaDon = 1;
                     }
-                    hienThiDanhSachHoaDon(searchHoaDonInput.value);
+                    // GỌI LẠI API lấy danh sách mới nhất
+                    await hienThiDanhSachHoaDon(searchHoaDonInput.value);
                 } catch (error) {
                     console.error('Lỗi xóa hóa đơn:', error);
                 }
@@ -1057,8 +1163,33 @@
             }
         }
 
+        // Hàm khởi tạo danh sách năm
+        function khoiTaoDanhSachNam() {
+            const currentYear = new Date().getFullYear();
+            const startYear = 2020; // Có thể điều chỉnh năm bắt đầu
+            
+            for (let year = currentYear; year >= startYear; year--) {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                filterNam.appendChild(option);
+            }
+        }
+
+        // Event listeners cho filter
+        filterThang.addEventListener('change', function() {
+            currentPageHoaDon = 1;
+            hienThiDanhSachHoaDon(searchHoaDonInput.value);
+        });
+
+        filterNam.addEventListener('change', function() {
+            currentPageHoaDon = 1;
+            hienThiDanhSachHoaDon(searchHoaDonInput.value);
+        });
+
         document.addEventListener('DOMContentLoaded', async () => {
             console.log("Đang tải danh sách hóa đơn");
+            khoiTaoDanhSachNam();
             hienThiDanhSachHoaDon();
         });
 

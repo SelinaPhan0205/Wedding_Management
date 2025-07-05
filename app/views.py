@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from django.contrib import messages
 from rest_framework.filters import SearchFilter
 from django.core.paginator import Paginator
-from .models import *
+from .models import TaiKhoan, Sanh, TiecCuoi, QuyDinh, MonAn, DichVu, HoaDon, ChiTietDichVu, ChiTietThucDon, LoaiSanh
 from .serializers import *
 from django.db.models import Sum, F
 import datetime
@@ -296,6 +296,27 @@ class TiecCuoiViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset().order_by('-ngay_dai_tiec')
+        
+        # Xử lý filter tháng/năm trước (vì cần QuerySet)
+        thang = request.query_params.get('thang')
+        nam = request.query_params.get('nam')
+        if thang:
+            queryset = queryset.filter(ngay_dai_tiec__month=int(thang))
+        if nam:
+            queryset = queryset.filter(ngay_dai_tiec__year=int(nam))
+            
+        # Xử lý các filter khác
+        sanh_id = request.query_params.get('sanh_id')
+        ngay_dai_tiec = request.query_params.get('ngay_dai_tiec')
+        ca = request.query_params.get('ca')
+        if sanh_id:
+            queryset = queryset.filter(sanh_id=sanh_id)
+        if ngay_dai_tiec:
+            queryset = queryset.filter(ngay_dai_tiec=ngay_dai_tiec)
+        if ca:
+            queryset = queryset.filter(ca=ca)
+            
+        # Xử lý search cuối cùng (sau khi đã filter)
         search_query = request.query_params.get('search', '').strip().lower()
         if search_query:
             search_query_no_diacritics = bo_dau(search_query).lower()
@@ -306,15 +327,6 @@ class TiecCuoiViewSet(viewsets.ModelViewSet):
                 or search_query_no_diacritics in bo_dau(t.so_dien_thoai or '').lower()
                 or search_query_no_diacritics in bo_dau(t.sanh.ten_sanh if t.sanh else '').lower()
             ]
-        sanh_id = request.query_params.get('sanh_id')
-        ngay_dai_tiec = request.query_params.get('ngay_dai_tiec')
-        ca = request.query_params.get('ca')
-        if sanh_id:
-            queryset = queryset.filter(sanh_id=sanh_id)
-        if ngay_dai_tiec:
-            queryset = queryset.filter(ngay_dai_tiec=ngay_dai_tiec)
-        if ca:
-            queryset = queryset.filter(ca=ca)
         # Phân trang
         page = int(request.query_params.get('page', 1))
         limit = int(request.query_params.get('limit', 8))
@@ -379,6 +391,16 @@ class HoaDonViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset().order_by('-ngay_thanh_toan')
+        
+        # Xử lý filter tháng/năm trước (vì cần QuerySet)
+        thang = request.query_params.get('thang')
+        nam = request.query_params.get('nam')
+        if thang:
+            queryset = queryset.filter(ngay_thanh_toan__month=int(thang))
+        if nam:
+            queryset = queryset.filter(ngay_thanh_toan__year=int(nam))
+            
+        # Xử lý search sau khi đã filter
         search_query = request.query_params.get('search', '').strip().lower()
         if search_query:
             queryset = queryset.filter(
