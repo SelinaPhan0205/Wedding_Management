@@ -58,14 +58,3 @@
     python manage.py runserver
 
 6. Truy cập hệ thống tại: http://127.0.0.1:8000
-
-## Cấu trúc thư mục chính của dự án
-
-webquanlytieccuoi/
-├── templates/
-├── static/
-├── app/
-├── webquanlytieccuoi/
-├── manage.py
-├── requirements.txt
-└── README.md

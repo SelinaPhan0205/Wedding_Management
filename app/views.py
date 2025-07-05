@@ -306,6 +306,15 @@ class TiecCuoiViewSet(viewsets.ModelViewSet):
                 or search_query_no_diacritics in bo_dau(t.so_dien_thoai or '').lower()
                 or search_query_no_diacritics in bo_dau(t.sanh.ten_sanh if t.sanh else '').lower()
             ]
+        sanh_id = request.query_params.get('sanh_id')
+        ngay_dai_tiec = request.query_params.get('ngay_dai_tiec')
+        ca = request.query_params.get('ca')
+        if sanh_id:
+            queryset = queryset.filter(sanh_id=sanh_id)
+        if ngay_dai_tiec:
+            queryset = queryset.filter(ngay_dai_tiec=ngay_dai_tiec)
+        if ca:
+            queryset = queryset.filter(ca=ca)
         # Phân trang
         page = int(request.query_params.get('page', 1))
         limit = int(request.query_params.get('limit', 8))

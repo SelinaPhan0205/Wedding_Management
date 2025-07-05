@@ -489,10 +489,10 @@
         <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md" style="max-height: 90vh; overflow-y: auto;">
             <h2 id="modalTitleSuaHoaDon" class="text-2xl font-bold mb-6 text-gray-800">Chỉnh Sửa Hóa Đơn</h2>
             <form id="formSuaHoaDon" autocomplete="off">
-                <div class="mb-4">
+                <div class="mb-4 relative">
                     <label for="suaMaTiec" class="block text-gray-700 text-sm font-medium mb-2">Mã Số Tiệc:</label>
                     <input type="text" id="suaMaTiec" name="suaMaTiec" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Nhập hoặc chọn mã số tiệc..." required autocomplete="off">
-                    <div id="maTiecAutocomplete" class="autocomplete-list hidden"></div>
+                    <div id="suaMaTiecAutocomplete" class="autocomplete-list hidden"></div>
                 </div>
                 <div class="mb-4">
                     <label for="suaSoLuongBan" class="block text-gray-700 text-sm font-medium mb-2">Số Lượng Bàn:</label>
@@ -955,6 +955,47 @@
                 autocompleteList.classList.add('hidden');
             }
         }
+
+        const suaMaTiecInput = document.getElementById('suaMaTiec');
+        const suaAutocompleteList = document.getElementById('suaMaTiecAutocomplete');
+
+        if (suaMaTiecInput) {
+            suaMaTiecInput.addEventListener('input', function(e) {
+                hienAutocompleteSuaMaTiec(e.target.value);
+            });
+        }
+
+        function hienAutocompleteSuaMaTiec(query) {
+            if (!suaAutocompleteList) return;
+            suaAutocompleteList.innerHTML = '';
+            const filtered = danhSachTiecCuoi.filter(tiec =>
+                tiec.id.toString().includes(query) ||
+                (tiec.ten_chu_re && tiec.ten_chu_re.toLowerCase().includes(query.toLowerCase())) ||
+                (tiec.ten_co_dau && tiec.ten_co_dau.toLowerCase().includes(query.toLowerCase()))
+            );
+            filtered.forEach(tiec => {
+                const item = document.createElement('div');
+                item.classList.add('autocomplete-item');
+                item.textContent = `${tiec.id} - ${tiec.ten_chu_re} & ${tiec.ten_co_dau}`;
+                item.onclick = () => {
+                    suaMaTiecInput.value = tiec.id;
+                    suaAutocompleteList.classList.add('hidden');
+                };
+                suaAutocompleteList.appendChild(item);
+            });
+            if (filtered.length > 0) {
+                suaAutocompleteList.classList.remove('hidden');
+            } else {
+                suaAutocompleteList.classList.add('hidden');
+            }
+        }
+
+        // Ẩn autocomplete khi click ra ngoài cho form sửa
+        document.addEventListener('click', function(event) {
+            if (suaAutocompleteList && !suaAutocompleteList.contains(event.target) && event.target !== suaMaTiecInput) {
+                suaAutocompleteList.classList.add('hidden');
+            }
+        });
 
         // Ẩn autocomplete khi click ra ngoài
         document.addEventListener('click', function(event) {
