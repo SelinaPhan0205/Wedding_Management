@@ -9,7 +9,7 @@ class UserSerializer(serializers.ModelSerializer):
 class LoaiSanhSerializer(serializers.ModelSerializer):
     class Meta:
         model = LoaiSanh
-        fields = ['id', 'ten_loai_sanh']
+        fields = ['id', 'ten_loai_sanh', 'gia_ban_toi_thieu']
 
 class SanhSerializer(serializers.ModelSerializer):
     loai_sanh = LoaiSanhSerializer(read_only=True)
@@ -153,6 +153,13 @@ class TiecCuoiSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'mon_an', 'dich_vu']
 
+    def tinh_tong_tien(self, tiec):
+        tong_mon_an = sum(ct.thanh_tien for ct in tiec.chitietthucdon_set.all())
+        tong_dich_vu = sum(ct.thanh_tien for ct in tiec.chitietdichvu_set.all())
+        tong = (tong_mon_an) * tiec.so_luong_ban + tong_dich_vu
+        tiec.tong_tien_tiec_cuoi = tong
+        tiec.save()
+
     def create(self, validated_data):
         # Đảm bảo tong_tien_tiec_cuoi mặc định là 0 nếu không truyền lên
         if 'tong_tien_tiec_cuoi' not in validated_data:
@@ -182,6 +189,7 @@ class TiecCuoiSerializer(serializers.ModelSerializer):
                 so_luong=so_luong,
                 thanh_tien=dich_vu_obj.don_gia * so_luong
             )
+        self.tinh_tong_tien(tiec)
         return tiec
 
     def update(self, instance, validated_data):
@@ -212,15 +220,17 @@ class TiecCuoiSerializer(serializers.ModelSerializer):
                     so_luong=so_luong,
                     thanh_tien=dich_vu_obj.don_gia * so_luong
                 )
+        self.tinh_tong_tien(instance)
         return instance
     
 class HoaDonSerializer(serializers.ModelSerializer):
     ma_hoa_don = serializers.IntegerField(source='id', read_only=True)
     ma_tiec = serializers.IntegerField(source='tiec_cuoi.id', read_only=True)
-    tong_tien = serializers.FloatField(source='tiec_cuoi.tong_tien_tiec_cuoi', read_only=True)
+    tong_tien = serializers.SerializerMethodField(read_only=True)
     tien_coc = serializers.FloatField(source='tiec_cuoi.tien_dat_coc', read_only=True)
     tien_con_lai = serializers.SerializerMethodField()
-    dich_vu = serializers.SerializerMethodField()  # Thêm dòng này
+    dich_vu = serializers.SerializerMethodField()
+    trang_thai = serializers.SerializerMethodField()  # Tính trạng thái động
 
     class Meta:
         model = HoaDon
@@ -231,10 +241,22 @@ class HoaDonSerializer(serializers.ModelSerializer):
         ]
 
     def get_tien_con_lai(self, obj):
-        tong = obj.tiec_cuoi.tong_tien_tiec_cuoi if obj.tiec_cuoi else 0
+        tong = obj.tinh_tong_tien() 
         coc = obj.tiec_cuoi.tien_dat_coc if obj.tiec_cuoi else 0
         return tong - coc
 
     def get_dich_vu(self, obj):
         chi_tiet = ChiTietDichVu.objects.filter(tiec_cuoi=obj.tiec_cuoi).select_related('dich_vu')
         return ChiTietDichVuSerializer(chi_tiet, many=True).data
+    
+    def get_tong_tien(self, obj):
+        return obj.tinh_tong_tien()
+
+    def get_trang_thai(self, obj):
+        # Luôn tính trạng thái động dựa vào ngày thanh toán và ngày đãi tiệc
+        tc = obj.tiec_cuoi
+        if not obj.ngay_thanh_toan or not tc or not tc.ngay_dai_tiec:
+            return 'Chưa thanh toán'
+        if obj.ngay_thanh_toan > tc.ngay_dai_tiec:
+            return 'Thanh toán trễ hạn'
+        return 'Đã thanh toán'

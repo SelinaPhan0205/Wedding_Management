@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from django.contrib import messages
 from rest_framework.filters import SearchFilter
 from django.core.paginator import Paginator
-from .models import *
+from .models import TaiKhoan, Sanh, TiecCuoi, QuyDinh, MonAn, DichVu, HoaDon, ChiTietDichVu, ChiTietThucDon, LoaiSanh
 from .serializers import *
 from django.db.models import Sum, F
 import datetime
@@ -296,6 +296,27 @@ class TiecCuoiViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset().order_by('-ngay_dai_tiec')
+        
+        # Xử lý filter tháng/năm trước (vì cần QuerySet)
+        thang = request.query_params.get('thang')
+        nam = request.query_params.get('nam')
+        if thang:
+            queryset = queryset.filter(ngay_dai_tiec__month=int(thang))
+        if nam:
+            queryset = queryset.filter(ngay_dai_tiec__year=int(nam))
+            
+        # Xử lý các filter khác
+        sanh_id = request.query_params.get('sanh_id')
+        ngay_dai_tiec = request.query_params.get('ngay_dai_tiec')
+        ca = request.query_params.get('ca')
+        if sanh_id:
+            queryset = queryset.filter(sanh_id=sanh_id)
+        if ngay_dai_tiec:
+            queryset = queryset.filter(ngay_dai_tiec=ngay_dai_tiec)
+        if ca:
+            queryset = queryset.filter(ca=ca)
+            
+        # Xử lý search cuối cùng (sau khi đã filter)
         search_query = request.query_params.get('search', '').strip().lower()
         if search_query:
             search_query_no_diacritics = bo_dau(search_query).lower()
@@ -326,8 +347,60 @@ class HoaDonViewSet(viewsets.ModelViewSet):
     queryset = HoaDon.objects.all().select_related('tiec_cuoi')
     serializer_class = HoaDonSerializer
 
+    def perform_create(self, serializer):
+        # Gán trạng thái và các trường liên quan khi tạo hóa đơn
+        instance = serializer.save()
+        tc = instance.tiec_cuoi
+        so_ngay_tre = 0
+        tien_phat = 0
+        trang_thai = 'Đã thanh toán'
+        if tc and instance.ngay_thanh_toan and tc.ngay_dai_tiec:
+            if instance.ngay_thanh_toan > tc.ngay_dai_tiec:
+                trang_thai = 'Thanh toán trễ hạn'
+                so_ngay_tre = (instance.ngay_thanh_toan - tc.ngay_dai_tiec).days
+                tien_phat = max((tc.tong_tien_tiec_cuoi - tc.tien_dat_coc) * 0.01 * so_ngay_tre, 0)
+            else:
+                trang_thai = 'Đã thanh toán'
+                so_ngay_tre = 0
+                tien_phat = 0
+        instance.trang_thai = trang_thai
+        instance.so_ngay_tre = so_ngay_tre
+        instance.tien_phat = tien_phat
+        instance.save()
+
+    def perform_update(self, serializer):
+        # Gán lại trạng thái và các trường liên quan khi cập nhật hóa đơn
+        instance = serializer.save()
+        tc = instance.tiec_cuoi
+        so_ngay_tre = 0
+        tien_phat = 0
+        trang_thai = 'Đã thanh toán'
+        if tc and instance.ngay_thanh_toan and tc.ngay_dai_tiec:
+            if instance.ngay_thanh_toan > tc.ngay_dai_tiec:
+                trang_thai = 'Thanh toán trễ hạn'
+                so_ngay_tre = (instance.ngay_thanh_toan - tc.ngay_dai_tiec).days
+                tien_phat = max((tc.tong_tien_tiec_cuoi - tc.tien_dat_coc) * 0.01 * so_ngay_tre, 0)
+            else:
+                trang_thai = 'Đã thanh toán'
+                so_ngay_tre = 0
+                tien_phat = 0
+        instance.trang_thai = trang_thai
+        instance.so_ngay_tre = so_ngay_tre
+        instance.tien_phat = tien_phat
+        instance.save()
+
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset().order_by('-ngay_thanh_toan')
+        
+        # Xử lý filter tháng/năm trước (vì cần QuerySet)
+        thang = request.query_params.get('thang')
+        nam = request.query_params.get('nam')
+        if thang:
+            queryset = queryset.filter(ngay_thanh_toan__month=int(thang))
+        if nam:
+            queryset = queryset.filter(ngay_thanh_toan__year=int(nam))
+            
+        # Xử lý search sau khi đã filter
         search_query = request.query_params.get('search', '').strip().lower()
         if search_query:
             queryset = queryset.filter(
@@ -446,35 +519,80 @@ class ReportViewSet(viewsets.ViewSet):
         """Báo cáo doanh thu theo tháng/năm (truyền ?month=7&year=2025)"""
         month = int(request.query_params.get('month', datetime.date.today().month))
         year = int(request.query_params.get('year', datetime.date.today().year))
-        hoadons = HoaDon.objects.filter(ngay_thanh_toan__month=month, ngay_thanh_toan__year=year)
+        hoadons = HoaDon.objects.filter(ngay_thanh_toan__month=month, ngay_thanh_toan__year=year).select_related('tiec_cuoi')
         total = hoadons.aggregate(total=Sum('tiec_cuoi__tong_tien_tiec_cuoi'))['total'] or 0
+
+        details = []
+        for hd in hoadons:
+            tc = hd.tiec_cuoi
+            doanh_thu = tc.tong_tien_tiec_cuoi if tc else 0
+            ti_le = round(doanh_thu / total * 100, 2) if total > 0 else 0
+            details.append({
+                'ma_tiec': tc.id if tc else '',
+                'ten_khach_hang': f"{tc.ten_chu_re} & {tc.ten_co_dau}" if tc else '',
+                'ngay_tiec': tc.ngay_dai_tiec.strftime('%Y-%m-%d') if tc and tc.ngay_dai_tiec else '',
+                'ngay_thanh_toan': hd.ngay_thanh_toan.strftime('%Y-%m-%d') if hd.ngay_thanh_toan else '-',
+                'trang_thai_thanh_toan': hd.trang_thai if hasattr(hd, 'trang_thai') else '-',
+                'doanh_thu': doanh_thu,
+                'ti_le': ti_le,
+            })
+
         return Response({
             'month': month,
             'year': year,
             'total_revenue': total,
             'count': hoadons.count(),
+            'details': details,
         })
 
     @action(detail=False, methods=['get'], url_path='debt')
     def debt_report(self, request):
-        """Báo cáo công nợ: tổng các hóa đơn chưa thanh toán"""
-        hoadons = HoaDon.objects.filter(trang_thai='Chưa Thanh Toán')
+        """Báo cáo công nợ: chỉ các hóa đơn trạng thái 'Thanh toán trễ hạn'"""
+        month = int(request.query_params.get('month', datetime.date.today().month))
+        year = int(request.query_params.get('year', datetime.date.today().year))
+        hoadons = HoaDon.objects.filter(trang_thai='Thanh toán trễ hạn', tiec_cuoi__ngay_dai_tiec__month=month, tiec_cuoi__ngay_dai_tiec__year=year).select_related('tiec_cuoi')
         total_debt = hoadons.aggregate(total=Sum(F('tiec_cuoi__tong_tien_tiec_cuoi')-F('tiec_cuoi__tien_dat_coc')))['total'] or 0
+        details = []
+        for hd in hoadons:
+            tc = hd.tiec_cuoi
+            so_con_no = (tc.tong_tien_tiec_cuoi - tc.tien_dat_coc) if tc else 0
+            details.append({
+                'ma_tiec': tc.id if tc else '',
+                'ten_khach_hang': f"{tc.ten_chu_re} & {tc.ten_co_dau}" if tc else '',
+                'ngay_tiec': tc.ngay_dai_tiec.strftime('%Y-%m-%d') if tc and tc.ngay_dai_tiec else '',
+                'so_con_no': so_con_no,
+                'da_thanh_toan': False,
+            })
         return Response({
+            'month': month,
+            'year': year,
             'total_debt': total_debt,
             'count': hoadons.count(),
+            'details': details,
         })
 
     @action(detail=False, methods=['get'], url_path='actual-receipt')
     def actual_receipt_report(self, request):
-        """Báo cáo thực thu: tổng tiền đã thu (đã thanh toán) theo tháng/năm"""
+        """Báo cáo thực thu: tổng tiền đã thu (đã thanh toán) theo tháng/năm, trả về details"""
         month = int(request.query_params.get('month', datetime.date.today().month))
         year = int(request.query_params.get('year', datetime.date.today().year))
-        hoadons = HoaDon.objects.filter(trang_thai='Đã thanh toán', ngay_thanh_toan__month=month, ngay_thanh_toan__year=year)
+        hoadons = HoaDon.objects.filter(trang_thai='Đã thanh toán', ngay_thanh_toan__month=month, ngay_thanh_toan__year=year).select_related('tiec_cuoi')
         total = hoadons.aggregate(total=Sum('tiec_cuoi__tong_tien_tiec_cuoi'))['total'] or 0
+        details = []
+        for hd in hoadons:
+            tc = hd.tiec_cuoi
+            so_thuc_thu = tc.tong_tien_tiec_cuoi if tc else 0
+            details.append({
+                'ma_hoa_don': hd.id,
+                'ma_tiec': tc.id if tc else '',
+                'ten_khach_hang': f"{tc.ten_chu_re} & {tc.ten_co_dau}" if tc else '',
+                'ngay_thanh_toan': hd.ngay_thanh_toan.strftime('%d/%m/%Y') if hd.ngay_thanh_toan else '-',
+                'so_thuc_thu': so_thuc_thu,
+            })
         return Response({
             'month': month,
             'year': year,
             'total_actual_receipt': total,
             'count': hoadons.count(),
+            'details': details,
         })

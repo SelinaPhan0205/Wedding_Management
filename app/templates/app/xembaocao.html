@@ -299,16 +299,16 @@
                     <div class="text-2xl font-bold text-blue-700" id="totalTiec">-</div>
                 </div>
                 <div class="overview-card bg-green-50">
-                    <div class="text-sm text-gray-600 mb-2">Doanh thu dự kiến</div>
-                    <div class="text-2xl font-bold text-green-700" id="doanhThuDuKien">350,000,000</div>
+                    <div class="text-sm text-gray-600 mb-2">Tổng doanh thu</div>
+                    <div class="text-2xl font-bold text-green-700" id="tongDoanhThu">-</div>
                 </div>
                 <div class="overview-card bg-yellow-50">
                     <div class="text-sm text-gray-600 mb-2">Công nợ</div>
-                    <div class="text-2xl font-bold text-yellow-700" id="congNo">70,000,000</div>
+                    <div class="text-2xl font-bold text-yellow-700" id="congNo">-</div>
                 </div>
                 <div class="overview-card bg-indigo-50">
                     <div class="text-sm text-gray-600 mb-2">Thực thu</div>
-                    <div class="text-2xl font-bold text-indigo-700" id="thucThu">280,000,000</div>
+                    <div class="text-2xl font-bold text-indigo-700" id="thucThu">-</div>
                 </div>
             </div>
 
@@ -354,6 +354,28 @@
                 document.getElementById('totalTiec').textContent = (res && typeof res.total_tiec_cuoi !== 'undefined') ? res.total_tiec_cuoi : '-';
             } catch (e) {
                 document.getElementById('totalTiec').textContent = '-';
+            }
+        }
+
+        // --- Hàm cập nhật tổng quan báo cáo ---
+        async function updateOverview() {
+            try {
+                // Lấy tổng doanh thu từ báo cáo doanh thu
+                const doanhThuRes = await goiAPI(`/report/revenue?month=${selectedMonth}&year=${selectedYear}`);
+                const tongDoanhThu = (doanhThuRes && typeof doanhThuRes.total_revenue !== 'undefined') ? doanhThuRes.total_revenue : 0;
+                document.getElementById('tongDoanhThu').textContent = tongDoanhThu.toLocaleString('vi-VN');
+                // Lấy tổng công nợ từ báo cáo công nợ
+                const congNoRes = await goiAPI(`/report/debt?month=${selectedMonth}&year=${selectedYear}`);
+                const tongCongNo = (congNoRes && typeof congNoRes.total_debt !== 'undefined') ? congNoRes.total_debt : 0;
+                document.getElementById('congNo').textContent = tongCongNo.toLocaleString('vi-VN');
+                // Lấy tổng thực thu từ báo cáo thực thu
+                const thucThuRes = await goiAPI(`/report/actual-receipt?month=${selectedMonth}&year=${selectedYear}`);
+                const tongThucThu = (thucThuRes && typeof thucThuRes.total_actual_receipt !== 'undefined') ? thucThuRes.total_actual_receipt : 0;
+                document.getElementById('thucThu').textContent = tongThucThu.toLocaleString('vi-VN');
+            } catch (e) {
+                document.getElementById('tongDoanhThu').textContent = '-';
+                document.getElementById('congNo').textContent = '-';
+                document.getElementById('thucThu').textContent = '-';
             }
         }
 
@@ -410,6 +432,7 @@
                 selectedYear = parseInt(document.getElementById('selectYear').value);
                 updateSectionTitles();
                 updateTotalTiecCuoi();
+                updateOverview();
                 loadFavorites();
                 loadChartSanhs();
             }
@@ -420,6 +443,7 @@
             if (document.visibilityState === 'visible') {
                 updateSectionTitles();
                 updateTotalTiecCuoi();
+                updateOverview();
                 loadFavorites();
                 loadChartSanhs();
             }
@@ -621,6 +645,7 @@
             updateSectionTitles();
             await Promise.all([
                 updateTotalTiecCuoi(),
+                updateOverview(),
                 loadFavorites(),
                 loadChartSanhs()
             ]);

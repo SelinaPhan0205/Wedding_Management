@@ -243,42 +243,28 @@
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <h2>Quản lý Tiệc Cưới</h2>
-        <a href="{% url 'trangchu' %}">
-            <i class="fi fi-sr-house-chimney"></i>
-            <span>Trang Chủ</span>
-        </a>
-        <a href="{% url 'quanlytaikhoan' %}">
-            <i class="fi fi-sr-user"></i>
-            <span>Tài Khoản</span>
-        </a>
-        <a href="{% url 'quanlyhoadon' %}">
-            <i class="fi fi-bs-dollar"></i>
-            <span>Hóa Đơn</span>
-        </a>
-        <a href="{% url 'quanlysanh' %}">
-            <i class="fi fi-br-calendar-heart"></i>
-            <span>Sảnh</span>
-        </a>
-        <a href="{% url 'quanlythucdon' %}">
-            <i class="fi fi-sr-restaurant"></i>
-            <span>Thực Đơn</span>
-        </a>
-        <a href="{% url 'quanlydichvu' %}">
-            <i class="fi fi-sr-holding-hand-dinner"></i>
-            <span>Dịch Vụ</span>
-        </a>
-        <a href="{% url 'quanlytieccuoi' %}">
-            <i class="fi fi-rs-rings-wedding"></i>
-            <span>Tiệc Cưới</span>
-        </a>
-        <a href="{% url 'quanlyquydinh' %}">
-            <i class="fi fi-ss-rules"></i>
-            <span>Quy Định</span>
-        </a>
-        <a href="{% url 'xembaocao' %}" class="active">
-            <i class="fi fi-sr-big-data-analytics"></i>
-            <span>Xem Báo Cáo</span>
-        </a>
+
+        {% if request.user.is_authenticated %}
+            {% with vaitro=request.user.taikhoan.vaitro|default_if_none:'' %}
+                {% if vaitro == 'admin' %}
+                    <!-- Admin: Hiển thị tất cả -->
+                    <a href="{% url 'trangchu' %}" class="{% if request.resolver_match.url_name == 'trangchu' %}active{% endif %}"><i class="fi fi-sr-house-chimney"></i><span>Trang Chủ</span></a>
+                    <a href="{% url 'quanlytaikhoan' %}" class="{% if request.resolver_match.url_name == 'quanlytaikhoan' %}active{% endif %}"><i class="fi fi-sr-user"></i><span>Tài Khoản</span></a>
+                    <a href="{% url 'quanlyhoadon' %}" class="{% if request.resolver_match.url_name == 'quanlyhoadon' %}active{% endif %}"><i class="fi fi-bs-dollar"></i><span>Hóa Đơn</span></a>
+                    <a href="{% url 'quanlytieccuoi' %}" class="{% if request.resolver_match.url_name == 'quanlytieccuoi' %}active{% endif %}"><i class="fi fi-rs-rings-wedding"></i><span>Tiệc Cưới</span></a>
+                    <a href="{% url 'quanlysanh' %}" class="{% if request.resolver_match.url_name == 'quanlysanh' %}active{% endif %}"><i class="fi fi-br-calendar-heart"></i><span>Sảnh</span></a>
+                    <a href="{% url 'quanlythucdon' %}" class="{% if request.resolver_match.url_name == 'quanlythucdon' %}active{% endif %}"><i class="fi fi-sr-restaurant"></i><span>Thực Đơn</span></a>
+                    <a href="{% url 'quanlydichvu' %}" class="{% if request.resolver_match.url_name == 'quanlydichvu' %}active{% endif %}"><i class="fi fi-sr-holding-hand-dinner"></i><span>Dịch Vụ</span></a>
+                    <a href="{% url 'quanlyquydinh' %}" class="{% if request.resolver_match.url_name == 'quanlyquydinh' %}active{% endif %}"><i class="fi fi-ss-rules"></i><span>Quy Định</span></a>
+                    <a href="{% url 'xembaocao' %}" class="{% if request.resolver_match.url_name == 'xembaocao' %}active{% endif %}"><i class="fi fi-sr-big-data-analytics"></i><span>Xem Báo Cáo</span></a>
+                {% else %}
+                    <!-- User: Chỉ hiển thị Trang chủ, Hóa đơn, Tiệc cưới -->
+                    <a href="{% url 'trangchu' %}" class="{% if request.resolver_match.url_name == 'trangchu' %}active{% endif %}"><i class="fi fi-sr-house-chimney"></i><span>Trang Chủ</span></a>
+                    <a href="{% url 'quanlyhoadon' %}" class="{% if request.resolver_match.url_name == 'quanlyhoadon' %}active{% endif %}"><i class="fi fi-bs-dollar"></i><span>Hóa Đơn</span></a>
+                    <a href="{% url 'quanlytieccuoi' %}" class="{% if request.resolver_match.url_name == 'quanlytieccuoi' %}active{% endif %}"><i class="fi fi-rs-rings-wedding"></i><span>Tiệc Cưới</span></a>
+                {% endif %}
+            {% endwith %}
+        {% endif %}
     </div>
 
     <!-- Main Content -->
@@ -290,10 +276,22 @@
 
             <!-- Filter & Buttons (Đã thay đổi để giống Báo Cáo Doanh Thu) -->
             <div class="filter-section">
-                <select id="timeFilter" onchange="loadReportData()">
-                    <option value="2025-05">Tháng 5/2025</option>
-                    <option value="2025-04">Tháng 4/2025</option>
-                    <option value="2025-03">Tháng 3/2025</option>
+                <select id="monthFilter" onchange="loadReportData()">
+                    <option value="1">Tháng 1</option>
+                    <option value="2">Tháng 2</option>
+                    <option value="3">Tháng 3</option>
+                    <option value="4">Tháng 4</option>
+                    <option value="5">Tháng 5</option>
+                    <option value="6">Tháng 6</option>
+                    <option value="7">Tháng 7</option>
+                    <option value="8">Tháng 8</option>
+                    <option value="9">Tháng 9</option>
+                    <option value="10">Tháng 10</option>
+                    <option value="11">Tháng 11</option>
+                    <option value="12">Tháng 12</option>
+                </select>
+                <select id="yearFilter" onchange="loadReportData()">
+                    <!-- Năm sẽ được render động bằng JS -->
                 </select>
                 <button class="report-btn bg-green-600 text-white" onclick="exportToExcel()">
                     <i class="fi fi-sr-file-excel"></i> Xuất Excel
@@ -311,8 +309,7 @@
                         <tr>
                             <th>Mã Tiệc / HĐ</th>
                             <th>Tên Khách hàng</th>
-                            <th>Ngày Tiệc</th>
-                            <th>Ngày Đáo hạn</th>
+                            <th>Ngày đãi tiệc</th>
                             <th>Số tiền Còn lại (VNĐ)</th>
                             <th>Số ngày Quá hạn</th>
                             <th>Tiền phạt (VNĐ)</th>
@@ -350,17 +347,13 @@
         async function goiAPI(endpoint) {
             try {
                 const baseUrl = 'http://localhost:8000/api';
-                const time = document.getElementById('timeFilter').value;
-                const startDate = document.getElementById('startDate').value;
-                const endDate = document.getElementById('endDate').value;
-                const paymentMethod = document.getElementById('paymentMethodFilter').value;
-                const params = new URLSearchParams({
-                    time: time || '',
-                    start_date: startDate || '',
-                    end_date: endDate || '',
-                    payment_method: paymentMethod || 'all'
-                }).toString();
-                const response = await fetch(`${baseUrl}${endpoint}?${params}`, {
+                const month = document.getElementById('monthFilter')?.value;
+                const year = document.getElementById('yearFilter')?.value;
+                let url = `${baseUrl}${endpoint}`;
+                if (month && year) {
+                    url += `?month=${month}&year=${year}`;
+                }
+                const response = await fetch(url, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -372,18 +365,7 @@
                 return await response.json();
             } catch (error) {
                 console.error(`Lỗi gọi API ${endpoint}:`, error);
-                return {
-                    chartData: {
-                        labels: ['Chưa Quá Hạn', 'Quá Hạn < 7 ngày', 'Quá Hạn 7-30 ngày', 'Quá Hạn > 30 ngày'],
-                        data: [50, 15, 8, 3]
-                    },
-                    tableData: [
-                        { ma_tiec: 'TC001', ten_khach_hang: 'Nguyễn Văn A', ngay_tiec: '10/05/2025', ngay_dao_han: '20/05/2025', so_tien_con_lai: 10000000, so_ngay_qua_han: null, tien_phat: 0, trang_thai: 'Đang chờ' },
-                        { ma_tiec: 'TC002', ten_khach_hang: 'Trần Thị B', ngay_tiec: '01/05/2025', ngay_dao_han: '10/05/2025', so_tien_con_lai: 5000000, so_ngay_qua_han: 15, tien_phat: 500000, trang_thai: 'Quá hạn' },
-                        { ma_tiec: 'TC003', ten_khach_hang: 'Lê Văn C', ngay_tiec: '20/04/2025', ngay_dao_han: '01/05/2025', so_tien_con_lai: 20000000, so_ngay_qua_han: 24, tien_phat: 2000000, trang_thai: 'Quá hạn' },
-                        { ma_tiec: 'TC004', ten_khach_hang: 'Phạm Thị D', ngay_tiec: '15/03/2025', ngay_dao_han: '15/04/2025', so_tien_con_lai: 8000000, so_ngay_qua_han: 40, tien_phat: 1600000, trang_thai: 'Quá hạn' }
-                    ]
-                };
+                return { details: [] };
             }
         }
 
@@ -392,151 +374,172 @@
             return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(number);
         }
 
+        // --- Render năm động ---
+        function renderYearOptions() {
+            const yearFilter = document.getElementById('yearFilter');
+            const thisYear = new Date().getFullYear();
+            yearFilter.innerHTML = '';
+            for (let y = thisYear - 5; y <= thisYear + 2; y++) {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = y;
+                if (y === thisYear) opt.selected = true;
+                yearFilter.appendChild(opt);
+            }
+        }
+
         // Load debt report
         let debtChartInstance = null;
         async function loadReportData() {
             try {
-                const data = await goiAPI('/debt-report');
-
-                // Update chart
+                const month = document.getElementById('monthFilter').value;
+                const year = document.getElementById('yearFilter').value;
+                const data = await goiAPI(`/report/debt?month=${month}&year=${year}`);
+                const today = new Date();
+                // Vẽ biểu đồ cột cộng dồn công nợ theo ngày tiệc
                 const chartLoading = document.getElementById('chartLoading');
                 const chartContainer = document.getElementById('chartContainer');
                 const ctx = document.getElementById('debtChart').getContext('2d');
-
+                const details = data.details || [];
+                // Gom nhóm theo ngày tiệc
+                const dateMap = {};
+                details.forEach(item => {
+                    if (!item.ngay_tiec) return;
+                    if (!dateMap[item.ngay_tiec]) dateMap[item.ngay_tiec] = 0;
+                    dateMap[item.ngay_tiec] += item.so_con_no || 0;
+                });
+                // Sắp xếp ngày tăng dần
+                const labels = Object.keys(dateMap).sort();
+                // Chuyển sang triệu VND
+                const values = labels.map(date => (dateMap[date] || 0) / 1_000_000);
                 if (debtChartInstance) debtChartInstance.destroy();
-
-                // Single color based on sidebar (#2c3e50)
-                const baseColor = '#2c3e50';
-                const hoverColor = '#34495e'; // Slightly lighter for hover
-
-                chartLoading.classList.add('hidden');
-                chartContainer.classList.remove('hidden');
-
-                // Hủy chart cũ nếu có
-                if (debtChartInstance) debtChartInstance.destroy();
-                
-                debtChartInstance = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: data.chartData.labels,
-                        datasets: [{
-                            label: 'Số tiền (triệu VNĐ)',
-                            data: data.chartData.data,
-                            backgroundColor: baseColor,
-                            borderColor: baseColor,
-                            borderWidth: 2,
-                            borderRadius: 0, // Remove all rounding to make it rectangular
-                            barThickness: 50, // Increased thickness for a balanced look
-                            hoverBackgroundColor: hoverColor,
-                            hoverBorderColor: '#1a252f',
-                            hoverBorderWidth: 3
-                        }]
-                    },
-                    options: {
-                        indexAxis: 'x',
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                title: {
-                                    display: true,
-                                    text: 'Số tiền (triệu VNĐ)',
-                                    font: { size: 16, weight: 'bold', family: "'Inter', sans-serif" },
-                                    color: '#2c3e50'
-                                },
-                                ticks: {
-                                    color: '#2c3e50',
-                                    font: { size: 12 },
-                                    callback: function(value) { return value + 'M'; }
-                                },
-                                grid: {
-                                    color: 'rgba(44, 62, 80, 0.1)',
-                                    borderDash: [8, 4]
-                                }
-                            },
-                            x: {
-                                title: {
-                                    display: true,
-                                    text: 'Trạng thái công nợ',
-                                    font: { size: 16, weight: 'bold', family: "'Inter', sans-serif" },
-                                    color: '#2c3e50'
-                                },
-                                ticks: { color: '#2c3e50', font: { size: 12 } },
-                                grid: { display: false }
-                            }
+                if (labels.length > 0) {
+                    debtChartInstance = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Công nợ (triệu VND)',
+                                data: values,
+                                backgroundColor: '#f59e42',
+                                borderColor: '#f59e42',
+                                borderWidth: 1
+                            }]
                         },
-                        plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: {
-                                    font: { size: 14, family: "'Inter', sans-serif" },
-                                    color: '#2c3e50',
-                                    boxWidth: 20,
-                                    padding: 15
-                                }
-                            },
-                            tooltip: {
-                                backgroundColor: '#2c3e50',
-                                titleFont: { size: 14, family: "'Inter', sans-serif", weight: 'bold' },
-                                bodyFont: { size: 12, family: "'Inter', sans-serif" },
-                                borderColor: '#3498db',
-                                borderWidth: 2,
-                                padding: 12,
-                                caretSize: 6,
-                                callbacks: {
-                                    label: function(context) {
-                                        return `Số tiền: ${formatVND(context.raw * 1000000)}`;
+                        options: {
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return `Công nợ: ${context.raw.toLocaleString('vi-VN', {maximumFractionDigits:2})} triệu VND`;
+                                        }
                                     }
                                 }
-                            }
-                        },
-                        animations: {
-                            y: {
-                                from: undefined, // <-- Không cần đặt from, mặc định sẽ mọc từ đáy trục y
+                            },
+                            scales: {
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: 'Ngày đặt tiệc',
+                                        font: { size: 14, family: "'Inter', sans-serif" }
+                                    },
+                                    stacked: true,
+                                    ticks: { color: '#2c3e50' }
+                                },
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: 'Số tiền (Triệu VND)',
+                                        font: { size: 14, family: "'Inter', sans-serif" }
+                                    },
+                                    beginAtZero: true,
+                                    stacked: true,
+                                    ticks: { color: '#2c3e50' }
+                                }
+                            },
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: {
+                                y: {
+                                    from: 0,
+                                    duration: 1000,
+                                    easing: 'easeOutQuart'
+                                }
                             }
                         }
+                    });
+                        chartLoading.classList.add('hidden');
+                        chartContainer.classList.remove('hidden');
+                    } else {
+                        chartLoading.innerText = 'Không có dữ liệu';
+                        chartContainer.classList.add('hidden');
                     }
-                });
-
                 // Update table
                 const tableLoading = document.getElementById('tableLoading');
                 const table = document.getElementById('debtTable');
                 const tbody = document.getElementById('debtTableBody');
-                const totalDebt = data.tableData.reduce((sum, item) => sum + (item.so_tien_con_lai || 0), 0);
-
-                tbody.innerHTML = data.tableData.map(item => `
-                    <tr>
-                        <td>${item.ma_tiec || '-'}</td>
-                        <td>${item.ten_khach_hang || '-'}</td>
-                        <td>${item.ngay_tiec || '-'}</td>
-                        <td>${item.ngay_dao_han || '-'}</td>
-                        <td>${formatVND(item.so_tien_con_lai || 0)}</td>
-                        <td>${item.so_ngay_qua_han || '-'}</td>
-                        <td>${formatVND(item.tien_phat || 0)}</td>
-                        <td class="${item.trang_thai === 'Quá hạn' ? 'status-overdue' : 'status-pending'}">${item.trang_thai || '-'}</td>
-                    </tr>
-                `).join('') + `
-                    <tr>
-                        <td>Tổng cộng</td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td>${formatVND(totalDebt)}</td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td>-</td>
-                    </tr>
-                `;
-
+                const totalDebt = details.reduce((sum, item) => sum + (item.so_con_no || 0), 0);
+                tbody.innerHTML = details.length
+                  ? details.map(item => {
+                        const ngayTiec = item.ngay_tiec || '-';
+                        let soNgayQuaHan = '-';
+                        let tienPhat = '-';
+                        let soConNo = item.so_con_no || 0;
+                        let trangThai = '-';
+                        // Chỉ lấy tên chú rể (nếu có dấu & thì lấy phần trước dấu &)
+                        let tenKhachHang = item.ten_khach_hang || '-';
+                        if (tenKhachHang.includes('&')) {
+                            tenKhachHang = tenKhachHang.split('&')[0].trim();
+                        }
+                        if (item.da_thanh_toan) {
+                            // Đã thanh toán: không tính ngày quá hạn, tiền phạt
+                            soNgayQuaHan = 0;
+                            tienPhat = 0;
+                            trangThai = 'Đã thanh toán';
+                        } else if (ngayTiec && ngayTiec !== '-') {
+                            const dateDue = new Date(ngayTiec);
+                            const diffTime = today - dateDue;
+                            soNgayQuaHan = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                            if (soNgayQuaHan > 0) {
+                                tienPhat = soConNo + soConNo * 0.01 * soNgayQuaHan;
+                                trangThai = 'Trễ hạn';
+                            } else {
+                                soNgayQuaHan = 0;
+                                tienPhat = 0;
+                                trangThai = 'Chưa đến hạn';
+                            }
+                        }
+                        return `
+                        <tr>
+                            <td>${item.ma_tiec || '-'}</td>
+                            <td>${tenKhachHang}</td>
+                            <td>${ngayTiec}</td>
+                            <td>${formatVND(soConNo)}</td>
+                            <td>${soNgayQuaHan}</td>
+                            <td>${formatVND(tienPhat)}</td>
+                            <td>${trangThai}</td>
+                        </tr>
+                        `;
+                    }).join('') + `
+                        <tr>
+                            <td>Tổng cộng</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>${formatVND(totalDebt)}</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>-</td>
+                        </tr>
+                    `
+                  : '<tr><td colspan="7" class="text-center">Không có dữ liệu</td></tr>';
                 // Hide loading and show content
-                chartLoading.classList.add('hidden');
-                chartContainer.classList.remove('hidden');
                 tableLoading.classList.add('hidden');
                 table.classList.remove('hidden');
             } catch (error) {
                 console.error('Lỗi tải báo cáo công nợ:', error);
-                document.getElementById('chartLoading').innerText = 'Lỗi tải biểu đồ';
                 document.getElementById('tableLoading').innerText = 'Lỗi tải bảng';
             }
         }
@@ -570,6 +573,13 @@
                 document.getElementById('sidebar').classList.add('collapsed');
                 document.getElementById('content').classList.add('collapsed');
             }
+            renderYearOptions();
+            // Đợi DOM render xong mới set value cho năm/tháng
+            setTimeout(() => {
+                const now = new Date();
+                document.getElementById('monthFilter').value = now.getMonth() + 1;
+                document.getElementById('yearFilter').value = now.getFullYear();
+            }, 0);
             await loadReportData();
         });
     </script>

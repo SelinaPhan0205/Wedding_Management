@@ -89,6 +89,15 @@ class TiecCuoi(models.Model):
     tien_dat_coc = models.FloatField()
     so_dien_thoai = models.CharField(max_length=15)
 
+    def tinh_tong_tien(self, so_luong_ban=None):
+        """Tính tổng tiền tiệc cưới, cho phép truyền vào số lượng bàn thực tế."""
+        tong_mon_an = sum(ct.thanh_tien for ct in self.chitietthucdon_set.all())
+        tong_dich_vu = sum(ct.thanh_tien for ct in self.chitietdichvu_set.all())
+        if so_luong_ban is None:
+            so_luong_ban = self.so_luong_ban
+        tong = tong_mon_an * so_luong_ban + tong_dich_vu
+        return tong
+
     def __str__(self):
         return f"{self.ten_chu_re} & {self.ten_co_dau} ({self.ngay_dai_tiec})"
 
@@ -106,6 +115,9 @@ class HoaDon(models.Model):
     tien_phat = models.FloatField(default=0)
     so_luong_ban = models.IntegerField(default=0)
 
+    def tinh_tong_tien(self):
+        return self.tiec_cuoi.tinh_tong_tien(self.so_luong_ban)
+    
     def __str__(self):
         return f"HĐ - {self.tiec_cuoi}"
 

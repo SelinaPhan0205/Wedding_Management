@@ -144,16 +144,17 @@
             border-bottom: 1px solid #e5e7eb;
         }
         .search-input {
+            padding: 0.75rem;
             border: 1px solid #d1d5db;
-            padding: 0.6rem 1rem;
-            border-radius: 8px;
-            width: 300px;
+            border-radius: 0.5rem;
+            background-color: #f9fafb;
             font-size: 0.95rem;
-            outline: none;
-            transition: border-color 0.2s;
+            min-width: 100px;
         }
         .search-input:focus {
             border-color: #2c3e50;
+            box-shadow: 0 2px 8px rgba(44,62,80,0.10);
+            outline: none;
         }
         .add-button {
             font-family: 'Inter', sans-serif;
@@ -210,12 +211,13 @@
             padding-right: 0;
         }
         .action-button {
-            padding: 0.4rem 0.8rem;
+            padding: 0.3rem 0.7rem;
             border-radius: 6px;
             font-size: 0.85rem;
             font-weight: 500;
             transition: background-color 0.2s, transform 0.1s;
-            margin-right: 0.2rem;
+            margin-right: 0.1rem;
+            white-space: nowrap;
         }
         .view-button {
             background-color: #e3ecfd;
@@ -310,6 +312,35 @@
             max-height: 90vh;
             overflow-y: auto;
         }
+        .search-input {
+            padding: 0.75rem;
+            padding-right: 0px;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            background-color: #f9fafb;
+            font-size: 0.95rem;
+            min-width: 300px;
+        }
+        .search-input:focus {
+            border-color: #2c3e50;
+            box-shadow: 0 2px 8px rgba(44,62,80,0.10);
+            outline: none;
+        }
+        .filter-select {
+            padding: 0.75rem;
+            padding-right: 0px;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            background-color: #f9fafb;
+            font-size: 0.95rem;
+            min-width: 90px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .filter-select:focus {
+            border-color: #2c3e50;
+            box-shadow: 0 2px 8px rgba(44,62,80,0.10);
+            outline: none;
+        }
     </style>
 </head>
 <body>
@@ -356,6 +387,27 @@
                             </svg>
                         </button>
                     </div>
+                    <div class="flex items-center gap-2">
+                        <i class="fi fi-sr-filter text-gray-600"></i>
+                        <select id="filterThang" class="filter-select" style="width: 80px;">
+                            <option value="">Tháng</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10</option>
+                            <option value="11">11</option>
+                            <option value="12">12</option>
+                        </select>
+                        <select id="filterNam" class="filter-select" style="width: 80px;">
+                            <option value="">Năm</option>
+                        </select>
+                    </div>
                     <button class="add-button" onclick="moFormThemHoaDon()">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
@@ -382,7 +434,7 @@
                             <th>Số Ngày Trễ</th>
                             <th>Tiền Phạt</th>
                             <th>Trạng Thái</th>
-                            <th>Hành Động</th>
+                            <th style="min-width: 180px; width: 180px;">Hành Động</th>
                         </tr>
                     </thead>
                     <tbody id="danhSachHoaDon"></tbody>
@@ -393,8 +445,9 @@
         </div>
     </div>
 
-    <div id="modalHoaDon" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
-        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
+    <div id="modalHoaDon" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden" onclick="if(event.target===this)dongModalHoaDon()">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md relative">
+            <button type="button" onclick="dongModalHoaDon()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-2xl font-bold focus:outline-none" aria-label="Đóng">&times;</button>
             <h2 id="modalTitleHoaDon" class="text-2xl font-bold mb-6 text-gray-800">Thêm Hóa Đơn Mới</h2>
             <form id="formHoaDon" class="space-y-4" autocomplete="off">
                 <div class="relative mb-4">
@@ -415,8 +468,9 @@
     </div>
 
     <!-- Modal xem hóa đơn -->
-    <div class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 hidden" id="modalXemHoaDon">
-        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-2xl modal-content" style="max-height:90vh;overflow-y:auto;">
+    <div class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 hidden" id="modalXemHoaDon" onclick="if(event.target===this)dongModalXemHoaDon()">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-2xl modal-content relative" style="max-height:90vh;overflow-y:auto;">
+            <button type="button" onclick="dongModalXemHoaDon()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-2xl font-bold focus:outline-none" aria-label="Đóng">&times;</button>
             <h2 class="text-2xl font-bold mb-6 text-gray-800">Chi Tiết Hóa Đơn</h2>
             <div class="grid grid-cols-2 gap-x-8 gap-y-4 mb-6">
                 <div>
@@ -485,14 +539,15 @@
         </div>
     </div>
 
-    <div id="modalSuaHoaDon" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
-        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md" style="max-height: 90vh; overflow-y: auto;">
+    <div id="modalSuaHoaDon" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden" onclick="if(event.target===this)dongModalSuaHoaDon()">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md relative" style="max-height: 90vh; overflow-y: auto;">
+            <button type="button" onclick="dongModalSuaHoaDon()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-2xl font-bold focus:outline-none" aria-label="Đóng">&times;</button>
             <h2 id="modalTitleSuaHoaDon" class="text-2xl font-bold mb-6 text-gray-800">Chỉnh Sửa Hóa Đơn</h2>
             <form id="formSuaHoaDon" autocomplete="off">
-                <div class="mb-4">
+                <div class="mb-4 relative">
                     <label for="suaMaTiec" class="block text-gray-700 text-sm font-medium mb-2">Mã Số Tiệc:</label>
                     <input type="text" id="suaMaTiec" name="suaMaTiec" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Nhập hoặc chọn mã số tiệc..." required autocomplete="off">
-                    <div id="maTiecAutocomplete" class="autocomplete-list hidden"></div>
+                    <div id="suaMaTiecAutocomplete" class="autocomplete-list hidden"></div>
                 </div>
                 <div class="mb-4">
                     <label for="suaSoLuongBan" class="block text-gray-700 text-sm font-medium mb-2">Số Lượng Bàn:</label>
@@ -516,11 +571,15 @@
                 </div>
                 <div class="mb-4">
                     <label for="suaTrangThai" class="block text-gray-700 text-sm font-medium mb-2">Trạng Thái:</label>
-                    <select id="suaTrangThai" name="suaTrangThai" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
-                        <option value="Chưa Thanh Toán">Chưa Thanh Toán</option>
-                        <option value="Đã thanh toán">Đã Thanh Toán</option>
-                        <option value="Trễ hạn">Trễ Hạn</option>
-                    </select>
+                    <input type="text" id="suaTrangThai" name="suaTrangThai" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100" readonly disabled>
+                </div>
+                <div class="mb-4">
+                    <label for="suaSoNgayTre" class="block text-gray-700 text-sm font-medium mb-2">Số Ngày Trễ:</label>
+                    <input type="number" id="suaSoNgayTre" name="suaSoNgayTre" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100" readonly disabled>
+                </div>
+                <div class="mb-4">
+                    <label for="suaTienPhat" class="block text-gray-700 text-sm font-medium mb-2">Tiền Phạt:</label>
+                    <input type="text" id="suaTienPhat" name="suaTienPhat" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100" readonly disabled>
                 </div>
                 <div class="flex justify-end gap-3">
                     <button type="button" onclick="dongModalSuaHoaDon()" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-100 transition">Hủy</button>
@@ -548,6 +607,8 @@
         const formSuaHoaDon = document.getElementById('formSuaHoaDon');
         const paginationControlsHoaDon = document.getElementById('paginationControlsHoaDon');
         const searchHoaDonInput = document.getElementById('searchHoaDonInput');
+        const filterThang = document.getElementById('filterThang');
+        const filterNam = document.getElementById('filterNam');
         const maTiecInput = document.getElementById('maTiecCuoi');
         const autocompleteList = document.getElementById('maTiecAutocomplete');
         let isEditModeHoaDon = false;
@@ -576,6 +637,7 @@
                     method,
                     headers: {
                         'Content-Type': 'application/json',
+                        'Cache-Control': 'no-cache'
                     },
                 };
                 if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method.toUpperCase())) {
@@ -603,72 +665,107 @@
             }
         }
 
+        // Hàm parse ngày robust cho mọi định dạng phổ biến
+        function parseDateVN(dateStr) {
+            if (!dateStr) return null;
+            // Loại bỏ khoảng trắng
+            dateStr = dateStr.trim();
+            // Đổi tất cả dấu '/' thành '-'
+            dateStr = dateStr.replace(/\//g, '-');
+            // Tách các phần
+            const parts = dateStr.split('-');
+            if (parts.length !== 3) return null;
+            // Nếu yyyy-mm-dd
+            if (parts[0].length === 4) {
+                return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+            }
+            // Nếu dd-mm-yyyy hoặc d-m-yyyy
+            if (parts[2].length === 4) {
+                return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+            }
+            // Nếu không khớp, trả về null
+            return null;
+        }
+
+        // Hiển thị danh sách hóa đơn trong bảng
         async function hienThiDanhSachHoaDon(searchQuery = '') {
             try {
-                const url = searchQuery
-                    ? `/api/hoadon/?search=${encodeURIComponent(searchQuery)}&page=${currentPageHoaDon}&limit=${itemsPerPageHoaDon}`
-                    : `/api/hoadon/?page=${currentPageHoaDon}&limit=${itemsPerPageHoaDon}`;
-                const response = await goiAPI('GET', url);
-                danhSachHoaDon = response.data || [];
-                danhSachHoaDonElement.innerHTML = '';
-
-                if (danhSachHoaDon.length === 0) {
-                    danhSachHoaDonElement.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-gray-500">Không có hóa đơn nào.</td></tr>';
-                } else {
-                    const ngayHienTai = new Date();
-                    danhSachHoaDon.forEach((hoadon, index) => {
-                        const ngayThanhToan = hoadon.ngay_thanh_toan ? new Date(hoadon.ngay_thanh_toan) : null;
-                        let ngayDaiTiec = null;
-                        if (hoadon.tiec_cuoi && hoadon.tiec_cuoi.ngay_dai_tiec) {
-                            ngayDaiTiec = new Date(hoadon.tiec_cuoi.ngay_dai_tiec.split('-').reverse().join('-'));
-                        }
-                        let soNgayTre = 0;
-                        if (ngayThanhToan && ngayDaiTiec && ngayThanhToan > ngayDaiTiec) {
-                            soNgayTre = Math.ceil((ngayThanhToan - ngayDaiTiec) / (1000 * 60 * 60 * 24));
-                        }
-                        const tienPhat = soNgayTre > 0 ? soNgayTre * 50000 : 0;
-                        let ngayHienThi = '';
-                        if (hoadon.ngay_thanh_toan) {
-                            const parts = hoadon.ngay_thanh_toan.split('-');
-                            if (parts.length === 3) {
-                                ngayHienThi = `${parts[2]}-${parts[1]}-${parts[0]}`;
-                            } else {
-                                ngayHienThi = hoadon.ngay_thanh_toan;
-                            }
-                        }
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td>${hoadon.ma_hoa_don || ''}</td>
-                            <td>${hoadon.ma_tiec || ''}</td>
-                            <td>${ngayHienThi || 'Chưa có'}</td>
-                            <td>${hoadon.tong_tien || 0} VNĐ</td>
-                            <td>${hoadon.tien_coc || 0} VNĐ</td>
-                            <td>${hoadon.tien_con_lai || 0} VNĐ</td>
-                            <td>${soNgayTre}</td>
-                            <td>${tienPhat} VNĐ</td>
-                            <td>${hoadon.trang_thai || 'Chưa Thanh Toán'}</td>
-                            <td>
-                                <div style="display: flex; gap: 0.05rem;">
-                                    <button class="action-button view-button" onclick="xemHoaDon(${hoadon.id})">Xem</button>
-                                    <button class="action-button edit-button" onclick="suaHoaDon(${hoadon.id})">Sửa</button>
-                                    <button class="action-button delete-button" onclick="xoaHoaDon(${hoadon.id})">Xóa</button>
-                                </div>
-                            </td>
-                        `;
-                        danhSachHoaDonElement.appendChild(row);
-                    });
+                // Tạo URL với tất cả tham số: search, tháng, năm, page, limit
+                const params = new URLSearchParams();
+                params.append('page', currentPageHoaDon);
+                params.append('limit', itemsPerPageHoaDon);
+                
+                // Thêm search nếu có
+                if (searchQuery) {
+                    params.append('search', searchQuery);
                 }
-
+                
+                // Thêm filter tháng/năm nếu có
+                const thang = filterThang.value;
+                const nam = filterNam.value;
+                if (thang) {
+                    params.append('thang', thang);
+                }
+                if (nam) {
+                    params.append('nam', nam);
+                }
+                
+                const url = `/api/hoadon/?${params.toString()}`;
+                const response = await goiAPI('GET', url);
+                console.log('API /api/hoadon/ trả về:', response);
+                let ds = [];
+                if (Array.isArray(response)) {
+                    ds = response;
+                } else if (Array.isArray(response.results)) {
+                    ds = response.results;
+                } else if (Array.isArray(response.data)) {
+                    ds = response.data;
+                } else if (response && typeof response === 'object') {
+                    for (const v of Object.values(response)) {
+                        if (Array.isArray(v)) { ds = v; break; }
+                    }
+                }
+                
+                danhSachHoaDon = ds;
+                let html = '';
+                (danhSachHoaDon || []).forEach(hoadon => {
+                    html += `<tr>
+                        <td class="text-center">${hoadon.id}</td>
+                        <td class="text-center">${hoadon.tiec_cuoi && hoadon.tiec_cuoi.id ? hoadon.tiec_cuoi.id : (hoadon.ma_tiec || '')}</td>
+                        <td>${hoadon.ngay_thanh_toan || ''}</td>
+                        <td>${(hoadon.tong_tien || 0).toLocaleString('vi-VN')} VNĐ</td>
+                        <td>${(hoadon.tien_coc || 0).toLocaleString('vi-VN')} VNĐ</td>
+                        <td>${(hoadon.tien_con_lai || 0).toLocaleString('vi-VN')} VNĐ</td>
+                        <td>${hoadon.so_ngay_tre || 0}</td>
+                        <td>${(hoadon.tien_phat || 0).toLocaleString('vi-VN')} VNĐ</td>
+                        <td>${hoadon.trang_thai || ''}</td>
+                        <td style="min-width: 180px; width: 180px;">
+                            <div class="flex gap-1 flex-nowrap">
+                                <button class="action-button view-button" onclick="xemHoaDon(${hoadon.id})">Xem</button>
+                                <button class="action-button edit-button" onclick="suaHoaDon(${hoadon.id})">Sửa</button>
+                                <button class="action-button delete-button" onclick="xoaHoaDon(${hoadon.id})">Xóa</button>
+                            </div>
+                        </td>
+                    </tr>`;
+                });
+                document.getElementById('danhSachHoaDon').innerHTML = html;
+                
+                // Hiển thị tổng số hóa đơn
                 if (searchQuery) {
                     document.getElementById('tongSoHoaDon').textContent = `Kết quả tìm kiếm: ${response.total || danhSachHoaDon.length}`;
                 } else {
                     document.getElementById('tongSoHoaDon').textContent = `Tổng số hóa đơn: ${response.total || danhSachHoaDon.length}`;
                 }
+                
                 hienThiPhanTrangHoaDon(response.total || danhSachHoaDon.length);
+
+                if (danhSachHoaDon.length === 0) {
+                    document.getElementById('danhSachHoaDon').innerHTML = '<tr><td colspan="10" class="text-center py-4 text-gray-500">Không tìm thấy hóa đơn phù hợp.</td></tr>';
+                }
             } catch (error) {
                 console.error('Lỗi hiển thị danh sách hóa đơn:', error);
-                danhSachHoaDonElement.innerHTML = '<tr><td colspan="10" class="text-center py-4 text-gray-500">Không tìm thấy hóa đơn nào.</td></tr>';
-                hienThiPhanTrangHoaDon(0); // Thêm gọi phân trang khi lỗi
+                document.getElementById('danhSachHoaDon').innerHTML = '<tr><td colspan="10" class="text-center py-4 text-gray-500">Không tìm thấy hóa đơn nào.</td></tr>';
+                hienThiPhanTrangHoaDon(0);
             }
         }
 
@@ -720,48 +817,102 @@
             modalHoaDon.classList.remove('hidden');
         }
 
+        function dongModalHoaDon() {
+            modalHoaDon.classList.add('hidden');
+        }
+        function dongModalSuaHoaDon() {
+            modalSuaHoaDon.classList.add('hidden');
+        }
+        function dongModalXemHoaDon() {
+            modalXemHoaDon.classList.add('hidden');
+        }
+
+        // Modal Sửa Hóa Đơn: luôn hiển thị readonly trạng thái, số ngày trễ, tiền phạt
+        async function suaHoaDon(id) {
+            try {
+                const hoadon = await goiAPI('GET', `/api/hoadon/${id}/`);
+                isEditModeHoaDon = true;
+                currentHoaDonId = id;
+                document.getElementById('modalTitleSuaHoaDon').textContent = 'Chỉnh Sửa Hóa Đơn';
+                document.getElementById('suaMaTiec').value = hoadon.tiec_cuoi && hoadon.tiec_cuoi.id ? hoadon.tiec_cuoi.id : (hoadon.ma_tiec || '');
+                document.getElementById('suaSoLuongBan').value = hoadon.so_luong_ban || 0;
+
+                let ngayThanhToanInput = hoadon.ngay_thanh_toan || '';
+                if (ngayThanhToanInput && ngayThanhToanInput.includes('-')) {
+                    const parts = ngayThanhToanInput.split('-');
+                    if (parts.length === 3) {
+                        ngayThanhToanInput = `${parts[2]}/${parts[1]}/${parts[0]}`; // dd/mm/yyyy
+                    }
+                }
+                document.getElementById('suaNgayThanhToan').value = ngayThanhToanInput;
+
+                document.getElementById('suaTongTien').value = hoadon.tong_tien || 0;
+                document.getElementById('suaTienCoc').value = hoadon.tien_coc || 0;
+                document.getElementById('suaTienConLai').value = hoadon.tien_con_lai || 0;
+                // Hiển thị readonly trạng thái, số ngày trễ, tiền phạt
+                document.getElementById('suaTrangThai').value = hoadon.trang_thai || '';
+                document.getElementById('suaSoNgayTre').value = hoadon.so_ngay_tre || 0;
+                document.getElementById('suaTienPhat').value = (hoadon.tien_phat || 0).toLocaleString('vi-VN') + ' VNĐ';
+                modalSuaHoaDon.classList.remove('hidden');
+            } catch (error) {
+                console.error('Lỗi lấy thông tin hóa đơn:', error);
+            }
+        }
+
+        // Modal Xem Hóa Đơn: luôn hiển thị trạng thái, số ngày trễ, tiền phạt
         async function xemHoaDon(id) {
             try {
                 const hoadon = await goiAPI('GET', `/api/hoadon/${id}/`);
-                const ngayHienTai = new Date();
-                const ngayThanhToan = hoadon.ngay_thanh_toan ? new Date(hoadon.ngay_thanh_toan) : null;
+                // Sử dụng parseDateVN cho robust
+                const ngayThanhToan = hoadon.ngay_thanh_toan ? parseDateVN(hoadon.ngay_thanh_toan) : null;
                 let ngayDaiTiec = null;
                 if (hoadon.tiec_cuoi && hoadon.tiec_cuoi.ngay_dai_tiec) {
-                    ngayDaiTiec = new Date(hoadon.tiec_cuoi.ngay_dai_tiec.split('-').reverse().join('-'));
+                    ngayDaiTiec = parseDateVN(hoadon.tiec_cuoi.ngay_dai_tiec);
                 }
                 let soNgayTre = 0;
-                if (ngayThanhToan && ngayDaiTiec && ngayThanhToan > ngayDaiTiec) {
-                    soNgayTre = Math.ceil((ngayThanhToan - ngayDaiTiec) / (1000 * 60 * 60 * 24));
+                let tienPhat = 0;
+                let trangThaiHienThi = 'Đã thanh toán';
+                if (ngayThanhToan && ngayDaiTiec) {
+                    if (ngayThanhToan > ngayDaiTiec) {
+                        soNgayTre = Math.ceil((ngayThanhToan - ngayDaiTiec) / (1000 * 60 * 60 * 24));
+                        trangThaiHienThi = 'Thanh toán trễ hạn';
+                        tienPhat = Math.round((hoadon.tong_tien - hoadon.tien_coc) * 0.01 * soNgayTre);
+                    } else {
+                        soNgayTre = 0;
+                        tienPhat = 0;
+                        trangThaiHienThi = 'Đã thanh toán';
+                    }
+                } else {
+                    soNgayTre = 0;
+                    tienPhat = 0;
+                    trangThaiHienThi = 'Đã thanh toán';
                 }
-                const tienPhat = soNgayTre > 0 ? soNgayTre * 50000 : 0;
-
                 let tiec = hoadon.tiec_cuoi;
-
-                // Nếu chỉ là id, gọi API lấy chi tiết tiệc cưới
                 if (tiec && typeof tiec === 'number') {
                     tiec = await goiAPI('GET', `/api/tieccuoi/${tiec}/`);
                 }
-
                 // Tính tổng tiền bàn nếu có
                 const soLuongBan = hoadon.so_luong_ban || 0;
-                const donGiaBan = tiec.don_gia_ban || 0;
-                const tongTienBan = soLuongBan * donGiaBan;
-
+                // Đơn giá bàn = tổng tiền món ăn
+                const donGiaBan = (tiec.mon_an || []).reduce((sum, mon) => sum + (mon.don_gia || 0), 0);
+                const tongTienBan = donGiaBan * soLuongBan;
                 // Hiển thị thông tin hóa đơn theo bố cục 2 cột
                 document.getElementById('bmTenChuRe').textContent = tiec.ten_chu_re || '';
                 document.getElementById('bmTenCoDau').textContent = tiec.ten_co_dau || '';
                 let ngayThanhToanStr = hoadon.ngay_thanh_toan || '';
-                if (ngayThanhToanStr && ngayThanhToanStr.includes('-')) {
-                    const parts = ngayThanhToanStr.split('-');
-                    if (parts.length === 3) {
-                        ngayThanhToanStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                if (ngayThanhToanStr) {
+                    const d = parseDateVN(ngayThanhToanStr);
+                    if (d) {
+                        const day = String(d.getDate()).padStart(2, '0');
+                        const month = String(d.getMonth() + 1).padStart(2, '0');
+                        const year = d.getFullYear();
+                        ngayThanhToanStr = `${day}-${month}-${year}`;
                     }
                 }
                 document.getElementById('bmNgayThanhToan').textContent = ngayThanhToanStr || 'Chưa có';
                 document.getElementById('bmSoLuongBan').textContent = soLuongBan;
                 document.getElementById('bmDonGiaBan').textContent = donGiaBan ? donGiaBan.toLocaleString('vi-VN') + ' VNĐ' : '';
                 document.getElementById('bmTongTienBan').textContent = tongTienBan ? tongTienBan.toLocaleString('vi-VN') + ' VNĐ' : '';
-
                 // Render bảng dịch vụ
                 const dichVuBody = document.getElementById('bmBangDichVu');
                 dichVuBody.innerHTML = '';
@@ -785,62 +936,34 @@
                 document.getElementById('bmTienConLai').textContent = (hoadon.tien_con_lai || 0).toLocaleString('vi-VN') + ' VNĐ';
                 document.getElementById('bangDichVuSection').style.display = '';
 
-                // Hiện modal
+                
                 document.getElementById('modalXemHoaDon').classList.remove('hidden');
             } catch (error) {
                 console.error('Lỗi lấy thông tin hóa đơn:', error);
             }
         }
 
-        async function suaHoaDon(id) {
-            try {
-                const hoadon = await goiAPI('GET', `/api/hoadon/${id}/`);
-                isEditModeHoaDon = true;
-                currentHoaDonId = id;
-                document.getElementById('modalTitleSuaHoaDon').textContent = 'Chỉnh Sửa Hóa Đơn';
-                document.getElementById('suaMaTiec').value = hoadon.ma_tiec || '';
-                document.getElementById('suaSoLuongBan').value = hoadon.so_luong_ban || 0;
-
-                let ngayThanhToanInput = hoadon.ngay_thanh_toan || '';
-                if (ngayThanhToanInput && ngayThanhToanInput.includes('-')) {
-                    const parts = ngayThanhToanInput.split('-');
-                    if (parts.length === 3) {
-                        ngayThanhToanInput = `${parts[2]}/${parts[1]}/${parts[0]}`; // dd/mm/yyyy
-                    }
-                }
-                document.getElementById('suaNgayThanhToan').value = ngayThanhToanInput;
-
-                document.getElementById('suaTongTien').value = hoadon.tong_tien || 0;
-                document.getElementById('suaTienCoc').value = hoadon.tien_coc || 0;
-                document.getElementById('suaTienConLai').value = hoadon.tien_con_lai || 0;
-                document.getElementById('suaTrangThai').value = hoadon.trang_thai || 'Chưa Thanh Toán';
-                modalSuaHoaDon.classList.remove('hidden');
-            } catch (error) {
-                console.error('Lỗi lấy thông tin hóa đơn:', error);
-            }
-        }
-
-        function dongModalHoaDon() {
-            modalHoaDon.classList.add('hidden');
-        }
-
-        function dongModalXemHoaDon() {
-            document.getElementById('modalXemHoaDon').classList.add('hidden');
-        }
-
-        function dongModalSuaHoaDon() {
-            modalSuaHoaDon.classList.add('hidden');
-        }
-
         formHoaDon.addEventListener('submit', async function(event) {
             event.preventDefault();
+            const maTiec = maTiecInput.value;
+            const soLuongBanNhap = parseInt(document.getElementById('soLuongBan').value);
+            // Lấy số lượng bàn thực tế của tiệc cưới
+            const tiec = danhSachTiecCuoi.find(t => String(t.id) === String(maTiec));
+            if (!tiec) {
+                alert('Không tìm thấy thông tin tiệc cưới!');
+                return;
+            }
+            if (soLuongBanNhap < tiec.so_luong_ban) {
+                alert(`Số lượng bàn không được nhỏ hơn số lượng bàn đã đặt trong tiệc cưới. Vui lòng nhập số bàn lớn hơn hoặc bằng ${tiec.so_luong_ban}.`);
+                return;
+            }
             const newHoaDonData = {
                 tiec_cuoi: maTiecInput.value,
-                so_luong_ban: parseInt(document.getElementById('soLuongBan').value),
+                so_luong_ban: soLuongBanNhap,
                 ngay_thanh_toan: new Date().toISOString().split('T')[0],
-                tong_tien: parseInt(document.getElementById('soLuongBan').value) * 1000000,
+                tong_tien: soLuongBanNhap * 1000000,
                 tien_coc: 0,
-                tien_con_lai: parseInt(document.getElementById('soLuongBan').value) * 1000000,
+                tien_con_lai: soLuongBanNhap * 1000000,
                 trang_thai: 'Chưa Thanh Toán'
             };
 
@@ -868,22 +991,37 @@
             } else {
                 ngayThanhToanServer = ngayThanhToanStr;
             }
-
+            const tiecCuoiValue = document.getElementById('suaMaTiec').value;
+            const tiecCuoiId = Number(tiecCuoiValue);
+            if (!tiecCuoiId || isNaN(tiecCuoiId) || tiecCuoiId <= 0) {
+                alert('Mã số tiệc không hợp lệ. Vui lòng chọn lại!');
+                return;
+            }
+            // Kiểm tra số lượng bàn không nhỏ hơn số lượng bàn tiệc cưới
+            const soLuongBanNhap = parseInt(document.getElementById('suaSoLuongBan').value);
+            const tiec = danhSachTiecCuoi.find(t => String(t.id) === String(tiecCuoiId));
+            if (!tiec) {
+                alert('Không tìm thấy thông tin tiệc cưới!');
+                return;
+            }
+            if (soLuongBanNhap < tiec.so_luong_ban) {
+                alert(`Số lượng bàn không được nhỏ hơn số lượng bàn đã đặt trong tiệc cưới. Vui lòng nhập số bàn lớn hơn hoặc bằng ${tiec.so_luong_ban}.`);
+                return;
+            }
             const updatedHoaDonData = {
-                tiec_cuoi: maTiecInput.value,
+                tiec_cuoi: tiecCuoiId,
                 so_luong_ban: parseInt(document.getElementById('suaSoLuongBan').value),
                 ngay_thanh_toan: ngayThanhToanServer,
                 tong_tien: parseInt(document.getElementById('suaTongTien').value),
                 tien_coc: parseInt(document.getElementById('suaTienCoc').value),
-                tien_con_lai: parseInt(document.getElementById('suaTienConLai').value),
-                trang_thai: document.getElementById('suaTrangThai').value
+                tien_con_lai: parseInt(document.getElementById('suaTienConLai').value)
             };
-
             try {
                 await goiAPI('PUT', `/api/hoadon/${currentHoaDonId}/`, updatedHoaDonData);
                 hienThiDanhSachHoaDon(searchHoaDonInput.value);
                 dongModalSuaHoaDon();
             } catch (error) {
+                alert('Lỗi cập nhật hóa đơn. Vui lòng kiểm tra lại dữ liệu!');
                 console.error('Lỗi cập nhật hóa đơn:', error);
             }
         });
@@ -897,10 +1035,13 @@
                     const totalPages = Math.ceil(totalItems / itemsPerPageHoaDon);
                     if (currentPageHoaDon > totalPages && totalPages > 0) {
                         currentPageHoaDon = totalPages;
-                    } else if (totalPages === 0) {
+                    }
+                    // Nếu không còn hóa đơn nào, về trang 1
+                    if (totalPages === 0) {
                         currentPageHoaDon = 1;
                     }
-                    hienThiDanhSachHoaDon(searchHoaDonInput.value);
+                    // GỌI LẠI API lấy danh sách mới nhất
+                    await hienThiDanhSachHoaDon(searchHoaDonInput.value);
                 } catch (error) {
                     console.error('Lỗi xóa hóa đơn:', error);
                 }
@@ -956,6 +1097,47 @@
             }
         }
 
+        const suaMaTiecInput = document.getElementById('suaMaTiec');
+        const suaAutocompleteList = document.getElementById('suaMaTiecAutocomplete');
+
+        if (suaMaTiecInput) {
+            suaMaTiecInput.addEventListener('input', function(e) {
+                hienAutocompleteSuaMaTiec(e.target.value);
+            });
+        }
+
+        function hienAutocompleteSuaMaTiec(query) {
+            if (!suaAutocompleteList) return;
+            suaAutocompleteList.innerHTML = '';
+            const filtered = danhSachTiecCuoi.filter(tiec =>
+                tiec.id.toString().includes(query) ||
+                (tiec.ten_chu_re && tiec.ten_chu_re.toLowerCase().includes(query.toLowerCase())) ||
+                (tiec.ten_co_dau && tiec.ten_co_dau.toLowerCase().includes(query.toLowerCase()))
+            );
+            filtered.forEach(tiec => {
+                const item = document.createElement('div');
+                item.classList.add('autocomplete-item');
+                item.textContent = `${tiec.id} - ${tiec.ten_chu_re} & ${tiec.ten_co_dau}`;
+                item.onclick = () => {
+                    suaMaTiecInput.value = tiec.id;
+                    suaAutocompleteList.classList.add('hidden');
+                };
+                suaAutocompleteList.appendChild(item);
+            });
+            if (filtered.length > 0) {
+                suaAutocompleteList.classList.remove('hidden');
+            } else {
+                suaAutocompleteList.classList.add('hidden');
+            }
+        }
+
+        // Ẩn autocomplete khi click ra ngoài cho form sửa
+        document.addEventListener('click', function(event) {
+            if (suaAutocompleteList && !suaAutocompleteList.contains(event.target) && event.target !== suaMaTiecInput) {
+                suaAutocompleteList.classList.add('hidden');
+            }
+        });
+
         // Ẩn autocomplete khi click ra ngoài
         document.addEventListener('click', function(event) {
             if (autocompleteList && !autocompleteList.contains(event.target) && event.target !== maTiecInput) {
@@ -981,9 +1163,43 @@
             }
         }
 
+        // Hàm khởi tạo danh sách năm
+        function khoiTaoDanhSachNam() {
+            const currentYear = new Date().getFullYear();
+            const startYear = 2020; // Có thể điều chỉnh năm bắt đầu
+            
+            for (let year = currentYear; year >= startYear; year--) {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                filterNam.appendChild(option);
+            }
+        }
+
+        // Event listeners cho filter
+        filterThang.addEventListener('change', function() {
+            currentPageHoaDon = 1;
+            hienThiDanhSachHoaDon(searchHoaDonInput.value);
+        });
+
+        filterNam.addEventListener('change', function() {
+            currentPageHoaDon = 1;
+            hienThiDanhSachHoaDon(searchHoaDonInput.value);
+        });
+
         document.addEventListener('DOMContentLoaded', async () => {
             console.log("Đang tải danh sách hóa đơn");
+            khoiTaoDanhSachNam();
             hienThiDanhSachHoaDon();
+        });
+
+        // Đóng modal khi bấm phím ESC
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                if (!modalHoaDon.classList.contains('hidden')) dongModalHoaDon();
+                if (!modalSuaHoaDon.classList.contains('hidden')) dongModalSuaHoaDon();
+                if (!modalXemHoaDon.classList.contains('hidden')) dongModalXemHoaDon();
+            }
         });
     </script>
 </body>
