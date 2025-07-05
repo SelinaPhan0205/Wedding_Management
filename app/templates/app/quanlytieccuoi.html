@@ -1205,11 +1205,8 @@
         });
         const selectedSanhId = document.getElementById('sanh').value;
         const selectedSanh = danhSachSanh.find(s => s.id === parseInt(selectedSanhId));
-        console.log('selectedSanh:', selectedSanh);
         const donGiaBanToiThieu = selectedSanh ? selectedSanh.loai_sanh.gia_ban_toi_thieu : 0;
-        console.log('donGiaBanToiThieu:', donGiaBanToiThieu);
         const tongTienMonAn = danhSachMonAnDaChon.reduce((sum, mon) => sum + (mon.don_gia || 0), 0);
-        console.log('tongTienMonAn:', tongTienMonAn);
         const monAnErrorDiv = document.getElementById('monAnError');
         if (monAnErrorDiv) {
             if (selectedSanh && tongTienMonAn < donGiaBanToiThieu) {
