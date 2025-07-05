@@ -456,6 +456,19 @@ class HoaDonViewSet(viewsets.ModelViewSet):
     def count(self, request):
         queryset = self.get_queryset()
         return Response({'total': queryset.count()})
+
+    def destroy(self, request, *args, **kwargs):
+        """Override destroy method để thêm logging và đảm bảo xóa thành công"""
+        try:
+            instance = self.get_object()
+            print(f"Đang xóa hóa đơn ID: {instance.id}")
+            instance.delete()
+            print(f"Đã xóa hóa đơn ID: {instance.id} thành công")
+            return Response({'message': 'Xóa hóa đơn thành công'}, status=204)
+        except Exception as e:
+            print(f"Lỗi khi xóa hóa đơn: {e}")
+            return Response({'error': str(e)}, status=500)
+
 class ReportViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'], url_path='total-tiec-cuoi')
