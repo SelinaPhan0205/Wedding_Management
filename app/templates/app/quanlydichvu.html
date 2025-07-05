@@ -523,11 +523,22 @@
     }
 
     // --- Mở form thêm dịch vụ ---
-    function moFormThemMoiDichVu() {
-        isEditMode = false;
-        modalTitle.textContent = 'Thêm Dịch Vụ Mới';
-        formDichVu.reset();
-        modalDichVu.classList.remove('hidden');
+    async function moFormThemMoiDichVu() {
+        try {
+            // Gọi API để lấy tổng số dịch vụ thực tế
+            const response = await goiAPI('GET', '/api/dichvu/?page=1&limit=1');
+            const total = response.total || 0;
+            if (total >= 20) {
+                alert('Chỉ được phép tạo tối đa 20 dịch vụ!');
+                return;
+            }
+            isEditMode = false;
+            modalTitle.textContent = 'Thêm Dịch Vụ Mới';
+            formDichVu.reset();
+            modalDichVu.classList.remove('hidden');
+        } catch (error) {
+            alert('Không thể kiểm tra số lượng dịch vụ!');
+        }
     }
 
     // --- Mở form sửa dịch vụ ---
@@ -554,7 +565,19 @@
     // --- Xử lý submit form ---
     formDichVu.addEventListener('submit', async function(event) {
         event.preventDefault();
-
+        if (!isEditMode) {
+            try {
+                const response = await goiAPI('GET', '/api/dichvu/?page=1&limit=1');
+                const total = response.total || 0;
+                if (total >= 20) {
+                    alert('Chỉ được phép tạo tối đa 20 dịch vụ!');
+                    return;
+                }
+            } catch (error) {
+                alert('Không thể kiểm tra số lượng dịch vụ!');
+                return;
+            }
+        }
         const newDichVuData = {
             ten_dich_vu: document.getElementById('tenDichVu').value,
             don_gia: parseFloat(document.getElementById('donGia').value),

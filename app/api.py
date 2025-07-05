@@ -5,7 +5,6 @@ from django.views.decorators.http import require_POST
 import json
 
 # API Đăng nhập: chỉ cho phép user có trong TaiKhoan đăng nhập
-@csrf_exempt
 @require_POST
 def dangnhap_api(request):
     try:

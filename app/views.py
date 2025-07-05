@@ -3,70 +3,99 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.http import HttpResponse
 from rest_framework import viewsets, status
+import requests
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.contrib import messages
 from rest_framework.filters import SearchFilter
 from django.core.paginator import Paginator
-from .models import TaiKhoan, Sanh, TiecCuoi, QuyDinh, MonAn, DichVu, HoaDon, ChiTietDichVu, ChiTietThucDon, LoaiSanh
+from .models import *
 from .serializers import *
 from django.db.models import Sum, F
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.cache import never_cache
 import datetime
 
 
 ##### Code các yêu cầu #####
-
 def dangnhap(request):
     return render(request, 'app/dangnhap.html')
+@login_required
+@never_cache
 def trangchu(request):
     return render(request, 'app/trangchu.html')
+@login_required
+@never_cache
 def quanlytaikhoan(request):
     return render(request, 'app/quanlytaikhoan.html')
+@login_required
+@never_cache
 def quanlysanh(request):
     return render(request, 'app/quanlysanh.html')
+@login_required
+@never_cache
 def quanlytieccuoi(request):
     return render(request, 'app/quanlytieccuoi.html')
+@login_required
+@never_cache
 def quanlyhoadon(request):
     return render(request, 'app/quanlyhoadon.html')
+@login_required
+@never_cache
 def quanlythucdon(request):
     return render(request, 'app/quanlythucdon.html')
+@login_required
+@never_cache
 def quanlydichvu(request):
     return render(request, 'app/quanlydichvu.html')
+@login_required
+@never_cache
 def quanlyquydinh(request):
     return render(request, 'app/quanlyquydinh.html')
+@login_required
+@never_cache
 def xembaocao(request):
     return render(request, 'app/xembaocao.html')
+@login_required
+@never_cache
 def baocaodoanhthu(request):
     return render(request, 'app/baocaodoanhthu.html')
+@login_required
+@never_cache
 def baocaocongno(request):
     return render(request, 'app/baocaocongno.html')
+@login_required
+@never_cache
 def baocaothucthu(request):
     return render(request, 'app/baocaothucthu.html')
 
-##### LOGIN #####
-def login(request):
+def dangnhap(request):
     if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '')
         user = authenticate(request, username=username, password=password)
-
         if user is not None:
-            login(request, user)
+            from .models import TaiKhoan
             try:
-                tai_khoan = TaiKhoan.objects.get(user=user)
-                # Cả Admin và User đều redirect về trang chủ
-                return redirect('trangchu')
+                TaiKhoan.objects.get(user=user)
+                if user.is_active:
+                    login(request, user)
+                    return redirect('trangchu') 
+                else:
+                    return render(request, 'app/dangnhap.html', {'error_message': 'Tài khoản đã bị khóa!'})
             except TaiKhoan.DoesNotExist:
-                messages.error(request, "Tài khoản không tồn tại trong hệ thống.")
-                return redirect('login')
+                return render(request, 'app/dangnhap.html', {'error_message': 'Tài khoản không tồn tại trong hệ thống!'})
         else:
-            messages.error(request, "Tên đăng nhập hoặc mật khẩu không đúng.")
-            return redirect('login')
-    return render(request, 'app/login.html')
+            return render(request, 'app/dangnhap.html', {'error_message': 'Tên đăng nhập hoặc mật khẩu không đúng!'})
+    return render(request, 'app/dangnhap.html')
 
-def custom_logout(request):
+def dangxuat(request):
     logout(request)
-    return redirect('login')
+    response = redirect('dangnhap')
+    response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    return response
 
 import unicodedata
 

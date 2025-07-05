@@ -2,6 +2,9 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>Đăng Nhập</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
@@ -121,6 +124,22 @@
   </div>
 
   <script>
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+
     document.querySelector('.login-button').addEventListener('click', function (e) {
       e.preventDefault();
       const username = document.getElementById('username').value.trim();
@@ -134,16 +153,22 @@
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          'X-CSRFToken': csrftoken
         },
         credentials: 'same-origin',
         body: JSON.stringify({ username, password })
       })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          window.location.href = '/';
+      .then(async res => {
+        let data = {};
+        try { data = await res.json(); } catch {}
+        if (data && typeof data.success !== 'undefined') {
+          if (data.success) {
+            window.location.href = '/';
+          } else {
+            alert(data.message || 'Sai tài khoản hoặc mật khẩu!');
+          }
         } else {
-          alert(data.message || 'Đăng nhập thất bại!');
+          alert('Sai tài khoản hoặc mật khẩu!');
         }
       })
       .catch(() => {

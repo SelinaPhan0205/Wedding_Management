@@ -523,12 +523,23 @@
     }
 
     // --- Mở form thêm món ăn ---
-    function moFormThemMoiMonAn() {
+    async function moFormThemMoiMonAn() {
+    try {
+        // Gọi API để lấy tổng số món ăn thực tế
+        const response = await goiAPI('GET', '/api/monan/?page=1&limit=1');
+        const total = response.total || 0;
+        if (total >= 100) {
+            alert('Chỉ được phép tạo tối đa 100 món ăn!');
+            return;
+        }
         isEditMode = false;
         modalTitle.textContent = 'Thêm Món Ăn Mới';
         formMonAn.reset();
         modalMonAn.classList.remove('hidden');
+    } catch (error) {
+        alert('Không thể kiểm tra số lượng món ăn!');
     }
+}
 
     // --- Mở form sửa món ăn ---
     async function suaMonAn(id) {
@@ -554,7 +565,19 @@
     // --- Xử lý submit form ---
     formMonAn.addEventListener('submit', async function(event) {
         event.preventDefault();
-
+        if (!isEditMode) {
+            try {
+                const response = await goiAPI('GET', '/api/monan/?page=1&limit=1');
+                const total = response.total || 0;
+                if (total >= 100) {
+                    alert('Chỉ được phép tạo tối đa 100 món ăn!');
+                    return;
+                }
+            } catch (error) {
+                alert('Không thể kiểm tra số lượng món ăn!');
+                return;
+            }
+        }
         const newMonAnData = {
             ten_mon_an: document.getElementById('tenMonAn').value,
             don_gia: parseFloat(document.getElementById('donGia').value),

@@ -889,6 +889,14 @@
                     }
                 }
                 const row = document.createElement('tr');
+                const vaitro = "{{ request.user.taikhoan.vaitro|default_if_none:'' }}";
+                let actionButtons = `<button class="action-button view-button" onclick="xemTiec(${tiec.id})">Xem</button>`;
+                if (vaitro === "admin") {
+                    actionButtons += `
+                        <button class="action-button edit-button" onclick="suaTiec(${tiec.id})">Sửa</button>
+                        <button class="action-button delete-button" onclick="xoaTiec(${tiec.id})">Xóa</button>
+                    `;
+                }
                 row.innerHTML = `
                     <td>${tiec.id}</td>
                     <td>${tiec.ten_chu_re}</td>
@@ -900,9 +908,7 @@
                     <td>${tiec.so_luong_ban}</td>
                     <td>
                         <div style="display: flex; gap: 0.2rem;">
-                            <button class="action-button view-button" onclick="xemTiec(${tiec.id})">Xem</button>
-                            <button class="action-button edit-button" onclick="suaTiec(${tiec.id})">Sửa</button>
-                            <button class="action-button delete-button" onclick="xoaTiec(${tiec.id})">Xóa</button>
+                            ${actionButtons}
                         </div>
                     </td>
                 `;
@@ -1636,6 +1642,20 @@
     $('#sanh').on('change', validateSanhTrung);
     document.getElementById('ngayDaiTiec').addEventListener('change', validateSanhTrung);
     document.getElementById('ca').addEventListener('change', validateSanhTrung);
+
+    // Giả sử mỗi lần thêm dịch vụ, bạn push vào mảng selectedServices
+    function themDichVuMoi() {
+        // Lấy danh sách dịch vụ đã chọn (có thể là mảng, hoặc đếm số dòng trong bảng)
+        let soLuongDichVu = selectedServices.length; // hoặc document.querySelectorAll('.row-dich-vu').length
+
+        if (soLuongDichVu >= 20) {
+            alert("Không được thêm quá 20 dịch vụ cho một tiệc cưới!");
+            return;
+        }
+
+        // Nếu chưa đủ 20, cho phép thêm dịch vụ mới
+        // ... code thêm dịch vụ ...
+    }
 </script>
 </body>
 </html>
