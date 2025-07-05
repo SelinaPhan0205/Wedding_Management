@@ -321,11 +321,11 @@
                 <table id="revenueTable" class="hidden">
                     <thead>
                         <tr>
-                            <th>Mã Giao dịch</th>
+                            <th>Mã Hóa đơn</th>
                             <th>Mã Tiệc</th>
                             <th>Tên Khách hàng</th>
-                            <th>Ngày Thực thu</th>
-                            <th>Số tiền Thực thu (VNĐ)</th>
+                            <th>Ngày thanh toán</th>
+                            <th>Số tiền</th>
                         </tr>
                     </thead>
                     <tbody id="revenueTableBody"></tbody>
@@ -424,9 +424,11 @@
                 const details = data.details || [];
                 const dateMap = {};
                 details.forEach(item => {
-                    if (!item.ngay_tiec) return;
-                    if (!dateMap[item.ngay_tiec]) dateMap[item.ngay_tiec] = 0;
-                    dateMap[item.ngay_tiec] += item.so_thuc_thu || 0;
+                    // Ưu tiên lấy ngày thanh toán hoặc ngày thực thu
+                    const ngay = item.ngay_thanh_toan || item.ngay_thuc_thu || item.ngay_tiec || null;
+                    if (!ngay) return;
+                    if (!dateMap[ngay]) dateMap[ngay] = 0;
+                    dateMap[ngay] += item.so_thuc_thu || item.so_tien || 0;
                 });
                 // Sắp xếp ngày tăng dần
                 const labels = Object.keys(dateMap).sort();
@@ -505,16 +507,28 @@
                 const tbody = document.getElementById('revenueTableBody');
                 const totalRevenue = details.reduce((sum, item) => sum + (item.so_thuc_thu || 0), 0);
 
+                // Gán lại dữ liệu từ hóa đơn nếu thiếu
                 tbody.innerHTML = details.length
-                  ? details.map(item => `
+                  ? details.map(item => {
+                        // Ưu tiên lấy từ hóa đơn nếu có
+                        let maHoaDon = item.ma_hoa_don || (item.hoa_don && item.hoa_don.ma_hoa_don) || item.id || '-';
+                        let ngayThanhToan = item.ngay_thanh_toan || (item.hoa_don && item.hoa_don.ngay_thanh_toan) || '-';
+                        // Chỉ lấy tên chú rể
+                        let tenKhachHang = item.ten_khach_hang || (item.hoa_don && item.hoa_don.ten_khach_hang) || '-';
+                        // Nếu có dấu & thì chỉ lấy phần trước dấu &
+                        if (tenKhachHang.includes('&')) {
+                            tenKhachHang = tenKhachHang.split('&')[0].trim();
+                        }
+                        return `
                         <tr>
-                            <td>-</td>
-                            <td>${item.ma_tiec || '-'}</td>
-                            <td>${item.ten_khach_hang || '-'}</td>
-                            <td>${item.ngay_tiec || '-'}</td>
+                            <td>${maHoaDon}</td>
+                            <td>${item.ma_tiec || (item.hoa_don && item.hoa_don.ma_tiec) || '-'}</td>
+                            <td>${tenKhachHang}</td>
+                            <td>${ngayThanhToan}</td>
                             <td>${formatVND(item.so_thuc_thu || 0)}</td>
                         </tr>
-                    `).join('') + `
+                        `;
+                    }).join('') + `
                         <tr>
                             <td>Tổng cộng</td>
                             <td>-</td>

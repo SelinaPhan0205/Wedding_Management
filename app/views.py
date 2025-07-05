@@ -335,6 +335,48 @@ class HoaDonViewSet(viewsets.ModelViewSet):
     queryset = HoaDon.objects.all().select_related('tiec_cuoi')
     serializer_class = HoaDonSerializer
 
+    def perform_create(self, serializer):
+        # Gán trạng thái và các trường liên quan khi tạo hóa đơn
+        instance = serializer.save()
+        tc = instance.tiec_cuoi
+        so_ngay_tre = 0
+        tien_phat = 0
+        trang_thai = 'Đã thanh toán'
+        if tc and instance.ngay_thanh_toan and tc.ngay_dai_tiec:
+            if instance.ngay_thanh_toan > tc.ngay_dai_tiec:
+                trang_thai = 'Thanh toán trễ hạn'
+                so_ngay_tre = (instance.ngay_thanh_toan - tc.ngay_dai_tiec).days
+                tien_phat = max((tc.tong_tien_tiec_cuoi - tc.tien_dat_coc) * 0.01 * so_ngay_tre, 0)
+            else:
+                trang_thai = 'Đã thanh toán'
+                so_ngay_tre = 0
+                tien_phat = 0
+        instance.trang_thai = trang_thai
+        instance.so_ngay_tre = so_ngay_tre
+        instance.tien_phat = tien_phat
+        instance.save()
+
+    def perform_update(self, serializer):
+        # Gán lại trạng thái và các trường liên quan khi cập nhật hóa đơn
+        instance = serializer.save()
+        tc = instance.tiec_cuoi
+        so_ngay_tre = 0
+        tien_phat = 0
+        trang_thai = 'Đã thanh toán'
+        if tc and instance.ngay_thanh_toan and tc.ngay_dai_tiec:
+            if instance.ngay_thanh_toan > tc.ngay_dai_tiec:
+                trang_thai = 'Thanh toán trễ hạn'
+                so_ngay_tre = (instance.ngay_thanh_toan - tc.ngay_dai_tiec).days
+                tien_phat = max((tc.tong_tien_tiec_cuoi - tc.tien_dat_coc) * 0.01 * so_ngay_tre, 0)
+            else:
+                trang_thai = 'Đã thanh toán'
+                so_ngay_tre = 0
+                tien_phat = 0
+        instance.trang_thai = trang_thai
+        instance.so_ngay_tre = so_ngay_tre
+        instance.tien_phat = tien_phat
+        instance.save()
+
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset().order_by('-ngay_thanh_toan')
         search_query = request.query_params.get('search', '').strip().lower()
@@ -483,10 +525,10 @@ class ReportViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'], url_path='debt')
     def debt_report(self, request):
-        """Báo cáo công nợ: tổng các hóa đơn chưa thanh toán, trả về details"""
+        """Báo cáo công nợ: chỉ các hóa đơn trạng thái 'Thanh toán trễ hạn'"""
         month = int(request.query_params.get('month', datetime.date.today().month))
         year = int(request.query_params.get('year', datetime.date.today().year))
-        hoadons = HoaDon.objects.filter(trang_thai='Chưa Thanh Toán', tiec_cuoi__ngay_dai_tiec__month=month, tiec_cuoi__ngay_dai_tiec__year=year).select_related('tiec_cuoi')
+        hoadons = HoaDon.objects.filter(trang_thai='Thanh toán trễ hạn', tiec_cuoi__ngay_dai_tiec__month=month, tiec_cuoi__ngay_dai_tiec__year=year).select_related('tiec_cuoi')
         total_debt = hoadons.aggregate(total=Sum(F('tiec_cuoi__tong_tien_tiec_cuoi')-F('tiec_cuoi__tien_dat_coc')))['total'] or 0
         details = []
         for hd in hoadons:
@@ -497,6 +539,7 @@ class ReportViewSet(viewsets.ViewSet):
                 'ten_khach_hang': f"{tc.ten_chu_re} & {tc.ten_co_dau}" if tc else '',
                 'ngay_tiec': tc.ngay_dai_tiec.strftime('%Y-%m-%d') if tc and tc.ngay_dai_tiec else '',
                 'so_con_no': so_con_no,
+                'da_thanh_toan': False,
             })
         return Response({
             'month': month,
@@ -518,9 +561,10 @@ class ReportViewSet(viewsets.ViewSet):
             tc = hd.tiec_cuoi
             so_thuc_thu = tc.tong_tien_tiec_cuoi if tc else 0
             details.append({
+                'ma_hoa_don': hd.id,
                 'ma_tiec': tc.id if tc else '',
                 'ten_khach_hang': f"{tc.ten_chu_re} & {tc.ten_co_dau}" if tc else '',
-                'ngay_tiec': tc.ngay_dai_tiec.strftime('%Y-%m-%d') if tc and tc.ngay_dai_tiec else '',
+                'ngay_thanh_toan': hd.ngay_thanh_toan.strftime('%d/%m/%Y') if hd.ngay_thanh_toan else '-',
                 'so_thuc_thu': so_thuc_thu,
             })
         return Response({

@@ -517,17 +517,24 @@
                 const table = document.getElementById('revenueTable');
                 const tbody = document.getElementById('revenueTableBody');
                 tbody.innerHTML = (data.details && data.details.length)
-                  ? data.details.map(item => `
+                  ? data.details.map(item => {
+                        // Chỉ lấy tên chú rể (nếu có dấu & thì lấy phần trước dấu &)
+                        let tenKhachHang = item.ten_khach_hang || '-';
+                        if (tenKhachHang.includes('&')) {
+                            tenKhachHang = tenKhachHang.split('&')[0].trim();
+                        }
+                        return `
                         <tr>
                           <td>${item.ma_tiec}</td>
-                          <td>${item.ten_khach_hang}</td>
+                          <td>${tenKhachHang}</td>
                           <td>${item.ngay_tiec}</td>
                           <td>${item.ngay_thanh_toan || '-'}</td>
                           <td>${item.trang_thai_thanh_toan || '-'}</td>
                           <td>${formatVND(item.doanh_thu)}</td>
                           <td>${item.ti_le != null ? item.ti_le : ''}</td>
                         </tr>
-                    `).join('')
+                        `;
+                    }).join('')
                   : '<tr><td colspan="7" class="text-center">Không có dữ liệu</td></tr>';
 
                 // Hide loading and show content

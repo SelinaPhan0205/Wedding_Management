@@ -323,8 +323,7 @@
                         <tr>
                             <th>Mã Tiệc / HĐ</th>
                             <th>Tên Khách hàng</th>
-                            <th>Ngày Tiệc</th>
-                            <th>Ngày Đáo hạn</th>
+                            <th>Ngày đãi tiệc</th>
                             <th>Số tiền Còn lại (VNĐ)</th>
                             <th>Số ngày Quá hạn</th>
                             <th>Tiền phạt (VNĐ)</th>
@@ -504,6 +503,11 @@
                         let tienPhat = '-';
                         let soConNo = item.so_con_no || 0;
                         let trangThai = '-';
+                        // Chỉ lấy tên chú rể (nếu có dấu & thì lấy phần trước dấu &)
+                        let tenKhachHang = item.ten_khach_hang || '-';
+                        if (tenKhachHang.includes('&')) {
+                            tenKhachHang = tenKhachHang.split('&')[0].trim();
+                        }
                         if (item.da_thanh_toan) {
                             // Đã thanh toán: không tính ngày quá hạn, tiền phạt
                             soNgayQuaHan = 0;
@@ -525,8 +529,7 @@
                         return `
                         <tr>
                             <td>${item.ma_tiec || '-'}</td>
-                            <td>${item.ten_khach_hang || '-'}</td>
-                            <td>${ngayTiec}</td>
+                            <td>${tenKhachHang}</td>
                             <td>${ngayTiec}</td>
                             <td>${formatVND(soConNo)}</td>
                             <td>${soNgayQuaHan}</td>
@@ -539,14 +542,13 @@
                             <td>Tổng cộng</td>
                             <td>-</td>
                             <td>-</td>
-                            <td>-</td>
                             <td>${formatVND(totalDebt)}</td>
                             <td>-</td>
                             <td>-</td>
                             <td>-</td>
                         </tr>
                     `
-                  : '<tr><td colspan="8" class="text-center">Không có dữ liệu</td></tr>';
+                  : '<tr><td colspan="7" class="text-center">Không có dữ liệu</td></tr>';
                 // Hide loading and show content
                 tableLoading.classList.add('hidden');
                 table.classList.remove('hidden');
