@@ -469,6 +469,7 @@
                     <label for="maTiecCuoi" class="block text-gray-700 text-sm font-medium mb-2">Mã Số Tiệc:</label>
                     <input type="text" id="maTiecCuoi" name="maTiecCuoi" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Nhập hoặc chọn mã số tiệc..." required autocomplete="off">
                     <div id="maTiecAutocomplete" class="autocomplete-list hidden"></div>
+                    <div id="maTiecError" class="text-red-600 text-sm mt-1" style="display:none"></div>
                 </div>
                 <div class="mb-4">
                     <label for="soLuongBan" class="block text-gray-700 text-sm font-medium mb-2">Số Lượng Bàn:</label>
@@ -570,7 +571,7 @@
                 </div>
                 <div class="mb-4">
                     <label for="suaNgayThanhToan" class="block text-gray-700 text-sm font-medium mb-2">Ngày Thanh Toán:</label>
-                    <input type="text" id="suaNgayThanhToan" name="suaNgayThanhToan" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="dd/mm/yyyy" required>
+                    <input type="text" id="suaNgayThanhToan" name="suaNgayThanhToan" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="dd/mm/yyyy">
                 </div>
                 <div class="mb-4">
                     <label for="suaTongTien" class="block text-gray-700 text-sm font-medium mb-2">Tổng Tiền:</label>
@@ -595,10 +596,6 @@
                 <div class="mb-4">
                     <label for="suaTienPhat" class="block text-gray-700 text-sm font-medium mb-2">Tiền Phạt:</label>
                     <input type="text" id="suaTienPhat" name="suaTienPhat" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100" readonly disabled>
-                </div>
-                <div class="mb-4">
-                    <label for="suaNgayLapHoaDon" class="block text-gray-700 text-sm font-medium mb-2">Ngày lập hóa đơn:</label>
-                    <input type="text" id="suaNgayLapHoaDon" name="suaNgayLapHoaDon" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100" readonly>
                 </div>
                 <div class="flex justify-end gap-3">
                     <button type="button" onclick="dongModalSuaHoaDon()" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-100 transition">Hủy</button>
@@ -919,6 +916,11 @@
                 document.getElementById('suaSoNgayTre').value = hoadon.so_ngay_tre || 0;
                 document.getElementById('suaTienPhat').value = formatVND(hoadon.tien_phat || 0);
                 modalSuaHoaDon.classList.remove('hidden');
+                modalSuaHoaDon.scrollTop = 0;
+                const modalContent = modalSuaHoaDon.querySelector('.modal-content');
+                if (modalContent) {
+                    modalContent.scrollTop = 0;
+                }
             } catch (error) {
                 console.error('Lỗi lấy thông tin hóa đơn:', error);
             }
@@ -1004,7 +1006,17 @@
 
         formHoaDon.addEventListener('submit', async function(event) {
             event.preventDefault();
+            checkTrungMaTiec();
+            if (btnLuuHoaDon.disabled) return;
             const maTiec = maTiecInput.value;
+            // Kiểm tra trùng tiệc cưới lần nữa khi submit
+            const daCoHoaDon = (danhSachHoaDon || []).some(hd => {
+                return hd.tiec_cuoi && String(hd.tiec_cuoi.id) === maTiec;
+            });
+            if (daCoHoaDon) {
+                alert('Tiệc cưới này đã có hóa đơn! Vui lòng chọn tiệc cưới khác.');
+                return;
+            }
             const soLuongBanNhap = parseInt(document.getElementById('soLuongBan').value);
             const tiec = danhSachTiecCuoi.find(t => String(t.id) === String(maTiec));
             if (!tiec) {
@@ -1036,15 +1048,17 @@
 
         formSuaHoaDon.addEventListener('submit', async function(event) {
             event.preventDefault();
-            let ngayThanhToanStr = document.getElementById('suaNgayThanhToan').value;
-            let ngayThanhToanServer = '';
-            if (ngayThanhToanStr && ngayThanhToanStr.includes('/')) {
-                const parts = ngayThanhToanStr.split('/');
-                if (parts.length === 3) {
-                    ngayThanhToanServer = `${parts[2]}-${parts[1]}-${parts[0]}`;
+            let ngayThanhToanStr = document.getElementById('suaNgayThanhToan').value.trim();
+            let ngayThanhToanServer = null;
+            if (ngayThanhToanStr) {
+                if (ngayThanhToanStr.includes('/')) {
+                    const parts = ngayThanhToanStr.split('/');
+                    if (parts.length === 3) {
+                        ngayThanhToanServer = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                    }
+                } else {
+                    ngayThanhToanServer = ngayThanhToanStr;
                 }
-            } else {
-                ngayThanhToanServer = ngayThanhToanStr;
             }
             const tiecCuoiValue = document.getElementById('suaMaTiec').value;
             const tiecCuoiId = Number(tiecCuoiValue);
@@ -1063,7 +1077,7 @@
                 return;
             }
             const updatedHoaDonData = {
-                tiec_cuoi: tiecCuoiId,
+                tiec_cuoi_id: tiecCuoiId,
                 so_luong_ban: parseInt(document.getElementById('suaSoLuongBan').value),
                 ngay_thanh_toan: ngayThanhToanServer,
                 tong_tien: parseInt(document.getElementById('suaTongTien').value),
@@ -1365,6 +1379,41 @@
                 if (!modalSuaHoaDon.classList.contains('hidden')) dongModalSuaHoaDon();
                 if (!modalXemHoaDon.classList.contains('hidden')) dongModalXemHoaDon();
             }
+        });
+
+        // --- Kiểm tra trùng tiệc cưới khi thêm hóa đơn ---
+        const btnLuuHoaDon = formHoaDon.querySelector('button[type="submit"]');
+        const maTiecError = document.getElementById('maTiecError');
+        function checkTrungMaTiec() {
+            const maTiec = maTiecInput.value.trim();
+            const daCoHoaDon = (danhSachHoaDon || []).some(hd => {
+                return hd.tiec_cuoi && String(hd.tiec_cuoi.id) === maTiec;
+            });
+            if (daCoHoaDon) {
+                maTiecError.textContent = 'Tiệc cưới này đã có hóa đơn!';
+                maTiecError.style.display = '';
+                btnLuuHoaDon.disabled = true;
+                btnLuuHoaDon.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                maTiecError.textContent = '';
+                maTiecError.style.display = 'none';
+                btnLuuHoaDon.disabled = false;
+                btnLuuHoaDon.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+        maTiecInput.addEventListener('blur', checkTrungMaTiec);
+        // Khi chọn autocomplete cũng nên kiểm tra lại
+        if (autocompleteList) {
+            autocompleteList.addEventListener('click', function() {
+                setTimeout(checkTrungMaTiec, 100);
+            });
+        }
+        // Khi nhập thì ẩn lỗi, enable nút lưu
+        maTiecInput.addEventListener('input', function() {
+            maTiecError.textContent = '';
+            maTiecError.style.display = 'none';
+            btnLuuHoaDon.disabled = false;
+            btnLuuHoaDon.classList.remove('opacity-50', 'cursor-not-allowed');
         });
     </script>
 </body>
