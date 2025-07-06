@@ -1161,6 +1161,7 @@
         }
 
         // --- Modal xác nhận thanh toán/hoàn tác ---
+        // Đảm bảo chỉ khai báo 1 lần callback
         let xacNhanCallback = null;
         let xacNhanCancelCallback = null;
         function moModalXacNhan(message, onOK, onCancel, title = 'Xác nhận') {
@@ -1183,13 +1184,13 @@
             if (xacNhanCancelCallback) xacNhanCancelCallback();
             dongModalXacNhan();
         };
-        // Đóng modal khi bấm ESC
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape' && !document.getElementById('modalXacNhan').classList.contains('hidden')) {
                 dongModalXacNhan();
             }
         });
 
+        // --- Xác nhận thanh toán ---
         async function xacNhanThanhToan(id, buttonElement) {
             moModalXacNhan(
                 'Bạn có chắc chắn muốn xác nhận thanh toán cho hóa đơn này?',
@@ -1199,69 +1200,34 @@
                         const day = String(today.getDate()).padStart(2, '0');
                         const month = String(today.getMonth() + 1).padStart(2, '0');
                         const year = today.getFullYear();
-                        const ngayThanhToan = `${year}-${month}-${day}`; // Định dạng yyyy-mm-dd cho backend
-                        const row = buttonElement.closest('tr');
-                        // --- TÍNH SỐ NGÀY TRỄ VÀ TIỀN PHẠT ---
-                        const ngayLapCell = row.cells[2];
-                        const tongTienCell = row.cells[4];
-                        let tienCoc = 0;
-                        if (row.hasAttribute('data-tien-coc')) {
-                            tienCoc = parseInt(row.getAttribute('data-tien-coc')) || 0;
-                        }
-                        let tongTien = 0;
-                        if (tongTienCell) {
-                            tongTien = parseInt(tongTienCell.textContent.replace(/[^\d]/g, '')) || 0;
-                        }
-                        function parseDate(str) {
-                            if (!str) return null;
-                            str = str.trim();
-                            if (str.includes('/')) {
-                                const [d, m, y] = str.split('/');
-                                return new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
-                            } else if (str.includes('-')) {
-                                const [y, m, d] = str.split('-');
-                                return new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
-                            }
-                            return null;
-                        }
-                        const dateLap = parseDate(ngayLapCell.textContent);
-                        const dateThanhToan = parseDate(`${day}/${month}/${year}`);
+                        const ngayThanhToan = `${year}-${month}-${day}`;
+                        // Lấy lại hóa đơn từ backend để tính chính xác
+                        const hoadon = await goiAPI('GET', `/api/hoadon/${id}/`);
+                        const ngayLap = hoadon.tiec_cuoi && hoadon.tiec_cuoi.ngay_dai_tiec ? hoadon.tiec_cuoi.ngay_dai_tiec : null;
                         let soNgayTre = 0;
-                        if (dateLap && dateThanhToan) {
+                        let tienPhat = 0;
+                        let trangThai = 'Chưa thanh toán';
+                        if (ngayLap) {
+                            const dateLap = new Date(ngayLap);
+                            const dateThanhToan = new Date(`${year}-${month}-${day}`);
                             const diff = Math.floor((dateThanhToan - dateLap) / (1000 * 60 * 60 * 24));
                             soNgayTre = diff > 0 ? diff : 0;
-                        }
-                        let tienPhat = Math.round((tongTien - tienCoc) * 0.01 * soNgayTre);
-                        if (tienPhat < 0) tienPhat = 0;
-                        // --- CẬP NHẬT TRẠNG THÁI ---
-                        let trangThai = 'Chưa thanh toán';
-                        if (dateLap && dateThanhToan) {
                             if (dateThanhToan.getTime() === dateLap.getTime()) {
                                 trangThai = 'Thanh toán đúng hạn';
                             } else if (dateThanhToan > dateLap) {
                                 trangThai = 'Thanh toán trễ hạn';
                             }
                         }
-                        // Gọi API cập nhật
+                        tienPhat = Math.round((hoadon.tong_tien - hoadon.tien_coc) * 0.01 * soNgayTre);
+                        if (tienPhat < 0) tienPhat = 0;
                         await goiAPI('PATCH', `/api/hoadon/${id}/`, {
                             ngay_thanh_toan: ngayThanhToan,
                             so_ngay_tre: soNgayTre,
                             tien_phat: tienPhat,
                             trang_thai: trangThai
                         });
-                        // Sau khi API thành công, cập nhật giao diện
-                        row.cells[3].textContent = `${day}/${month}/${year}`;
-                        row.cells[5].textContent = soNgayTre > 0 ? soNgayTre : 0;
-                        row.cells[6].textContent = tienPhat > 0 ? tienPhat.toLocaleString('vi-VN') + ' VNĐ' : '0 VNĐ';
-                        row.cells[7].textContent = (trangThai === 'Thanh toán đúng hạn' || trangThai === 'Thanh toán trễ hạn') ? 'Đã thanh toán' : trangThai;
-                        buttonElement.classList.remove('confirm-button');
-                        buttonElement.classList.add('undo-button');
-                        buttonElement.onclick = () => hoanTacThanhToan(id, buttonElement);
-                        buttonElement.title = 'Hoàn tác thanh toán';
-                        buttonElement.innerHTML = `
-                            <svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-4 w-4\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\">\n                                <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6\" />\n                            </svg>\n                        `;
+                        await hienThiDanhSachHoaDon(searchHoaDonInput.value);
                     } catch (error) {
-                        console.error('Lỗi xác nhận thanh toán:', error);
                         alert('Có lỗi khi xác nhận thanh toán. Vui lòng thử lại!');
                     }
                 },
@@ -1269,173 +1235,20 @@
                 'Xác nhận thanh toán'
             );
         }
+        // --- Hoàn tác thanh toán ---
         async function hoanTacThanhToan(id, buttonElement) {
             moModalXacNhan(
                 'Bạn có chắc chắn muốn hoàn tác thanh toán cho hóa đơn này?',
                 async function() {
                     try {
-                        const row = buttonElement.closest('tr');
-                        // Gọi API reset
                         await goiAPI('PATCH', `/api/hoadon/${id}/`, {
                             ngay_thanh_toan: null,
                             so_ngay_tre: 0,
                             tien_phat: 0,
                             trang_thai: 'Chưa thanh toán'
                         });
-                        row.cells[3].textContent = '-';
-                        row.cells[5].textContent = '-';
-                        row.cells[6].textContent = '-';
-                        row.cells[7].textContent = 'Chưa thanh toán';
-                        buttonElement.classList.remove('undo-button');
-                        buttonElement.classList.add('confirm-button');
-                        buttonElement.onclick = () => xacNhanThanhToan(id, buttonElement);
-                        buttonElement.title = 'Xác nhận thanh toán';
-                        buttonElement.innerHTML = `
-                            <svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-4 w-4\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\">\n                                <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M5 13l4 4L19 7\" />\n                            </svg>\n                        `;
+                        await hienThiDanhSachHoaDon(searchHoaDonInput.value);
                     } catch (error) {
-                        console.error('Lỗi hoàn tác thanh toán:', error);
-                        alert('Có lỗi khi hoàn tác thanh toán. Vui lòng thử lại!');
-                    }
-                },
-                null,
-                'Hoàn tác thanh toán'
-            );
-        }
-
-        // --- Modal xác nhận thanh toán/hoàn tác ---
-        let xacNhanCallback = null;
-        let xacNhanCancelCallback = null;
-        function moModalXacNhan(message, onOK, onCancel, title = 'Xác nhận') {
-            document.getElementById('modalXacNhanTitle').textContent = title;
-            document.getElementById('modalXacNhanMessage').textContent = message;
-            document.getElementById('modalXacNhan').classList.remove('hidden');
-            xacNhanCallback = onOK;
-            xacNhanCancelCallback = onCancel;
-        }
-        function dongModalXacNhan() {
-            document.getElementById('modalXacNhan').classList.add('hidden');
-            xacNhanCallback = null;
-            xacNhanCancelCallback = null;
-        }
-        document.getElementById('btnXacNhanOK').onclick = function() {
-            if (xacNhanCallback) xacNhanCallback();
-            dongModalXacNhan();
-        };
-        document.getElementById('btnXacNhanCancel').onclick = function() {
-            if (xacNhanCancelCallback) xacNhanCancelCallback();
-            dongModalXacNhan();
-        };
-        // Đóng modal khi bấm ESC
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape' && !document.getElementById('modalXacNhan').classList.contains('hidden')) {
-                dongModalXacNhan();
-            }
-        });
-
-        async function xacNhanThanhToan(id, buttonElement) {
-            moModalXacNhan(
-                'Bạn có chắc chắn muốn xác nhận thanh toán cho hóa đơn này?',
-                async function() {
-                    try {
-                        const today = new Date();
-                        const day = String(today.getDate()).padStart(2, '0');
-                        const month = String(today.getMonth() + 1).padStart(2, '0');
-                        const year = today.getFullYear();
-                        const ngayThanhToan = `${year}-${month}-${day}`; // Định dạng yyyy-mm-dd cho backend
-                        const row = buttonElement.closest('tr');
-                        // --- TÍNH SỐ NGÀY TRỄ VÀ TIỀN PHẠT ---
-                        const ngayLapCell = row.cells[2];
-                        const tongTienCell = row.cells[4];
-                        let tienCoc = 0;
-                        if (row.hasAttribute('data-tien-coc')) {
-                            tienCoc = parseInt(row.getAttribute('data-tien-coc')) || 0;
-                        }
-                        let tongTien = 0;
-                        if (tongTienCell) {
-                            tongTien = parseInt(tongTienCell.textContent.replace(/[^\d]/g, '')) || 0;
-                        }
-                        function parseDate(str) {
-                            if (!str) return null;
-                            str = str.trim();
-                            if (str.includes('/')) {
-                                const [d, m, y] = str.split('/');
-                                return new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
-                            } else if (str.includes('-')) {
-                                const [y, m, d] = str.split('-');
-                                return new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
-                            }
-                            return null;
-                        }
-                        const dateLap = parseDate(ngayLapCell.textContent);
-                        const dateThanhToan = parseDate(`${day}/${month}/${year}`);
-                        let soNgayTre = 0;
-                        if (dateLap && dateThanhToan) {
-                            const diff = Math.floor((dateThanhToan - dateLap) / (1000 * 60 * 60 * 24));
-                            soNgayTre = diff > 0 ? diff : 0;
-                        }
-                        let tienPhat = Math.round((tongTien - tienCoc) * 0.01 * soNgayTre);
-                        if (tienPhat < 0) tienPhat = 0;
-                        // --- CẬP NHẬT TRẠNG THÁI ---
-                        let trangThai = 'Chưa thanh toán';
-                        if (dateLap && dateThanhToan) {
-                            if (dateThanhToan.getTime() === dateLap.getTime()) {
-                                trangThai = 'Thanh toán đúng hạn';
-                            } else if (dateThanhToan > dateLap) {
-                                trangThai = 'Thanh toán trễ hạn';
-                            }
-                        }
-                        // Gọi API cập nhật
-                        await goiAPI('PATCH', `/api/hoadon/${id}/`, {
-                            ngay_thanh_toan: ngayThanhToan,
-                            so_ngay_tre: soNgayTre,
-                            tien_phat: tienPhat,
-                            trang_thai: trangThai
-                        });
-                        // Sau khi API thành công, cập nhật giao diện
-                        row.cells[3].textContent = `${day}/${month}/${year}`;
-                        row.cells[5].textContent = soNgayTre > 0 ? soNgayTre : 0;
-                        row.cells[6].textContent = tienPhat > 0 ? tienPhat.toLocaleString('vi-VN') + ' VNĐ' : '0 VNĐ';
-                        row.cells[7].textContent = (trangThai === 'Thanh toán đúng hạn' || trangThai === 'Thanh toán trễ hạn') ? 'Đã thanh toán' : trangThai;
-                        buttonElement.classList.remove('confirm-button');
-                        buttonElement.classList.add('undo-button');
-                        buttonElement.onclick = () => hoanTacThanhToan(id, buttonElement);
-                        buttonElement.title = 'Hoàn tác thanh toán';
-                        buttonElement.innerHTML = `
-                            <svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-4 w-4\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\">\n                                <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6\" />\n                            </svg>\n                        `;
-                    } catch (error) {
-                        console.error('Lỗi xác nhận thanh toán:', error);
-                        alert('Có lỗi khi xác nhận thanh toán. Vui lòng thử lại!');
-                    }
-                },
-                null,
-                'Xác nhận thanh toán'
-            );
-        }
-        async function hoanTacThanhToan(id, buttonElement) {
-            moModalXacNhan(
-                'Bạn có chắc chắn muốn hoàn tác thanh toán cho hóa đơn này?',
-                async function() {
-                    try {
-                        const row = buttonElement.closest('tr');
-                        // Gọi API reset
-                        await goiAPI('PATCH', `/api/hoadon/${id}/`, {
-                            ngay_thanh_toan: null,
-                            so_ngay_tre: 0,
-                            tien_phat: 0,
-                            trang_thai: 'Chưa thanh toán'
-                        });
-                        row.cells[3].textContent = '-';
-                        row.cells[5].textContent = '-';
-                        row.cells[6].textContent = '-';
-                        row.cells[7].textContent = 'Chưa thanh toán';
-                        buttonElement.classList.remove('undo-button');
-                        buttonElement.classList.add('confirm-button');
-                        buttonElement.onclick = () => xacNhanThanhToan(id, buttonElement);
-                        buttonElement.title = 'Xác nhận thanh toán';
-                        buttonElement.innerHTML = `
-                            <svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-4 w-4\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\">\n                                <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M5 13l4 4L19 7\" />\n                            </svg>\n                        `;
-                    } catch (error) {
-                        console.error('Lỗi hoàn tác thanh toán:', error);
                         alert('Có lỗi khi hoàn tác thanh toán. Vui lòng thử lại!');
                     }
                 },
