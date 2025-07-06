@@ -119,17 +119,14 @@ class SanhViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
-        search_query = request.query_params.get('search', '').strip()
+        search_query = request.query_params.get('search', '').strip().lower()
         
-        # Lọc sảnh theo tên bắt đầu bằng search_query (không phân biệt hoa thường)
         if search_query:
-            search_query_no_diacritics = bo_dau(search_query).lower().split()
+            search_query_no_diacritics = bo_dau(search_query).lower()
             queryset = [
                 s for s in queryset
-                if all(
-                    bo_dau(word).lower().startswith(q)
-                    for word, q in zip(s.ten_sanh.split(), search_query_no_diacritics)
-                )
+                if search_query_no_diacritics in bo_dau(s.ten_sanh).lower()
+                or search_query_no_diacritics in bo_dau(s.loai_sanh.ten_loai_sanh).lower()
             ]
 
         # Phân trang
