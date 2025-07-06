@@ -345,7 +345,7 @@
                 <div class="dropdown-arrow">▼</div>
                 <div class="profile-dropdown" id="dropdown">
                     <button onclick="openModal()"><i class="fi fi-sr-user icon"></i> Xem tài khoản</button>
-                    <button><i class="fi fi-sr-settings icon"></i> Cài đặt</button>
+                    <button type="button" onclick="openEditModal()"><i class="fi fi-sr-settings icon"></i> Cài đặt</button>
                     <button onclick="logoutRedirect()"><i class="fi fi-sr-sign-out-alt icon"></i> Đăng xuất</button>
                 </div>
             </div>
@@ -390,7 +390,53 @@
         </div>
     </div>
 
+    <div id="modalChinhSuaTaiKhoan" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-2xl">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">Chỉnh Sửa Tài Khoản</h2>
+            <form id="formChinhSuaTaiKhoan">
+                <div class="mb-2">
+                    <label class="font-medium text-gray-700">Họ tên:</label>
+                    <input type="text" id="editHoTen" class="border rounded px-2 py-1 w-full" required>
+                </div>
+                <div class="mb-2">
+                    <label class="font-medium text-gray-700">Số điện thoại:</label>
+                    <input type="text" id="editSoDienThoai" class="border rounded px-2 py-1 w-full">
+                </div>
+                <div class="mb-2">
+                    <label class="font-medium text-gray-700">Email:</label>
+                    <input type="email" id="editEmail" class="border rounded px-2 py-1 w-full">
+                </div>
+                <div class="mb-2">
+                    <label class="font-medium text-gray-700">Mật khẩu mới:</label>
+                    <input type="password" id="editMatKhauMoi" class="border rounded px-2 py-1 w-full">
+                </div>
+                <div class="mb-2">
+                    <label class="font-medium text-gray-700">Xác nhận mật khẩu:</label>
+                    <input type="password" id="editMatKhauMoi2" class="border rounded px-2 py-1 w-full">
+                </div>
+                <div class="flex justify-end gap-3 mt-4">
+                    <button type="button" onclick="dongModalChinhSuaTaiKhoan()" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-100 transition">Hủy</button>
+                    <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
         function logoutRedirect() {
             window.location.href = "{% url 'dangnhap' %}";
         }
@@ -481,6 +527,74 @@
                 dropdown.classList.remove('show');
             }
         });
+
+        function openEditModal() {
+            document.getElementById('modalChinhSuaTaiKhoan').classList.remove('hidden');
+            // Lấy thông tin hiện tại để điền vào form
+            fetch('/api/thong-tin-tai-khoan/', {
+                method: 'GET',
+                credentials: 'same-origin',
+                headers: { 'Accept': 'application/json' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('editHoTen').value = data.ho_ten || '';
+                document.getElementById('editSoDienThoai').value = data.so_dien_thoai || '';
+                document.getElementById('editEmail').value = data.email || '';
+                document.getElementById('editMatKhauMoi').value = '';
+                document.getElementById('editMatKhauMoi2').value = '';
+            });
+        }
+        function dongModalChinhSuaTaiKhoan() {
+            document.getElementById('modalChinhSuaTaiKhoan').classList.add('hidden');
+        }
+        const password = document.getElementById('editMatKhauMoi').value;
+        document.getElementById('formChinhSuaTaiKhoan').onsubmit = function(e) {
+            e.preventDefault();
+            const password = document.getElementById('editMatKhauMoi').value;
+            const password2 = document.getElementById('editMatKhauMoi2').value;
+            const data = {
+                hovaten: document.getElementById('editHoTen').value,
+                sodienthoai: document.getElementById('editSoDienThoai').value,
+                email: document.getElementById('editEmail').value,
+            };
+
+            if (password || password2) {
+                if (password !== password2) {
+                    alert('Mật khẩu mới và xác nhận mật khẩu không khớp!');
+                    return;
+                }
+                data.password = password;
+            }
+
+            fetch('/api/cap-nhat-tai-khoan/', {
+                method: 'PATCH',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(data)
+            })
+            .then(res => {
+                if (!res.ok) throw new Error('Cập nhật thất bại');
+                return res.json();
+            })
+            .then(data => {
+                if (data.success && password) {
+                    alert('Bạn đã đổi mật khẩu thành công. Vui lòng đăng nhập lại!');
+                    window.location.href = "{% url 'dangnhap' %}";
+                } else if (data.success) {
+                    alert('Cập nhật thành công!');
+                    dongModalChinhSuaTaiKhoan();
+                    fetchAccountInfo();
+                }
+            })
+            .catch(err => {
+                alert('Có lỗi xảy ra khi cập nhật!');
+            });
+        };
     </script>
 </body>
-</html> 
+</html>

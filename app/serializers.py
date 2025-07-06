@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import *
+from datetime import date
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -34,18 +35,23 @@ class UserSerializer(serializers.ModelSerializer):
 class TaiKhoanSerializer(serializers.ModelSerializer):
     # Trả về thông tin user (username, email, ...)
     user = UserSerializer(read_only=True)
-    # Các trường này chỉ dùng khi tạo mới, không trả về khi GET
+    # Các trường này chỉ dùng khi tạo/sửa, không trả về khi GET
     username = serializers.CharField(write_only=True, required=False)
     password = serializers.CharField(write_only=True, required=False)
     email = serializers.EmailField(write_only=True, required=False)
+    # Thêm trường email để trả về khi GET
+    email_display = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = TaiKhoan
         fields = [
             'id', 'user', 'hovaten', 'sodienthoai', 'vaitro', 'trangthai',
-            'username', 'password', 'email'
+            'username', 'password', 'email', 'email_display'
         ]
-        read_only_fields = ['user']
+        read_only_fields = ['user', 'email_display']
+
+    def get_email_display(self, obj):
+        return obj.user.email if obj.user else ''
 
     def create(self, validated_data):
         username = validated_data.pop('username', None)
@@ -224,21 +230,26 @@ class TiecCuoiSerializer(serializers.ModelSerializer):
         return instance
     
 class HoaDonSerializer(serializers.ModelSerializer):
+    tiec_cuoi = TiecCuoiSerializer(read_only=True)
+    tiec_cuoi_id = serializers.PrimaryKeyRelatedField(queryset=TiecCuoi.objects.all(), source='tiec_cuoi', write_only=True)
     ma_hoa_don = serializers.IntegerField(source='id', read_only=True)
     ma_tiec = serializers.IntegerField(source='tiec_cuoi.id', read_only=True)
     tong_tien = serializers.SerializerMethodField(read_only=True)
     tien_coc = serializers.FloatField(source='tiec_cuoi.tien_dat_coc', read_only=True)
     tien_con_lai = serializers.SerializerMethodField()
     dich_vu = serializers.SerializerMethodField()
-    trang_thai = serializers.SerializerMethodField()  # Tính trạng thái động
+    trang_thai = serializers.CharField(required=False)  # KHÔNG có get_trang_thai
+    so_ngay_tre = serializers.SerializerMethodField()
+    tien_phat = serializers.SerializerMethodField()
 
     class Meta:
         model = HoaDon
         fields = [
             'id', 'ma_hoa_don', 'ma_tiec', 'ngay_thanh_toan', 'so_ngay_tre',
-            'trang_thai', 'tien_phat', 'tong_tien', 'tien_coc', 'tien_con_lai', 'tiec_cuoi',
+            'trang_thai', 'tien_phat', 'tong_tien', 'tien_coc', 'tien_con_lai', 'tiec_cuoi', 'tiec_cuoi_id',
             'dich_vu', 'so_luong_ban'
         ]
+        read_only_fields = ['id', 'ma_hoa_don', 'ma_tiec', 'tong_tien', 'tien_coc', 'tien_con_lai', 'dich_vu', 'tiec_cuoi']
 
     def get_tien_con_lai(self, obj):
         tong = obj.tinh_tong_tien() 
@@ -252,11 +263,35 @@ class HoaDonSerializer(serializers.ModelSerializer):
     def get_tong_tien(self, obj):
         return obj.tinh_tong_tien()
 
-    def get_trang_thai(self, obj):
-        # Luôn tính trạng thái động dựa vào ngày thanh toán và ngày đãi tiệc
-        tc = obj.tiec_cuoi
-        if not obj.ngay_thanh_toan or not tc or not tc.ngay_dai_tiec:
-            return 'Chưa thanh toán'
-        if obj.ngay_thanh_toan > tc.ngay_dai_tiec:
-            return 'Thanh toán trễ hạn'
-        return 'Đã thanh toán'
+    def get_so_ngay_tre(self, obj):
+        if obj.ngay_thanh_toan:
+            return obj.so_ngay_tre or 0
+        today = date.today()
+        ngay_lap = obj.tiec_cuoi.ngay_dai_tiec if obj.tiec_cuoi else None
+        if not ngay_lap:
+            return None
+        # Chỉ tính nếu hôm nay > ngày đãi tiệc
+        if today > ngay_lap:
+            so_ngay = (today - ngay_lap).days
+            return so_ngay
+        return None  # Trả về None để frontend hiển thị '-'
+
+    def get_tien_phat(self, obj):
+        so_ngay_tre = self.get_so_ngay_tre(obj)
+        if obj.ngay_thanh_toan:
+            return obj.tien_phat or 0
+        if so_ngay_tre is None or so_ngay_tre <= 0:
+            return None
+        tong_tien = obj.tinh_tong_tien()
+        tien_coc = obj.tiec_cuoi.tien_dat_coc if obj.tiec_cuoi else 0
+        tien_phat = max((tong_tien - tien_coc) * 0.01 * so_ngay_tre, 0)
+        return int(tien_phat)
+
+    def perform_update(self, serializer):
+        instance = serializer.save()
+        if not instance.ngay_thanh_toan:
+            instance.so_ngay_tre = 0
+            instance.tien_phat = 0
+            instance.trang_thai = 'Chưa thanh toán'
+        instance.save()
+        # ... các logic khác nếu có

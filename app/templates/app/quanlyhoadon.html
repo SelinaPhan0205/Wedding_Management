@@ -243,6 +243,22 @@
             background-color: #fecaca;
             transform: translateY(-1px);
         }
+        .confirm-button {
+            background-color: #dcfce7;
+            color: #16a34a;
+        }
+        .confirm-button:hover {
+            background-color: #bbf7d0;
+            transform: translateY(-1px);
+        }
+        .undo-button {
+            background-color: #fef3c7;
+            color: #d97706;
+        }
+        .undo-button:hover {
+            background-color: #fde68a;
+            transform: translateY(-1px);
+        }
         .autocomplete-item {
             padding: 8px 12px;
             cursor: pointer;
@@ -427,10 +443,9 @@
                         <tr>
                             <th>Mã Hóa Đơn</th>
                             <th>Mã Số Tiệc</th>
+                            <th>Ngày Lập Hóa Đơn</th>
                             <th>Ngày Thanh Toán</th>
                             <th>Tổng Tiền</th>
-                            <th>Tiền Cọc</th>
-                            <th>Tiền Còn Lại</th>
                             <th>Số Ngày Trễ</th>
                             <th>Tiền Phạt</th>
                             <th>Trạng Thái</th>
@@ -482,7 +497,7 @@
                     <span class="font-medium text-gray-900 ml-1" id="bmTenCoDau"></span>
                 </div>
                 <div>
-                    <span class="text-gray-500">Ngày thanh toán:</span>
+                    <span class="text-gray-500">Ngày lập hóa đơn:</span>
                     <span class="font-medium text-gray-900 ml-1" id="bmNgayThanhToan"></span>
                 </div>
                 <div>
@@ -554,7 +569,7 @@
                     <input type="number" id="suaSoLuongBan" name="suaSoLuongBan" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
                 </div>
                 <div class="mb-4">
-                    <label for="suaNgayThanhToan" class="block text-gray-700 text-sm font-medium mb-2">Ngày Thanh Toán:</label>
+                    <label for="suaNgayThanhToan" class="block text-gray-700 text-sm font-medium mb-2">Ngày Lập Hóa Đơn:</label>
                     <input type="text" id="suaNgayThanhToan" name="suaNgayThanhToan" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="dd/mm/yyyy" required>
                 </div>
                 <div class="mb-4">
@@ -589,6 +604,18 @@
         </div>
     </div>
 
+    <!-- Modal xác nhận thanh toán/hoàn tác -->
+    <div id="modalXacNhan" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-sm relative flex flex-col items-center">
+            <h3 id="modalXacNhanTitle" class="text-lg font-bold mb-4 text-gray-800 text-center">Xác nhận</h3>
+            <p id="modalXacNhanMessage" class="mb-6 text-center text-gray-700">Bạn có chắc chắn muốn xác nhận thanh toán cho hóa đơn này?</p>
+            <div class="flex gap-4 justify-center">
+                <button id="btnXacNhanOK" class="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition">OK</button>
+                <button id="btnXacNhanCancel" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition">Hủy</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Sidebar toggle logic
         function toggleSidebar() {
@@ -596,6 +623,12 @@
             const content = document.getElementById('content');
             sidebar.classList.toggle('collapsed');
             content.classList.toggle('collapsed');
+        }
+
+        // Hàm định dạng tiền VND
+        function formatVND(number) {
+            if (number == null || isNaN(number)) return '-';
+            return Number(number).toLocaleString('vi-VN', { maximumFractionDigits: 0 }) + ' VND';
         }
 
         let danhSachHoaDon = [];
@@ -747,21 +780,44 @@
                 danhSachHoaDon = ds;
                 let html = '';
                 (danhSachHoaDon || []).forEach(hoadon => {
-                    html += `<tr>
+                    // Định dạng ngày yyyy-mm-dd thành dd/mm/yyyy
+                    function formatDate(str) {
+                        if (!str) return '-';
+                        const parts = str.split('-');
+                        if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                        return str;
+                    }
+                    let actionButton = '';
+                    if (hoadon.ngay_thanh_toan) {
+                        // Đã thanh toán/trễ hạn/đúng hạn: chỉ hiện undo
+                        actionButton = `<button class="action-button undo-button" onclick="hoanTacThanhToan(${hoadon.id}, this)" title="Hoàn tác thanh toán">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                            </svg>
+                        </button>`;
+                    } else {
+                        // Chưa thanh toán: chỉ hiện tick xác nhận
+                        actionButton = `<button class="action-button confirm-button" onclick="xacNhanThanhToan(${hoadon.id}, this)" title="Xác nhận thanh toán" id="btnThanhToan_${hoadon.id}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </button>`;
+                    }
+                    html += `<tr data-tien-coc="${hoadon.tien_coc || 0}">
                         <td class="text-center">${hoadon.id}</td>
                         <td class="text-center">${hoadon.tiec_cuoi && hoadon.tiec_cuoi.id ? hoadon.tiec_cuoi.id : (hoadon.ma_tiec || '')}</td>
-                        <td>${hoadon.ngay_thanh_toan || ''}</td>
-                        <td>${(hoadon.tong_tien || 0).toLocaleString('vi-VN')} VNĐ</td>
-                        <td>${(hoadon.tien_coc || 0).toLocaleString('vi-VN')} VNĐ</td>
-                        <td>${(hoadon.tien_con_lai || 0).toLocaleString('vi-VN')} VNĐ</td>
-                        <td>${hoadon.so_ngay_tre || 0}</td>
-                        <td>${(hoadon.tien_phat || 0).toLocaleString('vi-VN')} VNĐ</td>
-                        <td>${hoadon.trang_thai || ''}</td>
+                        <td>${hoadon.tiec_cuoi && hoadon.tiec_cuoi.ngay_dai_tiec ? formatDate(hoadon.tiec_cuoi.ngay_dai_tiec) : '-'}</td>
+                        <td>${hoadon.ngay_thanh_toan ? formatDate(hoadon.ngay_thanh_toan) : '-'}</td>
+                        <td>${(hoadon.tong_tien != null && hoadon.tong_tien !== undefined) ? formatVND(hoadon.tong_tien) : '-'}</td>
+                        <td>${hoadon.so_ngay_tre != null ? hoadon.so_ngay_tre : '-'}</td>
+                        <td>${hoadon.tien_phat != null ? formatVND(hoadon.tien_phat) : '-'}</td>
+                        <td>${hoadon.trang_thai === 'Đã thanh toán' ? 'Đã thanh toán' : 'Chưa thanh toán'}</td>
                         <td style="min-width: 180px; width: 180px;">
                             <div class="flex gap-1 flex-nowrap">
                                 <button class="action-button view-button" onclick="xemHoaDon(${hoadon.id})">Xem</button>
                                 <button class="action-button edit-button" onclick="suaHoaDon(${hoadon.id})">Sửa</button>
                                 <button class="action-button delete-button" onclick="xoaHoaDon(${hoadon.id})">Xóa</button>
+                                ${actionButton}
                             </div>
                         </td>
                     </tr>`;
@@ -782,7 +838,7 @@
                 }
             } catch (error) {
                 console.error('Lỗi hiển thị danh sách hóa đơn:', error);
-                document.getElementById('danhSachHoaDon').innerHTML = '<tr><td colspan="10" class="text-center py-4 text-gray-500">Không tìm thấy hóa đơn nào.</td></tr>';
+                document.getElementById('danhSachHoaDon').innerHTML = '<tr><td colspan="9" class="text-center py-4 text-gray-500">Không tìm thấy hóa đơn nào.</td></tr>';
                 hienThiPhanTrangHoaDon(0);
             }
         }
@@ -870,7 +926,7 @@
                 // Hiển thị readonly trạng thái, số ngày trễ, tiền phạt
                 document.getElementById('suaTrangThai').value = hoadon.trang_thai || '';
                 document.getElementById('suaSoNgayTre').value = hoadon.so_ngay_tre || 0;
-                document.getElementById('suaTienPhat').value = (hoadon.tien_phat || 0).toLocaleString('vi-VN') + ' VNĐ';
+                document.getElementById('suaTienPhat').value = formatVND(hoadon.tien_phat || 0);
                 modalSuaHoaDon.classList.remove('hidden');
             } catch (error) {
                 console.error('Lỗi lấy thông tin hóa đơn:', error);
@@ -929,8 +985,8 @@
                 }
                 document.getElementById('bmNgayThanhToan').textContent = ngayThanhToanStr || 'Chưa có';
                 document.getElementById('bmSoLuongBan').textContent = soLuongBan;
-                document.getElementById('bmDonGiaBan').textContent = donGiaBan ? donGiaBan.toLocaleString('vi-VN') + ' VNĐ' : '';
-                document.getElementById('bmTongTienBan').textContent = tongTienBan ? tongTienBan.toLocaleString('vi-VN') + ' VNĐ' : '';
+                document.getElementById('bmDonGiaBan').textContent = donGiaBan ? formatVND(donGiaBan) : '';
+                document.getElementById('bmTongTienBan').textContent = tongTienBan ? formatVND(tongTienBan) : '';
                 // Render bảng dịch vụ
                 const dichVuBody = document.getElementById('bmBangDichVu');
                 dichVuBody.innerHTML = '';
@@ -942,16 +998,16 @@
                     row.innerHTML = `
                         <td class="pl-8 pr-2 py-4 w-12 text-center">${stt++}</td>
                         <td class="px-2 py-4 w-2/5 min-w-[220px] text-left">${dv.ten_dich_vu}</td>
-                        <td class="px-2 py-4 w-32 text-right">${dv.don_gia.toLocaleString('vi-VN')} VNĐ</td>
+                        <td class="px-2 py-4 w-32 text-right">${formatVND(dv.don_gia)}</td>
                         <td class="px-2 py-4 w-8 min-w-[40px] max-w-[56px] text-center">${dv.so_luong}</td>
-                        <td class="pl-2 pr-8 py-4 w-32 text-right">${(dv.so_luong * dv.don_gia).toLocaleString('vi-VN')} VNĐ</td>
+                        <td class="pl-2 pr-8 py-4 w-32 text-right">${formatVND(dv.so_luong * dv.don_gia)}</td>
                     `;
                     dichVuBody.appendChild(row);
                 });
-                document.getElementById('bmTongTienDichVu').textContent = tongTienDichVu.toLocaleString('vi-VN') + ' VNĐ';
-                document.getElementById('bmTongTienHoaDon').textContent = (hoadon.tong_tien || 0).toLocaleString('vi-VN') + ' VNĐ';
-                document.getElementById('bmTienCoc').textContent = (hoadon.tien_coc || 0).toLocaleString('vi-VN') + ' VNĐ';
-                document.getElementById('bmTienConLai').textContent = (hoadon.tien_con_lai || 0).toLocaleString('vi-VN') + ' VNĐ';
+                document.getElementById('bmTongTienDichVu').textContent = formatVND(tongTienDichVu);
+                document.getElementById('bmTongTienHoaDon').textContent = formatVND(hoadon.tong_tien || 0);
+                document.getElementById('bmTienCoc').textContent = formatVND(hoadon.tien_coc || 0);
+                document.getElementById('bmTienConLai').textContent = formatVND(hoadon.tien_con_lai || 0);
                 document.getElementById('bangDichVuSection').style.display = '';
 
                 
@@ -976,13 +1032,11 @@
                 return;
             }
             const newHoaDonData = {
-                tiec_cuoi: maTiecInput.value,
-                so_luong_ban: soLuongBanNhap,
-                ngay_thanh_toan: new Date().toISOString().split('T')[0],
-                tong_tien: soLuongBanNhap * 1000000,
-                tien_coc: 0,
-                tien_con_lai: soLuongBanNhap * 1000000,
-                trang_thai: 'Chưa Thanh Toán'
+                tiec_cuoi_id: Number(maTiecInput.value), // ĐÚNG!
+                so_luong_ban: Number(document.getElementById('soLuongBan').value),
+                ngay_thanh_toan: null, // hoặc bỏ qua nếu chưa thanh toán
+                trang_thai: 'Chưa thanh toán'
+                // KHÔNG cần truyền tong_tien, tien_coc, tien_con_lai, dich_vu
             };
 
             try {
@@ -1110,6 +1164,103 @@
                     alert('Có lỗi khi xóa hóa đơn. Vui lòng thử lại.');
                 }
             }
+        }
+
+        // --- Modal xác nhận thanh toán/hoàn tác ---
+        // Đảm bảo chỉ khai báo 1 lần callback
+        let xacNhanCallback = null;
+        let xacNhanCancelCallback = null;
+        function moModalXacNhan(message, onOK, onCancel, title = 'Xác nhận') {
+            document.getElementById('modalXacNhanTitle').textContent = title;
+            document.getElementById('modalXacNhanMessage').textContent = message;
+            document.getElementById('modalXacNhan').classList.remove('hidden');
+            xacNhanCallback = onOK;
+            xacNhanCancelCallback = onCancel;
+        }
+        function dongModalXacNhan() {
+            document.getElementById('modalXacNhan').classList.add('hidden');
+            xacNhanCallback = null;
+            xacNhanCancelCallback = null;
+        }
+        document.getElementById('btnXacNhanOK').onclick = function() {
+            if (xacNhanCallback) xacNhanCallback();
+            dongModalXacNhan();
+        };
+        document.getElementById('btnXacNhanCancel').onclick = function() {
+            if (xacNhanCancelCallback) xacNhanCancelCallback();
+            dongModalXacNhan();
+        };
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape' && !document.getElementById('modalXacNhan').classList.contains('hidden')) {
+                dongModalXacNhan();
+            }
+        });
+
+        // --- Xác nhận thanh toán ---
+        async function xacNhanThanhToan(id, buttonElement) {
+            moModalXacNhan(
+                'Bạn có chắc chắn muốn xác nhận thanh toán cho hóa đơn này?',
+                async function() {
+                    try {
+                        const today = new Date();
+                        const day = String(today.getDate()).padStart(2, '0');
+                        const month = String(today.getMonth() + 1).padStart(2, '0');
+                        const year = today.getFullYear();
+                        const ngayThanhToan = `${year}-${month}-${day}`;
+                        // Lấy lại hóa đơn từ backend để tính chính xác
+                        const hoadon = await goiAPI('GET', `/api/hoadon/${id}/`);
+                        const ngayLap = hoadon.tiec_cuoi && hoadon.tiec_cuoi.ngay_dai_tiec ? hoadon.tiec_cuoi.ngay_dai_tiec : null;
+                        let soNgayTre = 0;
+                        let tienPhat = 0;
+                        let trangThai = 'Chưa thanh toán';
+                        if (ngayLap) {
+                            const dateLap = new Date(ngayLap);
+                            const dateThanhToan = new Date(`${year}-${month}-${day}`);
+                            const diff = Math.floor((dateThanhToan - dateLap) / (1000 * 60 * 60 * 24));
+                            soNgayTre = diff > 0 ? diff : 0;
+                            if (dateThanhToan.getTime() === dateLap.getTime()) {
+                                trangThai = 'Thanh toán đúng hạn';
+                            } else if (dateThanhToan > dateLap) {
+                                trangThai = 'Thanh toán trễ hạn';
+                            }
+                        }
+                        tienPhat = Math.round((hoadon.tong_tien - hoadon.tien_coc) * 0.01 * soNgayTre);
+                        if (tienPhat < 0) tienPhat = 0;
+                        await goiAPI('PATCH', `/api/hoadon/${id}/`, {
+                            ngay_thanh_toan: ngayThanhToan,
+                            so_ngay_tre: soNgayTre,
+                            tien_phat: tienPhat,
+                            trang_thai: trangThai
+                        });
+                        await hienThiDanhSachHoaDon(searchHoaDonInput.value);
+                    } catch (error) {
+                        alert('Có lỗi khi xác nhận thanh toán. Vui lòng thử lại!');
+                    }
+                },
+                null,
+                'Xác nhận thanh toán'
+            );
+        }
+        // --- Hoàn tác thanh toán ---
+        async function hoanTacThanhToan(id, buttonElement) {
+            moModalXacNhan(
+                'Bạn có chắc chắn muốn hoàn tác thanh toán cho hóa đơn này?',
+                async function() {
+                    try {
+                        await goiAPI('PATCH', `/api/hoadon/${id}/`, {
+                            ngay_thanh_toan: null,
+                            so_ngay_tre: 0,
+                            tien_phat: 0,
+                            trang_thai: 'Chưa thanh toán'
+                        });
+                        await hienThiDanhSachHoaDon(searchHoaDonInput.value);
+                    } catch (error) {
+                        alert('Có lỗi khi hoàn tác thanh toán. Vui lòng thử lại!');
+                    }
+                },
+                null,
+                'Hoàn tác thanh toán'
+            );
         }
 
         let danhSachTiecCuoi = [];
