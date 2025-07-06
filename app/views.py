@@ -14,6 +14,9 @@ from .serializers import *
 from django.db.models import Sum, F
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 import datetime
 
 
@@ -638,3 +641,29 @@ class ReportViewSet(viewsets.ViewSet):
             'count': hoadons.count(),
             'details': details,
         })
+@csrf_exempt
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def cap_nhat_tai_khoan(request):
+    user = request.user
+    from .models import TaiKhoan
+    try:
+        taikhoan = TaiKhoan.objects.get(user=user)
+    except TaiKhoan.DoesNotExist:
+        return Response({'success': False, 'message': 'Không tìm thấy tài khoản!'}, status=404)
+
+    data = request.data
+
+    taikhoan.hovaten = data.get('hovaten', taikhoan.hovaten)
+    taikhoan.sodienthoai = data.get('sodienthoai', taikhoan.sodienthoai)
+    taikhoan.save()
+
+    if 'email' in data and data['email']:
+        user.email = data['email']
+        user.save()
+
+    if 'password' in data and data['password']:
+        user.set_password(data['password'])
+        user.save()
+
+    return Response({'success': True})
