@@ -5,12 +5,12 @@
 ```
 app/tests/
 ├── __init__.py
-├── test_models.py          # Test cho Models
-├── test_serializers.py     # Test cho Serializers  
+├── test_models.py         # Test cho Models
+├── test_serializers.py    # Test cho Serializers  
 ├── test_api.py            # Test cho API endpoints
 ├── test_views.py          # Test cho Views
 ├── test_all.py            # Test tích hợp toàn bộ hệ thống
-└── README.md              # File hướng dẫn này
+└── conftest.py            # Cấu hình pytest nâng cao
 ```
 
 ## Cách chạy Test
