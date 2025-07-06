@@ -469,6 +469,7 @@
                     <label for="maTiecCuoi" class="block text-gray-700 text-sm font-medium mb-2">Mã Số Tiệc:</label>
                     <input type="text" id="maTiecCuoi" name="maTiecCuoi" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Nhập hoặc chọn mã số tiệc..." required autocomplete="off">
                     <div id="maTiecAutocomplete" class="autocomplete-list hidden"></div>
+                    <div id="maTiecError" class="text-red-600 text-sm mt-1" style="display:none"></div>
                 </div>
                 <div class="mb-4">
                     <label for="soLuongBan" class="block text-gray-700 text-sm font-medium mb-2">Số Lượng Bàn:</label>
@@ -1005,7 +1006,17 @@
 
         formHoaDon.addEventListener('submit', async function(event) {
             event.preventDefault();
+            checkTrungMaTiec();
+            if (btnLuuHoaDon.disabled) return;
             const maTiec = maTiecInput.value;
+            // Kiểm tra trùng tiệc cưới lần nữa khi submit
+            const daCoHoaDon = (danhSachHoaDon || []).some(hd => {
+                return hd.tiec_cuoi && String(hd.tiec_cuoi.id) === maTiec;
+            });
+            if (daCoHoaDon) {
+                alert('Tiệc cưới này đã có hóa đơn! Vui lòng chọn tiệc cưới khác.');
+                return;
+            }
             const soLuongBanNhap = parseInt(document.getElementById('soLuongBan').value);
             const tiec = danhSachTiecCuoi.find(t => String(t.id) === String(maTiec));
             if (!tiec) {
@@ -1368,6 +1379,41 @@
                 if (!modalSuaHoaDon.classList.contains('hidden')) dongModalSuaHoaDon();
                 if (!modalXemHoaDon.classList.contains('hidden')) dongModalXemHoaDon();
             }
+        });
+
+        // --- Kiểm tra trùng tiệc cưới khi thêm hóa đơn ---
+        const btnLuuHoaDon = formHoaDon.querySelector('button[type="submit"]');
+        const maTiecError = document.getElementById('maTiecError');
+        function checkTrungMaTiec() {
+            const maTiec = maTiecInput.value.trim();
+            const daCoHoaDon = (danhSachHoaDon || []).some(hd => {
+                return hd.tiec_cuoi && String(hd.tiec_cuoi.id) === maTiec;
+            });
+            if (daCoHoaDon) {
+                maTiecError.textContent = 'Tiệc cưới này đã có hóa đơn!';
+                maTiecError.style.display = '';
+                btnLuuHoaDon.disabled = true;
+                btnLuuHoaDon.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                maTiecError.textContent = '';
+                maTiecError.style.display = 'none';
+                btnLuuHoaDon.disabled = false;
+                btnLuuHoaDon.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+        maTiecInput.addEventListener('blur', checkTrungMaTiec);
+        // Khi chọn autocomplete cũng nên kiểm tra lại
+        if (autocompleteList) {
+            autocompleteList.addEventListener('click', function() {
+                setTimeout(checkTrungMaTiec, 100);
+            });
+        }
+        // Khi nhập thì ẩn lỗi, enable nút lưu
+        maTiecInput.addEventListener('input', function() {
+            maTiecError.textContent = '';
+            maTiecError.style.display = 'none';
+            btnLuuHoaDon.disabled = false;
+            btnLuuHoaDon.classList.remove('opacity-50', 'cursor-not-allowed');
         });
     </script>
 </body>
