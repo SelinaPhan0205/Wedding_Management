@@ -420,14 +420,13 @@
                 let labels = [];
                 let values = [];
                 if (data.details && data.details.length > 0) {
-                    // Sắp xếp data.details theo ngày tăng dần (ưu tiên ngày thanh toán, nếu không có thì ngày tiệc)
+                    // Sắp xếp data.details theo ngày tiệc tăng dần
                     data.details.sort((a, b) => {
-                        const dateA = new Date(a.ngay_thanh_toan || a.ngay_tiec);
-                        const dateB = new Date(b.ngay_thanh_toan || b.ngay_tiec);
+                        const dateA = new Date(a.ngay_tiec);
+                        const dateB = new Date(b.ngay_tiec);
                         return dateA - dateB;
                     });
-                    // Ưu tiên lấy ngày thanh toán nếu có, nếu không lấy ngày tiệc
-                    labels = data.details.map(item => item.ngay_thanh_toan || item.ngay_tiec);
+                    labels = data.details.map(item => item.ngay_tiec);
                     values = data.details.map(item => item.doanh_thu ? item.doanh_thu / 1000000 : 0);
                 } else {
                     labels = [`Tháng ${month}/${year}`];

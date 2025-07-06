@@ -497,55 +497,52 @@
                 const tbody = document.getElementById('debtTableBody');
                 const totalDebt = details.reduce((sum, item) => sum + (item.so_con_no || 0), 0);
                 tbody.innerHTML = details.length
-                  ? details.map(item => {
+                  ? details
+                      .filter(item => item.trang_thai === 'Chưa thanh toán' || item.trang_thai === 'Thanh toán trễ hạn')
+                      .map(item => {
                         const ngayTiec = item.ngay_tiec || '-';
                         let soNgayQuaHan = '-';
                         let tienPhat = '-';
                         let soConNo = item.so_con_no || 0;
-                        let trangThai = '-';
+                        let hienThiTrangThai = item.trang_thai === 'Thanh toán trễ hạn' ? 'Đã thanh toán' : 'Chưa thanh toán';
+                        // Tính số ngày quá hạn và tiền phạt nếu chưa thanh toán hoặc trễ hạn
+                        if (item.trang_thai === 'Chưa thanh toán' || item.trang_thai === 'Thanh toán trễ hạn') {
+                          if (ngayTiec && ngayTiec !== '-') {
+                            const dateDue = new Date(ngayTiec);
+                            const today = new Date();
+                            soNgayQuaHan = Math.floor((today - dateDue) / (1000 * 60 * 60 * 24));
+                            if (soNgayQuaHan < 0) soNgayQuaHan = 0;
+                            tienPhat = soConNo + soConNo * 0.01 * soNgayQuaHan;
+                          }
+                        } else {
+                          soNgayQuaHan = 0;
+                          tienPhat = 0;
+                        }
                         // Chỉ lấy tên chú rể (nếu có dấu & thì lấy phần trước dấu &)
                         let tenKhachHang = item.ten_khach_hang || '-';
                         if (tenKhachHang.includes('&')) {
                             tenKhachHang = tenKhachHang.split('&')[0].trim();
                         }
-                        if (item.da_thanh_toan) {
-                            // Đã thanh toán: không tính ngày quá hạn, tiền phạt
-                            soNgayQuaHan = 0;
-                            tienPhat = 0;
-                            trangThai = 'Đã thanh toán';
-                        } else if (ngayTiec && ngayTiec !== '-') {
-                            const dateDue = new Date(ngayTiec);
-                            const diffTime = today - dateDue;
-                            soNgayQuaHan = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                            if (soNgayQuaHan > 0) {
-                                tienPhat = soConNo + soConNo * 0.01 * soNgayQuaHan;
-                                trangThai = 'Trễ hạn';
-                            } else {
-                                soNgayQuaHan = 0;
-                                tienPhat = 0;
-                                trangThai = 'Chưa đến hạn';
-                            }
-                        }
                         return `
-                        <tr>
+                          <tr>
                             <td>${item.ma_tiec || '-'}</td>
                             <td>${tenKhachHang}</td>
                             <td>${ngayTiec}</td>
                             <td>${formatVND(soConNo)}</td>
                             <td>${soNgayQuaHan}</td>
                             <td>${formatVND(tienPhat)}</td>
-                            <td>${trangThai}</td>
-                        </tr>
+                            <td>${hienThiTrangThai}</td>
+                          </tr>
                         `;
-                    }).join('') + `
+                      }).join('') + `
                         <tr>
-                            <td>Tổng cộng</td>
-                            <td>-</td>
-                            <td>-</td>
-                            <td>${formatVND(totalDebt)}</td>
-                            <td>-</td>
-                            <td>-</td>
-                            <td>-</td>
+                          <td>Tổng cộng</td>
+                          <td>-</td>
+                          <td>-</td>
+                          <td>${formatVND(totalDebt)}</td>
+                          <td>-</td>
+                          <td>-</td>
+                          <td>-</td>
                         </tr>
                     `
                   : '<tr><td colspan="7" class="text-center">Không có dữ liệu</td></tr>';

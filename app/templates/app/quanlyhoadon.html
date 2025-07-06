@@ -242,6 +242,22 @@
             background-color: #fecaca;
             transform: translateY(-1px);
         }
+        .confirm-button {
+            background-color: #dcfce7;
+            color: #16a34a;
+        }
+        .confirm-button:hover {
+            background-color: #bbf7d0;
+            transform: translateY(-1px);
+        }
+        .undo-button {
+            background-color: #fef3c7;
+            color: #d97706;
+        }
+        .undo-button:hover {
+            background-color: #fde68a;
+            transform: translateY(-1px);
+        }
         .autocomplete-item {
             padding: 8px 12px;
             cursor: pointer;
@@ -376,10 +392,9 @@
                         <tr>
                             <th>Mã Hóa Đơn</th>
                             <th>Mã Số Tiệc</th>
+                            <th>Ngày Lập Hóa Đơn</th>
                             <th>Ngày Thanh Toán</th>
                             <th>Tổng Tiền</th>
-                            <th>Tiền Cọc</th>
-                            <th>Tiền Còn Lại</th>
                             <th>Số Ngày Trễ</th>
                             <th>Tiền Phạt</th>
                             <th>Trạng Thái</th>
@@ -431,7 +446,7 @@
                     <span class="font-medium text-gray-900 ml-1" id="bmTenCoDau"></span>
                 </div>
                 <div>
-                    <span class="text-gray-500">Ngày thanh toán:</span>
+                    <span class="text-gray-500">Ngày lập hóa đơn:</span>
                     <span class="font-medium text-gray-900 ml-1" id="bmNgayThanhToan"></span>
                 </div>
                 <div>
@@ -503,7 +518,7 @@
                     <input type="number" id="suaSoLuongBan" name="suaSoLuongBan" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
                 </div>
                 <div class="mb-4">
-                    <label for="suaNgayThanhToan" class="block text-gray-700 text-sm font-medium mb-2">Ngày Thanh Toán:</label>
+                    <label for="suaNgayThanhToan" class="block text-gray-700 text-sm font-medium mb-2">Ngày Lập Hóa Đơn:</label>
                     <input type="text" id="suaNgayThanhToan" name="suaNgayThanhToan" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="dd/mm/yyyy" required>
                 </div>
                 <div class="mb-4">
@@ -535,6 +550,18 @@
                     <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition">Lưu</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal xác nhận thanh toán/hoàn tác -->
+    <div id="modalXacNhan" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-sm relative flex flex-col items-center">
+            <h3 id="modalXacNhanTitle" class="text-lg font-bold mb-4 text-gray-800 text-center">Xác nhận</h3>
+            <p id="modalXacNhanMessage" class="mb-6 text-center text-gray-700">Bạn có chắc chắn muốn xác nhận thanh toán cho hóa đơn này?</p>
+            <div class="flex gap-4 justify-center">
+                <button id="btnXacNhanOK" class="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition">OK</button>
+                <button id="btnXacNhanCancel" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition">Hủy</button>
+            </div>
         </div>
     </div>
 
@@ -653,21 +680,44 @@
                 danhSachHoaDon = ds;
                 let html = '';
                 (danhSachHoaDon || []).forEach(hoadon => {
-                    html += `<tr>
+                    // Định dạng ngày yyyy-mm-dd thành dd/mm/yyyy
+                    function formatDate(str) {
+                        if (!str) return '-';
+                        const parts = str.split('-');
+                        if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                        return str;
+                    }
+                    let actionButton = '';
+                    if (hoadon.ngay_thanh_toan) {
+                        // Đã thanh toán/trễ hạn/đúng hạn: chỉ hiện undo
+                        actionButton = `<button class="action-button undo-button" onclick="hoanTacThanhToan(${hoadon.id}, this)" title="Hoàn tác thanh toán">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                            </svg>
+                        </button>`;
+                    } else {
+                        // Chưa thanh toán: chỉ hiện tick xác nhận
+                        actionButton = `<button class="action-button confirm-button" onclick="xacNhanThanhToan(${hoadon.id}, this)" title="Xác nhận thanh toán" id="btnThanhToan_${hoadon.id}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </button>`;
+                    }
+                    html += `<tr data-tien-coc="${hoadon.tien_coc || 0}">
                         <td class="text-center">${hoadon.id}</td>
                         <td class="text-center">${hoadon.tiec_cuoi && hoadon.tiec_cuoi.id ? hoadon.tiec_cuoi.id : (hoadon.ma_tiec || '')}</td>
-                        <td>${hoadon.ngay_thanh_toan || ''}</td>
-                        <td>${(hoadon.tong_tien || 0).toLocaleString('vi-VN')} VNĐ</td>
-                        <td>${(hoadon.tien_coc || 0).toLocaleString('vi-VN')} VNĐ</td>
-                        <td>${(hoadon.tien_con_lai || 0).toLocaleString('vi-VN')} VNĐ</td>
-                        <td>${hoadon.so_ngay_tre || 0}</td>
-                        <td>${(hoadon.tien_phat || 0).toLocaleString('vi-VN')} VNĐ</td>
-                        <td>${hoadon.trang_thai || ''}</td>
+                        <td>${hoadon.tiec_cuoi && hoadon.tiec_cuoi.ngay_dai_tiec ? formatDate(hoadon.tiec_cuoi.ngay_dai_tiec) : '-'}</td>
+                        <td>${hoadon.ngay_thanh_toan ? formatDate(hoadon.ngay_thanh_toan) : '-'}</td>
+                        <td>${(hoadon.tong_tien != null && hoadon.tong_tien !== undefined) ? hoadon.tong_tien.toLocaleString('vi-VN') + ' VNĐ' : '-'}</td>
+                        <td>${hoadon.ngay_thanh_toan ? (hoadon.so_ngay_tre != null ? hoadon.so_ngay_tre : '-') : '-'}</td>
+                        <td>${hoadon.ngay_thanh_toan ? (hoadon.tien_phat != null ? hoadon.tien_phat.toLocaleString('vi-VN') + ' VNĐ' : '-') : '-'}</td>
+                        <td>${hoadon.ngay_thanh_toan ? (hoadon.trang_thai === 'Thanh toán đúng hạn' || hoadon.trang_thai === 'Thanh toán trễ hạn' ? 'Đã thanh toán' : (hoadon.trang_thai || '-')) : 'Chưa thanh toán'}</td>
                         <td style="min-width: 180px; width: 180px;">
                             <div class="flex gap-1 flex-nowrap">
                                 <button class="action-button view-button" onclick="xemHoaDon(${hoadon.id})">Xem</button>
                                 <button class="action-button edit-button" onclick="suaHoaDon(${hoadon.id})">Sửa</button>
                                 <button class="action-button delete-button" onclick="xoaHoaDon(${hoadon.id})">Xóa</button>
+                                ${actionButton}
                             </div>
                         </td>
                     </tr>`;
@@ -676,7 +726,7 @@
                 hienThiPhanTrangHoaDon(ds.length);
             } catch (error) {
                 console.error('Lỗi hiển thị danh sách hóa đơn:', error);
-                document.getElementById('danhSachHoaDon').innerHTML = '<tr><td colspan="10" class="text-center py-4 text-gray-500">Không tìm thấy hóa đơn nào.</td></tr>';
+                document.getElementById('danhSachHoaDon').innerHTML = '<tr><td colspan="9" class="text-center py-4 text-gray-500">Không tìm thấy hóa đơn nào.</td></tr>';
                 hienThiPhanTrangHoaDon(0);
             }
         }
@@ -866,13 +916,11 @@
         formHoaDon.addEventListener('submit', async function(event) {
             event.preventDefault();
             const newHoaDonData = {
-                tiec_cuoi: maTiecInput.value,
-                so_luong_ban: parseInt(document.getElementById('soLuongBan').value),
-                ngay_thanh_toan: new Date().toISOString().split('T')[0],
-                tong_tien: parseInt(document.getElementById('soLuongBan').value) * 1000000,
-                tien_coc: 0,
-                tien_con_lai: parseInt(document.getElementById('soLuongBan').value) * 1000000,
-                trang_thai: 'Chưa Thanh Toán'
+                tiec_cuoi_id: Number(maTiecInput.value), // ĐÚNG!
+                so_luong_ban: Number(document.getElementById('soLuongBan').value),
+                ngay_thanh_toan: null, // hoặc bỏ qua nếu chưa thanh toán
+                trang_thai: 'Chưa thanh toán'
+                // KHÔNG cần truyền tong_tien, tien_coc, tien_con_lai, dich_vu
             };
 
             try {
@@ -940,6 +988,148 @@
                     console.error('Lỗi xóa hóa đơn:', error);
                 }
             }
+        }
+
+        // --- Modal xác nhận thanh toán/hoàn tác ---
+        let xacNhanCallback = null;
+        let xacNhanCancelCallback = null;
+        function moModalXacNhan(message, onOK, onCancel, title = 'Xác nhận') {
+            document.getElementById('modalXacNhanTitle').textContent = title;
+            document.getElementById('modalXacNhanMessage').textContent = message;
+            document.getElementById('modalXacNhan').classList.remove('hidden');
+            xacNhanCallback = onOK;
+            xacNhanCancelCallback = onCancel;
+        }
+        function dongModalXacNhan() {
+            document.getElementById('modalXacNhan').classList.add('hidden');
+            xacNhanCallback = null;
+            xacNhanCancelCallback = null;
+        }
+        document.getElementById('btnXacNhanOK').onclick = function() {
+            if (xacNhanCallback) xacNhanCallback();
+            dongModalXacNhan();
+        };
+        document.getElementById('btnXacNhanCancel').onclick = function() {
+            if (xacNhanCancelCallback) xacNhanCancelCallback();
+            dongModalXacNhan();
+        };
+        // Đóng modal khi bấm ESC
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape' && !document.getElementById('modalXacNhan').classList.contains('hidden')) {
+                dongModalXacNhan();
+            }
+        });
+
+        async function xacNhanThanhToan(id, buttonElement) {
+            moModalXacNhan(
+                'Bạn có chắc chắn muốn xác nhận thanh toán cho hóa đơn này?',
+                async function() {
+                    try {
+                        const today = new Date();
+                        const day = String(today.getDate()).padStart(2, '0');
+                        const month = String(today.getMonth() + 1).padStart(2, '0');
+                        const year = today.getFullYear();
+                        const ngayThanhToan = `${year}-${month}-${day}`; // Định dạng yyyy-mm-dd cho backend
+                        const row = buttonElement.closest('tr');
+                        // --- TÍNH SỐ NGÀY TRỄ VÀ TIỀN PHẠT ---
+                        const ngayLapCell = row.cells[2];
+                        const tongTienCell = row.cells[4];
+                        let tienCoc = 0;
+                        if (row.hasAttribute('data-tien-coc')) {
+                            tienCoc = parseInt(row.getAttribute('data-tien-coc')) || 0;
+                        }
+                        let tongTien = 0;
+                        if (tongTienCell) {
+                            tongTien = parseInt(tongTienCell.textContent.replace(/[^\d]/g, '')) || 0;
+                        }
+                        function parseDate(str) {
+                            if (!str) return null;
+                            str = str.trim();
+                            if (str.includes('/')) {
+                                const [d, m, y] = str.split('/');
+                                return new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+                            } else if (str.includes('-')) {
+                                const [y, m, d] = str.split('-');
+                                return new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+                            }
+                            return null;
+                        }
+                        const dateLap = parseDate(ngayLapCell.textContent);
+                        const dateThanhToan = parseDate(`${day}/${month}/${year}`);
+                        let soNgayTre = 0;
+                        if (dateLap && dateThanhToan) {
+                            const diff = Math.floor((dateThanhToan - dateLap) / (1000 * 60 * 60 * 24));
+                            soNgayTre = diff > 0 ? diff : 0;
+                        }
+                        let tienPhat = Math.round((tongTien - tienCoc) * 0.01 * soNgayTre);
+                        if (tienPhat < 0) tienPhat = 0;
+                        // --- CẬP NHẬT TRẠNG THÁI ---
+                        let trangThai = 'Chưa thanh toán';
+                        if (dateLap && dateThanhToan) {
+                            if (dateThanhToan.getTime() === dateLap.getTime()) {
+                                trangThai = 'Thanh toán đúng hạn';
+                            } else if (dateThanhToan > dateLap) {
+                                trangThai = 'Thanh toán trễ hạn';
+                            }
+                        }
+                        // Gọi API cập nhật
+                        await goiAPI('PATCH', `/api/hoadon/${id}/`, {
+                            ngay_thanh_toan: ngayThanhToan,
+                            so_ngay_tre: soNgayTre,
+                            tien_phat: tienPhat,
+                            trang_thai: trangThai
+                        });
+                        // Sau khi API thành công, cập nhật giao diện
+                        row.cells[3].textContent = `${day}/${month}/${year}`;
+                        row.cells[5].textContent = soNgayTre > 0 ? soNgayTre : 0;
+                        row.cells[6].textContent = tienPhat > 0 ? tienPhat.toLocaleString('vi-VN') + ' VNĐ' : '0 VNĐ';
+                        row.cells[7].textContent = (trangThai === 'Thanh toán đúng hạn' || trangThai === 'Thanh toán trễ hạn') ? 'Đã thanh toán' : trangThai;
+                        buttonElement.classList.remove('confirm-button');
+                        buttonElement.classList.add('undo-button');
+                        buttonElement.onclick = () => hoanTacThanhToan(id, buttonElement);
+                        buttonElement.title = 'Hoàn tác thanh toán';
+                        buttonElement.innerHTML = `
+                            <svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-4 w-4\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\">\n                                <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6\" />\n                            </svg>\n                        `;
+                    } catch (error) {
+                        console.error('Lỗi xác nhận thanh toán:', error);
+                        alert('Có lỗi khi xác nhận thanh toán. Vui lòng thử lại!');
+                    }
+                },
+                null,
+                'Xác nhận thanh toán'
+            );
+        }
+        async function hoanTacThanhToan(id, buttonElement) {
+            moModalXacNhan(
+                'Bạn có chắc chắn muốn hoàn tác thanh toán cho hóa đơn này?',
+                async function() {
+                    try {
+                        const row = buttonElement.closest('tr');
+                        // Gọi API reset
+                        await goiAPI('PATCH', `/api/hoadon/${id}/`, {
+                            ngay_thanh_toan: null,
+                            so_ngay_tre: 0,
+                            tien_phat: 0,
+                            trang_thai: 'Chưa thanh toán'
+                        });
+                        row.cells[3].textContent = '-';
+                        row.cells[5].textContent = '-';
+                        row.cells[6].textContent = '-';
+                        row.cells[7].textContent = 'Chưa thanh toán';
+                        buttonElement.classList.remove('undo-button');
+                        buttonElement.classList.add('confirm-button');
+                        buttonElement.onclick = () => xacNhanThanhToan(id, buttonElement);
+                        buttonElement.title = 'Xác nhận thanh toán';
+                        buttonElement.innerHTML = `
+                            <svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-4 w-4\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\">\n                                <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M5 13l4 4L19 7\" />\n                            </svg>\n                        `;
+                    } catch (error) {
+                        console.error('Lỗi hoàn tác thanh toán:', error);
+                        alert('Có lỗi khi hoàn tác thanh toán. Vui lòng thử lại!');
+                    }
+                },
+                null,
+                'Hoàn tác thanh toán'
+            );
         }
 
         let danhSachTiecCuoi = [];
