@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import *
+from datetime import date
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -238,8 +239,8 @@ class HoaDonSerializer(serializers.ModelSerializer):
     tien_con_lai = serializers.SerializerMethodField()
     dich_vu = serializers.SerializerMethodField()
     trang_thai = serializers.CharField(required=False)  # KHÔNG có get_trang_thai
-    so_ngay_tre = serializers.IntegerField(required=False)
-    tien_phat = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
+    so_ngay_tre = serializers.SerializerMethodField()
+    tien_phat = serializers.SerializerMethodField()
 
     class Meta:
         model = HoaDon
@@ -261,6 +262,30 @@ class HoaDonSerializer(serializers.ModelSerializer):
     
     def get_tong_tien(self, obj):
         return obj.tinh_tong_tien()
+
+    def get_so_ngay_tre(self, obj):
+        if obj.ngay_thanh_toan:
+            return obj.so_ngay_tre or 0
+        today = date.today()
+        ngay_lap = obj.tiec_cuoi.ngay_dai_tiec if obj.tiec_cuoi else None
+        if not ngay_lap:
+            return None
+        # Chỉ tính nếu hôm nay > ngày đãi tiệc
+        if today > ngay_lap:
+            so_ngay = (today - ngay_lap).days
+            return so_ngay
+        return None  # Trả về None để frontend hiển thị '-'
+
+    def get_tien_phat(self, obj):
+        so_ngay_tre = self.get_so_ngay_tre(obj)
+        if obj.ngay_thanh_toan:
+            return obj.tien_phat or 0
+        if so_ngay_tre is None or so_ngay_tre <= 0:
+            return None
+        tong_tien = obj.tinh_tong_tien()
+        tien_coc = obj.tiec_cuoi.tien_dat_coc if obj.tiec_cuoi else 0
+        tien_phat = max((tong_tien - tien_coc) * 0.01 * so_ngay_tre, 0)
+        return int(tien_phat)
 
     def perform_update(self, serializer):
         instance = serializer.save()

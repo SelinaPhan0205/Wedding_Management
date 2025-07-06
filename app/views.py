@@ -381,47 +381,53 @@ class HoaDonViewSet(viewsets.ModelViewSet):
     serializer_class = HoaDonSerializer
 
     def perform_create(self, serializer):
-        # Gán trạng thái và các trường liên quan khi tạo hóa đơn
         instance = serializer.save()
-        tc = instance.tiec_cuoi
-        so_ngay_tre = 0
-        tien_phat = 0
-        trang_thai = 'Đã thanh toán'
-        if tc and instance.ngay_thanh_toan and tc.ngay_dai_tiec:
-            if instance.ngay_thanh_toan > tc.ngay_dai_tiec:
-                trang_thai = 'Thanh toán trễ hạn'
-                so_ngay_tre = (instance.ngay_thanh_toan - tc.ngay_dai_tiec).days
-                tien_phat = max((tc.tong_tien_tiec_cuoi - tc.tien_dat_coc) * 0.01 * so_ngay_tre, 0)
+        if instance.ngay_thanh_toan:
+            instance.trang_thai = 'Đã thanh toán'
+            # Tính số ngày trễ và tiền phạt
+            ngay_tiec = instance.tiec_cuoi.ngay_dai_tiec if instance.tiec_cuoi else None
+            if ngay_tiec:
+                so_ngay_tre = (instance.ngay_thanh_toan - ngay_tiec).days
+                if so_ngay_tre > 0:
+                    instance.so_ngay_tre = so_ngay_tre
+                    tong_tien = instance.tiec_cuoi.tinh_tong_tien(instance.so_luong_ban)
+                    tien_coc = instance.tiec_cuoi.tien_dat_coc
+                    instance.tien_phat = max((tong_tien - tien_coc) * 0.01 * so_ngay_tre, 0)
+                else:
+                    instance.so_ngay_tre = 0
+                    instance.tien_phat = 0
             else:
-                trang_thai = 'Đã thanh toán'
-                so_ngay_tre = 0
-                tien_phat = 0
-        instance.trang_thai = trang_thai
-        instance.so_ngay_tre = so_ngay_tre
-        instance.tien_phat = tien_phat
+                instance.so_ngay_tre = 0
+                instance.tien_phat = 0
+        else:
+            instance.trang_thai = 'Chưa thanh toán'
+            instance.so_ngay_tre = 0
+            instance.tien_phat = 0
         instance.save()
 
     def perform_update(self, serializer):
         instance = serializer.save()
-        tc = instance.tiec_cuoi
-        if not instance.ngay_thanh_toan:
-            instance.so_ngay_tre = 0
-            instance.tien_phat = Decimal('0.00')
-            instance.trang_thai = 'Chưa thanh toán'
+        if instance.ngay_thanh_toan:
+            instance.trang_thai = 'Đã thanh toán'
+            # Tính số ngày trễ và tiền phạt
+            ngay_tiec = instance.tiec_cuoi.ngay_dai_tiec if instance.tiec_cuoi else None
+            if ngay_tiec:
+                so_ngay_tre = (instance.ngay_thanh_toan - ngay_tiec).days
+                if so_ngay_tre > 0:
+                    instance.so_ngay_tre = so_ngay_tre
+                    tong_tien = instance.tiec_cuoi.tinh_tong_tien(instance.so_luong_ban)
+                    tien_coc = instance.tiec_cuoi.tien_dat_coc
+                    instance.tien_phat = max((tong_tien - tien_coc) * 0.01 * so_ngay_tre, 0)
+                else:
+                    instance.so_ngay_tre = 0
+                    instance.tien_phat = 0
+            else:
+                instance.so_ngay_tre = 0
+                instance.tien_phat = 0
         else:
-            so_ngay_tre = 0
-            tien_phat = 0
-            trang_thai = 'Đã thanh toán'
-            if tc and tc.ngay_dai_tiec:
-                if instance.ngay_thanh_toan > tc.ngay_dai_tiec:
-                    trang_thai = 'Thanh toán trễ hạn'
-                    so_ngay_tre = (instance.ngay_thanh_toan - tc.ngay_dai_tiec).days
-                    tien_phat = max((tc.tong_tien_tiec_cuoi - tc.tien_dat_coc) * 0.01 * so_ngay_tre, 0)
-                elif instance.ngay_thanh_toan == tc.ngay_dai_tiec:
-                    trang_thai = 'Đã thanh toán'
-            instance.so_ngay_tre = so_ngay_tre
-            instance.tien_phat = tien_phat
-            instance.trang_thai = trang_thai
+            instance.trang_thai = 'Chưa thanh toán'
+            instance.so_ngay_tre = 0
+            instance.tien_phat = 0
         instance.save()
 
     def list(self, request, *args, **kwargs):
