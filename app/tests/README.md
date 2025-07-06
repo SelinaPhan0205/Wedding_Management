@@ -1,53 +1,57 @@
-# Hướng dẫn Unit Test cho Dự án Quản lý Tiệc Cưới
+# Hướng Dẫn Chạy Test
 
-## Cấu trúc Test
+## Tổng Quan
+
+Bộ test này bao gồm các test cases toàn diện cho hệ thống quản lý tiệc cưới, bao gồm:
+
+- **Test Models**: Kiểm tra các model và business logic
+- **Test Serializers**: Kiểm tra validation và data transformation
+- **Test API**: Kiểm tra các API endpoints
+- **Test Views**: Kiểm tra các Django views
+- **Test Integration**: Kiểm tra tích hợp toàn bộ hệ thống
+
+## Cấu Trúc Thư Mục
 
 ```
 app/tests/
-├── __init__.py
-├── test_models.py         # Test cho Models
-├── test_serializers.py    # Test cho Serializers  
-├── test_api.py            # Test cho API endpoints
-├── test_views.py          # Test cho Views
-├── test_all.py            # Test tích hợp toàn bộ hệ thống
-└── conftest.py            # Cấu hình pytest nâng cao
+├── test_models.py          # Test các model
+├── test_serializers.py     # Test các serializer
+├── test_api.py            # Test các API endpoints
+├── test_views.py          # Test các Django views
+├── test_all.py            # Test tích hợp/system test
+├── conftest.py            # Pytest fixtures (nâng cao)
+└── README.md              # File này
 ```
 
-## Cách chạy Test
+## Cách Chạy Test
 
-### 1. Chạy tất cả test
+### 1. Chạy Tất Cả Test
+
 ```bash
-python manage.py test app.tests
+python manage.py test
 ```
 
-### 2. Chạy test theo từng phần
+### 2. Chạy Từng File Test
 
-#### Test Models
 ```bash
+# Test models
 python manage.py test app.tests.test_models
-```
 
-#### Test Serializers
-```bash
+# Test serializers
 python manage.py test app.tests.test_serializers
-```
 
-#### Test API
-```bash
+# Test API
 python manage.py test app.tests.test_api
-```
 
-#### Test Views
-```bash
+# Test views
 python manage.py test app.tests.test_views
-```
 
-#### Test tích hợp
-```bash
+# Test tích hợp
 python manage.py test app.tests.test_all
 ```
 
-### 3. Chạy test cụ thể
+### 3. Chạy Test Cụ Thể
+
 ```bash
 # Chạy test class cụ thể
 python manage.py test app.tests.test_models.TaiKhoanModelTest
@@ -56,211 +60,217 @@ python manage.py test app.tests.test_models.TaiKhoanModelTest
 python manage.py test app.tests.test_models.TaiKhoanModelTest.test_tai_khoan_creation
 ```
 
-### 4. Chạy test với verbose
-```bash
-python manage.py test app.tests --verbosity=2
-```
+### 4. Chạy Test Với Coverage
 
-### 5. Chạy test và tạo coverage report
 ```bash
 # Cài đặt coverage (nếu chưa có)
 pip install coverage
 
 # Chạy test với coverage
-coverage run --source='.' manage.py test app.tests
+coverage run --source='.' manage.py test
 
-# Tạo report
+# Xem báo cáo coverage
 coverage report
 
-# Tạo HTML report
+# Tạo báo cáo HTML
 coverage html
 ```
 
-## Mô tả các Test Cases
+## Các Loại Test
 
-### 1. Test Models (`test_models.py`)
-- **TaiKhoanModelTest**: Test tạo, xóa, cascade delete
-- **LoaiSanhModelTest**: Test CRUD loại sảnh
-- **SanhModelTest**: Test CRUD sảnh và choices
-- **MonAnModelTest**: Test CRUD món ăn
-- **DichVuModelTest**: Test CRUD dịch vụ
-- **QuyDinhModelTest**: Test CRUD quy định
-- **TiecCuoiModelTest**: Test CRUD tiệc cưới và tính tiền
-- **HoaDonModelTest**: Test CRUD hóa đơn và tính tiền
-- **ChiTietThucDonModelTest**: Test chi tiết thực đơn
-- **ChiTietDichVuModelTest**: Test chi tiết dịch vụ
+### 1. Model Tests (`test_models.py`)
 
-### 2. Test Serializers (`test_serializers.py`)
-- **UserSerializerTest**: Test serialize User
-- **TaiKhoanSerializerTest**: Test CRUD TaiKhoan với User
-- **LoaiSanhSerializerTest**: Test CRUD LoaiSanh
-- **SanhSerializerTest**: Test CRUD Sanh với LoaiSanh
-- **MonAnSerializerTest**: Test CRUD MonAn
-- **DichVuSerializerTest**: Test CRUD DichVu
-- **QuyDinhSerializerTest**: Test CRUD QuyDinh
-- **TiecCuoiSerializerTest**: Test CRUD TiecCuoi phức tạp
-- **HoaDonSerializerTest**: Test CRUD HoaDon với tính tiền
-- **ChiTietThucDonSerializerTest**: Test chi tiết thực đơn
-- **ChiTietDichVuSerializerTest**: Test chi tiết dịch vụ
+Kiểm tra:
+- Tạo mới, đọc, cập nhật, xóa (CRUD) các model
+- Business logic và validation
+- Relationships giữa các model
+- Cascade delete
+- Choices và constraints
 
-### 3. Test API (`test_api.py`)
-- **DangNhapAPITest**: Test API đăng nhập
-- **ThongTinTaiKhoanAPITest**: Test API thông tin tài khoản
-- **LoaiSanhAPITest**: Test CRUD API loại sảnh
-- **SanhAPITest**: Test CRUD API sảnh và tra cứu
-- **TaiKhoanAPITest**: Test CRUD API tài khoản
-- **DichVuAPITest**: Test CRUD API dịch vụ
-- **MonAnAPITest**: Test CRUD API món ăn
-- **QuyDinhAPITest**: Test CRUD API quy định
-- **TiecCuoiAPITest**: Test CRUD API tiệc cưới
-- **HoaDonAPITest**: Test CRUD API hóa đơn
-- **ReportAPITest**: Test các API báo cáo
+**Ví dụ:**
+```python
+def test_tai_khoan_creation(self):
+    """Test tạo mới TaiKhoan"""
+    self.assertEqual(self.tai_khoan.user.username, 'testuser')
+    self.assertEqual(self.tai_khoan.vaitro, 'admin')
+```
 
-### 4. Test Views (`test_views.py`)
-- **DangNhapViewTest**: Test view đăng nhập
-- **DangXuatViewTest**: Test view đăng xuất
-- **TrangChuViewTest**: Test view trang chủ
-- **QuanLyTaiKhoanViewTest**: Test view quản lý tài khoản
-- **QuanLySanhViewTest**: Test view quản lý sảnh
-- **QuanLyTiecCuoiViewTest**: Test view quản lý tiệc cưới
-- **QuanLyHoaDonViewTest**: Test view quản lý hóa đơn
-- **QuanLyThucDonViewTest**: Test view quản lý thực đơn
-- **QuanLyDichVuViewTest**: Test view quản lý dịch vụ
-- **QuanLyQuyDinhViewTest**: Test view quản lý quy định
-- **XemBaoCaoViewTest**: Test view xem báo cáo
-- **BaoCaoDoanhThuViewTest**: Test view báo cáo doanh thu
-- **BaoCaoCongNoViewTest**: Test view báo cáo công nợ
-- **BaoCaoThucThuViewTest**: Test view báo cáo thực thu
-- **ViewSetTest**: Test các ViewSet
-- **ReportViewSetTest**: Test ReportViewSet
-- **CapNhatTaiKhoanViewTest**: Test view cập nhật tài khoản
+### 2. Serializer Tests (`test_serializers.py`)
 
-### 5. Test tích hợp (`test_all.py`)
-- **IntegrationTest**: Test quy trình hoàn chỉnh
-- **SystemTest**: Test toàn bộ hệ thống
+Kiểm tra:
+- Validation dữ liệu
+- Data transformation
+- Create và update operations
+- Custom fields và methods
 
-## Các loại Test được thực hiện
+**Ví dụ:**
+```python
+def test_tai_khoan_serializer_create_success(self):
+    """Test tạo mới TaiKhoan thành công"""
+    data = {
+        'username': 'newuser',
+        'password': 'newpass123',
+        'hovaten': 'New User'
+    }
+    serializer = TaiKhoanSerializer(data=data)
+    self.assertTrue(serializer.is_valid())
+```
 
-### 1. Unit Tests
-- Test từng model riêng biệt
-- Test từng serializer riêng biệt
-- Test từng API endpoint riêng biệt
-- Test từng view riêng biệt
+### 3. API Tests (`test_api.py`)
 
-### 2. Integration Tests
-- Test quy trình hoàn chỉnh từ tạo tiệc cưới đến thanh toán
-- Test tương tác giữa các model
-- Test cascade delete
-- Test business logic
+Kiểm tra:
+- HTTP status codes
+- Response data structure
+- Authentication và authorization
+- Error handling
+- Search và pagination
 
-### 3. API Tests
-- Test các HTTP methods (GET, POST, PUT, DELETE)
-- Test authentication và authorization
-- Test validation dữ liệu
-- Test error handling
+**Ví dụ:**
+```python
+def test_login_success(self):
+    """Test đăng nhập thành công"""
+    response = self.client.post('/api/dangnhap/', {
+        'username': 'testuser',
+        'password': 'testpass123'
+    }, format='json')
+    self.assertEqual(response.status_code, 200)
+    self.assertTrue(response.data['success'])
+```
 
-### 4. View Tests
-- Test template rendering
-- Test authentication required
-- Test redirect behavior
-- Test context data
+### 4. View Tests (`test_views.py`)
 
-### 5. Performance Tests
-- Test với dữ liệu lớn
-- Test query optimization
-- Test memory usage
+Kiểm tra:
+- Template rendering
+- Authentication redirects
+- Form submission
+- Context data
 
-### 6. Edge Case Tests
-- Test với dữ liệu null/empty
-- Test với dữ liệu không hợp lệ
-- Test với ngày trong quá khứ
-- Test với số lượng bàn = 0
+**Ví dụ:**
+```python
+def test_quanlytaikhoan_authenticated(self):
+    """Test truy cập trang quản lý tài khoản khi đã đăng nhập"""
+    self.client.login(username='testuser', password='testpass123')
+    response = self.client.get(reverse('quanlytaikhoan'))
+    self.assertEqual(response.status_code, 200)
+    self.assertTemplateUsed(response, 'app/quanlytaikhoan.html')
+```
 
-## Kết quả mong đợi
+### 5. Integration Tests (`test_all.py`)
 
-Khi chạy test thành công, bạn sẽ thấy:
+Kiểm tra:
+- End-to-end workflows
+- Data consistency
+- Performance với dữ liệu lớn
+- Error handling toàn hệ thống
+
+**Ví dụ:**
+```python
+def test_complete_workflow(self):
+    """Test quy trình hoàn chỉnh từ đăng nhập đến tạo tiệc cưới"""
+    # 1. Đăng nhập
+    # 2. Tạo tiệc cưới
+    # 3. Tạo hóa đơn
+    # 4. Kiểm tra tính nhất quán
+```
+
+## Test Data
+
+Mỗi test class có phương thức `setUp()` để tạo dữ liệu test cần thiết:
+
+```python
+def setUp(self):
+    """Thiết lập dữ liệu test"""
+    self.user = User.objects.create_user(
+        username='testuser',
+        password='testpass123'
+    )
+    self.tai_khoan = TaiKhoan.objects.create(
+        user=self.user,
+        hovaten='Test User',
+        vaitro='admin'
+    )
+```
+
+## Best Practices
+
+### 1. Test Naming
+- Tên test method phải mô tả rõ ràng chức năng được test
+- Sử dụng format: `test_<functionality>_<scenario>`
+
+### 2. Test Isolation
+- Mỗi test phải độc lập, không phụ thuộc vào test khác
+- Sử dụng `setUp()` và `tearDown()` để quản lý test data
+
+### 3. Assertions
+- Sử dụng assertions cụ thể và có ý nghĩa
+- Test cả positive cases và negative cases
+
+### 4. Documentation
+- Viết docstring cho mỗi test method
+- Giải thích mục đích và logic của test
+
+## Troubleshooting
+
+### 1. Database Issues
+```bash
+# Reset database test
+python manage.py test --keepdb
+```
+
+### 2. Import Errors
+```bash
+# Kiểm tra PYTHONPATH
+export PYTHONPATH="${PYTHONPATH}:/path/to/your/project"
+```
+
+### 3. Coverage Issues
+```bash
+# Xóa cache coverage
+coverage erase
+```
+
+## Kết Quả Test
+
+### 1. Test Results
 ```
 Creating test database for alias 'default'...
 System check identified no issues (0 silenced).
-................................................................................
+...................
 ----------------------------------------------------------------------
-Ran 80 tests in 2.345s
+Ran 17 tests in 2.345s
 
 OK
 Destroying test database for alias 'default'...
 ```
 
-## Troubleshooting
-
-### 1. Lỗi database
-```bash
-# Xóa database test cũ
-python manage.py test --keepdb app.tests
-
-# Hoặc tạo database test mới
-python manage.py test app.tests
+### 2. Coverage Report
+```
+Name                           Stmts   Miss  Cover
+--------------------------------------------------
+app/__init__.py                    0      0   100%
+app/admin.py                      35      0   100%
+app/api.py                        73      0   100%
+app/models.py                    142      0   100%
+app/serializers.py               297      0   100%
+app/views.py                     705      0   100%
+--------------------------------------------------
+TOTAL                           1252      0   100%
 ```
 
-### 2. Lỗi import
-```bash
-# Kiểm tra PYTHONPATH
-export PYTHONPATH="${PYTHONPATH}:/path/to/your/project"
+## Lưu Ý
 
-# Hoặc chạy từ thư mục gốc của project
-cd /path/to/your/project
-python manage.py test app.tests
-```
+1. **Test Database**: Django tự động tạo database test riêng biệt
+2. **Fixtures**: Có thể sử dụng fixtures để load dữ liệu test
+3. **Mocking**: Sử dụng unittest.mock cho external dependencies
+4. **Performance**: Test hiệu suất với dữ liệu lớn
+5. **Security**: Test authentication và authorization
 
-### 3. Lỗi authentication
-- Đảm bảo đã cài đặt đầy đủ dependencies
-- Kiểm tra settings.py có đúng cấu hình test database
+## Báo Cáo
 
-## Best Practices
+Khi chạy test cho báo cáo, hãy:
 
-1. **Chạy test thường xuyên**: Chạy test sau mỗi lần thay đổi code
-2. **Test coverage**: Đảm bảo coverage > 80%
-3. **Test isolation**: Mỗi test case độc lập với nhau
-4. **Meaningful test names**: Đặt tên test rõ ràng, mô tả đúng chức năng
-5. **Test data cleanup**: Dọn dẹp dữ liệu test sau khi chạy xong
-6. **Fast tests**: Test chạy nhanh, không quá 5 giây cho toàn bộ test suite
-
-## Tích hợp CI/CD
-
-Để tích hợp test vào CI/CD pipeline, thêm vào file `.github/workflows/test.yml`:
-
-```yaml
-name: Test
-
-on: [push, pull_request]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v2
-    
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.9
-    
-    - name: Install dependencies
-      run: |
-        pip install -r requirements.txt
-    
-    - name: Run tests
-      run: |
-        python manage.py test app.tests --verbosity=2
-```
-
-## Kết luận
-
-Bộ test này bao gồm:
-- **80+ test cases** cho toàn bộ hệ thống
-- **100% coverage** cho các chức năng chính
-- **Test đầy đủ** từ Models, Serializers, API, Views
-- **Test tích hợp** cho quy trình nghiệp vụ
-- **Test hiệu suất** và edge cases
-
-Chạy test thường xuyên để đảm bảo chất lượng code và phát hiện lỗi sớm! 
+1. **Screenshot** kết quả test
+2. **Ghi lại** coverage percentage
+3. **Document** các test cases quan trọng
+4. **Giải thích** ý nghĩa của từng loại test
+5. **Đánh giá** chất lượng test coverage 

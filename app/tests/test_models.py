@@ -207,15 +207,15 @@ class TiecCuoiModelTest(TestCase):
     
     def setUp(self):
         """Thiết lập dữ liệu test cho TiecCuoi"""
-        # Tạo User và TaiKhoan
-        self.user = User.objects.create_user(username='testuser', password='testpass123')
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='testpass123'
+        )
         self.tai_khoan = TaiKhoan.objects.create(
             user=self.user,
             sodienthoai='0123456789',
             hovaten='Test User'
         )
-        
-        # Tạo LoaiSanh và Sanh
         self.loai_sanh = LoaiSanh.objects.create(
             ten_loai_sanh='Sảnh VIP',
             gia_ban_toi_thieu=5000000.0
@@ -226,37 +226,36 @@ class TiecCuoiModelTest(TestCase):
             so_luong_ban_toi_da=50,
             trang_thai='Active'
         )
-        
-        # Tạo TiecCuoi
         self.tiec_cuoi = TiecCuoi.objects.create(
             tai_khoan=self.tai_khoan,
             sanh=self.sanh,
             ten_chu_re='Nguyễn Văn A',
             ten_co_dau='Trần Thị B',
-            ngay_dai_tiec=date.today() + timedelta(days=30),
-            so_luong_ban=20,
+            ngay_dai_tiec=date(2024, 12, 25),
+            so_luong_ban=30,
             so_luong_ban_du_tru=5,
-            ca='Trưa',
-            tong_tien_tiec_cuoi=10000000.0,
-            tien_dat_coc=3000000.0,
-            so_dien_thoai='0987654321'
+            ca='Tối',
+            tien_dat_coc=5000000.0,
+            so_dien_thoai='0123456789'
         )
 
     def test_tiec_cuoi_creation(self):
         """Test tạo mới TiecCuoi"""
         self.assertEqual(self.tiec_cuoi.ten_chu_re, 'Nguyễn Văn A')
         self.assertEqual(self.tiec_cuoi.ten_co_dau, 'Trần Thị B')
-        self.assertEqual(self.tiec_cuoi.so_luong_ban, 20)
+        self.assertEqual(self.tiec_cuoi.ngay_dai_tiec, date(2024, 12, 25))
+        self.assertEqual(self.tiec_cuoi.so_luong_ban, 30)
         self.assertEqual(self.tiec_cuoi.so_luong_ban_du_tru, 5)
-        self.assertEqual(self.tiec_cuoi.ca, 'Trưa')
-        self.assertEqual(self.tiec_cuoi.tong_tien_tiec_cuoi, 10000000.0)
-        self.assertEqual(self.tiec_cuoi.tien_dat_coc, 3000000.0)
-        self.assertEqual(self.tiec_cuoi.so_dien_thoai, '0987654321')
+        self.assertEqual(self.tiec_cuoi.ca, 'Tối')
+        self.assertEqual(self.tiec_cuoi.tien_dat_coc, 5000000.0)
+        self.assertEqual(self.tiec_cuoi.so_dien_thoai, '0123456789')
+        self.assertEqual(self.tiec_cuoi.sanh, self.sanh)
+        self.assertEqual(self.tiec_cuoi.tai_khoan, self.tai_khoan)
 
     def test_tiec_cuoi_str_method(self):
         """Test phương thức __str__ của TiecCuoi"""
-        expected_str = f"Nguyễn Văn A & Trần Thị B ({self.tiec_cuoi.ngay_dai_tiec})"
-        self.assertEqual(str(self.tiec_cuoi), expected_str)
+        expected = f"Nguyễn Văn A & Trần Thị B ({date(2024, 12, 25)})"
+        self.assertEqual(str(self.tiec_cuoi), expected)
 
     def test_tiec_cuoi_choices(self):
         """Test các choices của TiecCuoi"""
@@ -265,53 +264,55 @@ class TiecCuoiModelTest(TestCase):
 
     def test_tiec_cuoi_tinh_tong_tien_method(self):
         """Test phương thức tinh_tong_tien của TiecCuoi"""
-        # Tạo MonAn và ChiTietThucDon
+        # Tạo món ăn và dịch vụ
         mon_an = MonAn.objects.create(
             ten_mon_an='Gà nướng',
             don_gia=150000.0
         )
-        ChiTietThucDon.objects.create(
-            mon_an=mon_an,
-            tiec_cuoi=self.tiec_cuoi,
-            so_luong=1,
-            thanh_tien=150000.0
-        )
-        
-        # Tạo DichVu và ChiTietDichVu
         dich_vu = DichVu.objects.create(
             ten_dich_vu='Trang trí',
             don_gia=2000000.0
         )
-        ChiTietDichVu.objects.create(
-            dich_vu=dich_vu,
+        
+        # Tạo chi tiết thực đơn và dịch vụ
+        ChiTietThucDon.objects.create(
             tiec_cuoi=self.tiec_cuoi,
+            mon_an=mon_an,
+            so_luong=1,
+            thanh_tien=150000.0
+        )
+        ChiTietDichVu.objects.create(
+            tiec_cuoi=self.tiec_cuoi,
+            dich_vu=dich_vu,
             so_luong=1,
             thanh_tien=2000000.0
         )
         
-        # Test tính tổng tiền
+        # Tính tổng tiền
         tong_tien = self.tiec_cuoi.tinh_tong_tien()
-        expected_tong = (150000.0 * 20) + 2000000.0  # (tiền món ăn * số bàn) + tiền dịch vụ
-        self.assertEqual(tong_tien, expected_tong)
+        expected = 150000.0 * 30 + 2000000.0  # (món ăn * số bàn) + dịch vụ
+        self.assertEqual(tong_tien, expected)
 
     def test_tiec_cuoi_tinh_tong_tien_with_custom_ban(self):
-        """Test tính tổng tiền với số bàn tùy chỉnh"""
-        # Tạo MonAn và ChiTietThucDon
+        """Test phương thức tinh_tong_tien với số bàn tùy chỉnh"""
+        # Tạo món ăn
         mon_an = MonAn.objects.create(
             ten_mon_an='Gà nướng',
             don_gia=150000.0
         )
+        
+        # Tạo chi tiết thực đơn
         ChiTietThucDon.objects.create(
-            mon_an=mon_an,
             tiec_cuoi=self.tiec_cuoi,
+            mon_an=mon_an,
             so_luong=1,
             thanh_tien=150000.0
         )
         
-        # Test với số bàn tùy chỉnh
+        # Tính tổng tiền với số bàn tùy chỉnh
         tong_tien = self.tiec_cuoi.tinh_tong_tien(so_luong_ban=25)
-        expected_tong = 150000.0 * 25  # tiền món ăn * số bàn tùy chỉnh
-        self.assertEqual(tong_tien, expected_tong)
+        expected = 150000.0 * 25  # món ăn * số bàn tùy chỉnh
+        self.assertEqual(tong_tien, expected)
 
 
 class HoaDonModelTest(TestCase):
@@ -319,15 +320,15 @@ class HoaDonModelTest(TestCase):
     
     def setUp(self):
         """Thiết lập dữ liệu test cho HoaDon"""
-        # Tạo User và TaiKhoan
-        self.user = User.objects.create_user(username='testuser', password='testpass123')
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='testpass123'
+        )
         self.tai_khoan = TaiKhoan.objects.create(
             user=self.user,
             sodienthoai='0123456789',
             hovaten='Test User'
         )
-        
-        # Tạo LoaiSanh và Sanh
         self.loai_sanh = LoaiSanh.objects.create(
             ten_loai_sanh='Sảnh VIP',
             gia_ban_toi_thieu=5000000.0
@@ -338,71 +339,76 @@ class HoaDonModelTest(TestCase):
             so_luong_ban_toi_da=50,
             trang_thai='Active'
         )
-        
-        # Tạo TiecCuoi
         self.tiec_cuoi = TiecCuoi.objects.create(
             tai_khoan=self.tai_khoan,
             sanh=self.sanh,
             ten_chu_re='Nguyễn Văn A',
             ten_co_dau='Trần Thị B',
-            ngay_dai_tiec=date.today() + timedelta(days=30),
-            so_luong_ban=20,
+            ngay_dai_tiec=date(2024, 12, 25),
+            so_luong_ban=30,
             so_luong_ban_du_tru=5,
-            ca='Trưa',
-            tong_tien_tiec_cuoi=10000000.0,
-            tien_dat_coc=3000000.0,
-            so_dien_thoai='0987654321'
+            ca='Tối',
+            tien_dat_coc=5000000.0,
+            so_dien_thoai='0123456789'
         )
-        
-        # Tạo HoaDon
         self.hoa_don = HoaDon.objects.create(
             tiec_cuoi=self.tiec_cuoi,
-            ngay_thanh_toan=date.today(),
+            ngay_thanh_toan=date(2024, 12, 25),
             so_ngay_tre=0,
             trang_thai='Đã thanh toán',
             tien_phat=Decimal('0.00'),
-            so_luong_ban=20
+            so_luong_ban=30
         )
 
     def test_hoa_don_creation(self):
         """Test tạo mới HoaDon"""
         self.assertEqual(self.hoa_don.tiec_cuoi, self.tiec_cuoi)
-        self.assertEqual(self.hoa_don.ngay_thanh_toan, date.today())
+        self.assertEqual(self.hoa_don.ngay_thanh_toan, date(2024, 12, 25))
         self.assertEqual(self.hoa_don.so_ngay_tre, 0)
         self.assertEqual(self.hoa_don.trang_thai, 'Đã thanh toán')
         self.assertEqual(self.hoa_don.tien_phat, Decimal('0.00'))
-        self.assertEqual(self.hoa_don.so_luong_ban, 20)
+        self.assertEqual(self.hoa_don.so_luong_ban, 30)
 
     def test_hoa_don_str_method(self):
         """Test phương thức __str__ của HoaDon"""
-        expected_str = f"HĐ - {self.tiec_cuoi}"
-        self.assertEqual(str(self.hoa_don), expected_str)
+        expected = f"HĐ - {self.tiec_cuoi}"
+        self.assertEqual(str(self.hoa_don), expected)
 
     def test_hoa_don_choices(self):
         """Test các choices của HoaDon"""
-        self.assertIn(('Chưa thanh toán', 'Chưa thanh toán'), 
-                     HoaDon._meta.get_field('trang_thai').choices)
-        self.assertIn(('Đã thanh toán', 'Đã thanh toán'), 
-                     HoaDon._meta.get_field('trang_thai').choices)
+        self.assertIn(('Chưa thanh toán', 'Chưa thanh toán'), HoaDon._meta.get_field('trang_thai').choices)
+        self.assertIn(('Đã thanh toán', 'Đã thanh toán'), HoaDon._meta.get_field('trang_thai').choices)
 
     def test_hoa_don_tinh_tong_tien_method(self):
         """Test phương thức tinh_tong_tien của HoaDon"""
-        # Tạo MonAn và ChiTietThucDon
+        # Tạo món ăn và dịch vụ
         mon_an = MonAn.objects.create(
             ten_mon_an='Gà nướng',
             don_gia=150000.0
         )
+        dich_vu = DichVu.objects.create(
+            ten_dich_vu='Trang trí',
+            don_gia=2000000.0
+        )
+        
+        # Tạo chi tiết thực đơn và dịch vụ
         ChiTietThucDon.objects.create(
-            mon_an=mon_an,
             tiec_cuoi=self.tiec_cuoi,
+            mon_an=mon_an,
             so_luong=1,
             thanh_tien=150000.0
         )
+        ChiTietDichVu.objects.create(
+            tiec_cuoi=self.tiec_cuoi,
+            dich_vu=dich_vu,
+            so_luong=1,
+            thanh_tien=2000000.0
+        )
         
-        # Test tính tổng tiền
+        # Tính tổng tiền
         tong_tien = self.hoa_don.tinh_tong_tien()
-        expected_tong = 150000.0 * 20  # tiền món ăn * số bàn trong hóa đơn
-        self.assertEqual(tong_tien, expected_tong)
+        expected = 150000.0 * 30 + 2000000.0  # (món ăn * số bàn) + dịch vụ
+        self.assertEqual(tong_tien, expected)
 
 
 class ChiTietThucDonModelTest(TestCase):
@@ -410,15 +416,15 @@ class ChiTietThucDonModelTest(TestCase):
     
     def setUp(self):
         """Thiết lập dữ liệu test cho ChiTietThucDon"""
-        # Tạo User và TaiKhoan
-        self.user = User.objects.create_user(username='testuser', password='testpass123')
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='testpass123'
+        )
         self.tai_khoan = TaiKhoan.objects.create(
             user=self.user,
             sodienthoai='0123456789',
             hovaten='Test User'
         )
-        
-        # Tạo LoaiSanh và Sanh
         self.loai_sanh = LoaiSanh.objects.create(
             ten_loai_sanh='Sảnh VIP',
             gia_ban_toi_thieu=5000000.0
@@ -429,58 +435,51 @@ class ChiTietThucDonModelTest(TestCase):
             so_luong_ban_toi_da=50,
             trang_thai='Active'
         )
-        
-        # Tạo TiecCuoi
         self.tiec_cuoi = TiecCuoi.objects.create(
             tai_khoan=self.tai_khoan,
             sanh=self.sanh,
             ten_chu_re='Nguyễn Văn A',
             ten_co_dau='Trần Thị B',
-            ngay_dai_tiec=date.today() + timedelta(days=30),
-            so_luong_ban=20,
+            ngay_dai_tiec=date(2024, 12, 25),
+            so_luong_ban=30,
             so_luong_ban_du_tru=5,
-            ca='Trưa',
-            tong_tien_tiec_cuoi=10000000.0,
-            tien_dat_coc=3000000.0,
-            so_dien_thoai='0987654321'
+            ca='Tối',
+            tien_dat_coc=5000000.0,
+            so_dien_thoai='0123456789'
         )
-        
-        # Tạo MonAn
         self.mon_an = MonAn.objects.create(
             ten_mon_an='Gà nướng',
             don_gia=150000.0,
             ghi_chu='Gà ta nướng lá chanh'
         )
-        
-        # Tạo ChiTietThucDon
         self.chi_tiet_thuc_don = ChiTietThucDon.objects.create(
-            mon_an=self.mon_an,
             tiec_cuoi=self.tiec_cuoi,
+            mon_an=self.mon_an,
             so_luong=1,
             thanh_tien=150000.0,
-            ghi_chu='Ghi chú test'
+            ghi_chu='Ghi chú cho món ăn'
         )
 
     def test_chi_tiet_thuc_don_creation(self):
         """Test tạo mới ChiTietThucDon"""
-        self.assertEqual(self.chi_tiet_thuc_don.mon_an, self.mon_an)
         self.assertEqual(self.chi_tiet_thuc_don.tiec_cuoi, self.tiec_cuoi)
+        self.assertEqual(self.chi_tiet_thuc_don.mon_an, self.mon_an)
         self.assertEqual(self.chi_tiet_thuc_don.so_luong, 1)
         self.assertEqual(self.chi_tiet_thuc_don.thanh_tien, 150000.0)
-        self.assertEqual(self.chi_tiet_thuc_don.ghi_chu, 'Ghi chú test')
+        self.assertEqual(self.chi_tiet_thuc_don.ghi_chu, 'Ghi chú cho món ăn')
 
     def test_chi_tiet_thuc_don_str_method(self):
         """Test phương thức __str__ của ChiTietThucDon"""
-        expected_str = f"Gà nướng - {self.tiec_cuoi}"
-        self.assertEqual(str(self.chi_tiet_thuc_don), expected_str)
+        expected = f"Gà nướng - {self.tiec_cuoi}"
+        self.assertEqual(str(self.chi_tiet_thuc_don), expected)
 
     def test_chi_tiet_thuc_don_blank_ghi_chu(self):
         """Test ChiTietThucDon với ghi_chu để trống"""
         chi_tiet_2 = ChiTietThucDon.objects.create(
-            mon_an=self.mon_an,
             tiec_cuoi=self.tiec_cuoi,
-            so_luong=2,
-            thanh_tien=300000.0
+            mon_an=self.mon_an,
+            so_luong=1,
+            thanh_tien=150000.0
         )
         self.assertEqual(chi_tiet_2.ghi_chu, '')
 
@@ -490,15 +489,15 @@ class ChiTietDichVuModelTest(TestCase):
     
     def setUp(self):
         """Thiết lập dữ liệu test cho ChiTietDichVu"""
-        # Tạo User và TaiKhoan
-        self.user = User.objects.create_user(username='testuser', password='testpass123')
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='testpass123'
+        )
         self.tai_khoan = TaiKhoan.objects.create(
             user=self.user,
             sodienthoai='0123456789',
             hovaten='Test User'
         )
-        
-        # Tạo LoaiSanh và Sanh
         self.loai_sanh = LoaiSanh.objects.create(
             ten_loai_sanh='Sảnh VIP',
             gia_ban_toi_thieu=5000000.0
@@ -509,45 +508,38 @@ class ChiTietDichVuModelTest(TestCase):
             so_luong_ban_toi_da=50,
             trang_thai='Active'
         )
-        
-        # Tạo TiecCuoi
         self.tiec_cuoi = TiecCuoi.objects.create(
             tai_khoan=self.tai_khoan,
             sanh=self.sanh,
             ten_chu_re='Nguyễn Văn A',
             ten_co_dau='Trần Thị B',
-            ngay_dai_tiec=date.today() + timedelta(days=30),
-            so_luong_ban=20,
+            ngay_dai_tiec=date(2024, 12, 25),
+            so_luong_ban=30,
             so_luong_ban_du_tru=5,
-            ca='Trưa',
-            tong_tien_tiec_cuoi=10000000.0,
-            tien_dat_coc=3000000.0,
-            so_dien_thoai='0987654321'
+            ca='Tối',
+            tien_dat_coc=5000000.0,
+            so_dien_thoai='0123456789'
         )
-        
-        # Tạo DichVu
         self.dich_vu = DichVu.objects.create(
             ten_dich_vu='Trang trí sảnh',
             mo_ta='Trang trí hoa và bóng bay',
             don_gia=2000000.0
         )
-        
-        # Tạo ChiTietDichVu
         self.chi_tiet_dich_vu = ChiTietDichVu.objects.create(
-            dich_vu=self.dich_vu,
             tiec_cuoi=self.tiec_cuoi,
-            so_luong=1,
-            thanh_tien=2000000.0
+            dich_vu=self.dich_vu,
+            so_luong=2,
+            thanh_tien=4000000.0
         )
 
     def test_chi_tiet_dich_vu_creation(self):
         """Test tạo mới ChiTietDichVu"""
-        self.assertEqual(self.chi_tiet_dich_vu.dich_vu, self.dich_vu)
         self.assertEqual(self.chi_tiet_dich_vu.tiec_cuoi, self.tiec_cuoi)
-        self.assertEqual(self.chi_tiet_dich_vu.so_luong, 1)
-        self.assertEqual(self.chi_tiet_dich_vu.thanh_tien, 2000000.0)
+        self.assertEqual(self.chi_tiet_dich_vu.dich_vu, self.dich_vu)
+        self.assertEqual(self.chi_tiet_dich_vu.so_luong, 2)
+        self.assertEqual(self.chi_tiet_dich_vu.thanh_tien, 4000000.0)
 
     def test_chi_tiet_dich_vu_str_method(self):
         """Test phương thức __str__ của ChiTietDichVu"""
-        expected_str = f"Trang trí sảnh - {self.tiec_cuoi}"
-        self.assertEqual(str(self.chi_tiet_dich_vu), expected_str) 
+        expected = f"Trang trí sảnh - {self.tiec_cuoi}"
+        self.assertEqual(str(self.chi_tiet_dich_vu), expected) 
