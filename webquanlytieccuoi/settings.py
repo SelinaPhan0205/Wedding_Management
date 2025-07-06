@@ -35,8 +35,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware', 
 ]
 
 ROOT_URLCONF = 'webquanlytieccuoi.urls'
@@ -63,9 +62,9 @@ WSGI_APPLICATION = 'webquanlytieccuoi.wsgi.application'
 DATABASES = {
     'default': {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": "Wedding_Management",
+        "NAME": "weddingdb",
         "USER": "postgres",
-        "PASSWORD": "Hoangngo113",
+        "PASSWORD": "NVTS220205s",
         "HOST": "localhost",
         "PORT": "5432",  # Thêm cổng mặc định của PostgreSQL
     }
@@ -96,6 +95,7 @@ USE_I18N = True
 
 USE_TZ = True
 
+LOGIN_URL = '/dangnhap/'
 
 # CORS settings
 CORS_ALLOWED_ORIGINS = [

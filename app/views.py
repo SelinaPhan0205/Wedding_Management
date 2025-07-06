@@ -3,6 +3,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.http import HttpResponse
 from rest_framework import viewsets, status
+import requests
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.contrib import messages
@@ -11,63 +12,91 @@ from django.core.paginator import Paginator
 from .models import *
 from .serializers import *
 from django.db.models import Sum, F
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.cache import never_cache
 import datetime
 from decimal import Decimal
 
 
 ##### Code các yêu cầu #####
-
 def dangnhap(request):
     return render(request, 'app/dangnhap.html')
+@login_required
+@never_cache
 def trangchu(request):
     return render(request, 'app/trangchu.html')
+@login_required
+@never_cache
 def quanlytaikhoan(request):
     return render(request, 'app/quanlytaikhoan.html')
+@login_required
+@never_cache
 def quanlysanh(request):
     return render(request, 'app/quanlysanh.html')
+@login_required
+@never_cache
 def quanlytieccuoi(request):
     return render(request, 'app/quanlytieccuoi.html')
+@login_required
+@never_cache
 def quanlyhoadon(request):
     return render(request, 'app/quanlyhoadon.html')
+@login_required
+@never_cache
 def quanlythucdon(request):
     return render(request, 'app/quanlythucdon.html')
+@login_required
+@never_cache
 def quanlydichvu(request):
     return render(request, 'app/quanlydichvu.html')
+@login_required
+@never_cache
 def quanlyquydinh(request):
     return render(request, 'app/quanlyquydinh.html')
+@login_required
+@never_cache
 def xembaocao(request):
     return render(request, 'app/xembaocao.html')
+@login_required
+@never_cache
 def baocaodoanhthu(request):
     return render(request, 'app/baocaodoanhthu.html')
+@login_required
+@never_cache
 def baocaocongno(request):
     return render(request, 'app/baocaocongno.html')
+@login_required
+@never_cache
 def baocaothucthu(request):
     return render(request, 'app/baocaothucthu.html')
 
-##### LOGIN #####
-def login(request):
+def dangnhap(request):
     if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '')
         user = authenticate(request, username=username, password=password)
-
         if user is not None:
-            login(request, user)
+            from .models import TaiKhoan
             try:
-                tai_khoan = TaiKhoan.objects.get(user=user)
-                # Cả Admin và User đều redirect về trang chủ
-                return redirect('trangchu')
+                TaiKhoan.objects.get(user=user)
+                if user.is_active:
+                    login(request, user)
+                    return redirect('trangchu') 
+                else:
+                    return render(request, 'app/dangnhap.html', {'error_message': 'Tài khoản đã bị khóa!'})
             except TaiKhoan.DoesNotExist:
-                messages.error(request, "Tài khoản không tồn tại trong hệ thống.")
-                return redirect('login')
+                return render(request, 'app/dangnhap.html', {'error_message': 'Tài khoản không tồn tại trong hệ thống!'})
         else:
-            messages.error(request, "Tên đăng nhập hoặc mật khẩu không đúng.")
-            return redirect('login')
-    return render(request, 'app/login.html')
+            return render(request, 'app/dangnhap.html', {'error_message': 'Tên đăng nhập hoặc mật khẩu không đúng!'})
+    return render(request, 'app/dangnhap.html')
 
-def custom_logout(request):
+def dangxuat(request):
     logout(request)
-    return redirect('login')
+    response = redirect('dangnhap')
+    response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    return response
 
 import unicodedata
 
@@ -297,6 +326,27 @@ class TiecCuoiViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset().order_by('-ngay_dai_tiec')
+        
+        # Xử lý filter tháng/năm trước (vì cần QuerySet)
+        thang = request.query_params.get('thang')
+        nam = request.query_params.get('nam')
+        if thang:
+            queryset = queryset.filter(ngay_dai_tiec__month=int(thang))
+        if nam:
+            queryset = queryset.filter(ngay_dai_tiec__year=int(nam))
+            
+        # Xử lý các filter khác
+        sanh_id = request.query_params.get('sanh_id')
+        ngay_dai_tiec = request.query_params.get('ngay_dai_tiec')
+        ca = request.query_params.get('ca')
+        if sanh_id:
+            queryset = queryset.filter(sanh_id=sanh_id)
+        if ngay_dai_tiec:
+            queryset = queryset.filter(ngay_dai_tiec=ngay_dai_tiec)
+        if ca:
+            queryset = queryset.filter(ca=ca)
+            
+        # Xử lý search cuối cùng (sau khi đã filter)
         search_query = request.query_params.get('search', '').strip().lower()
         if search_query:
             search_query_no_diacritics = bo_dau(search_query).lower()
@@ -307,15 +357,6 @@ class TiecCuoiViewSet(viewsets.ModelViewSet):
                 or search_query_no_diacritics in bo_dau(t.so_dien_thoai or '').lower()
                 or search_query_no_diacritics in bo_dau(t.sanh.ten_sanh if t.sanh else '').lower()
             ]
-        sanh_id = request.query_params.get('sanh_id')
-        ngay_dai_tiec = request.query_params.get('ngay_dai_tiec')
-        ca = request.query_params.get('ca')
-        if sanh_id:
-            queryset = queryset.filter(sanh_id=sanh_id)
-        if ngay_dai_tiec:
-            queryset = queryset.filter(ngay_dai_tiec=ngay_dai_tiec)
-        if ca:
-            queryset = queryset.filter(ca=ca)
         # Phân trang
         page = int(request.query_params.get('page', 1))
         limit = int(request.query_params.get('limit', 8))
@@ -382,6 +423,16 @@ class HoaDonViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset().order_by('-ngay_thanh_toan')
+        
+        # Xử lý filter tháng/năm trước (vì cần QuerySet)
+        thang = request.query_params.get('thang')
+        nam = request.query_params.get('nam')
+        if thang:
+            queryset = queryset.filter(ngay_thanh_toan__month=int(thang))
+        if nam:
+            queryset = queryset.filter(ngay_thanh_toan__year=int(nam))
+            
+        # Xử lý search sau khi đã filter
         search_query = request.query_params.get('search', '').strip().lower()
         if search_query:
             queryset = queryset.filter(
@@ -408,6 +459,19 @@ class HoaDonViewSet(viewsets.ModelViewSet):
     def count(self, request):
         queryset = self.get_queryset()
         return Response({'total': queryset.count()})
+
+    def destroy(self, request, *args, **kwargs):
+        """Override destroy method để thêm logging và đảm bảo xóa thành công"""
+        try:
+            instance = self.get_object()
+            print(f"Đang xóa hóa đơn ID: {instance.id}")
+            instance.delete()
+            print(f"Đã xóa hóa đơn ID: {instance.id} thành công")
+            return Response({'message': 'Xóa hóa đơn thành công'}, status=204)
+        except Exception as e:
+            print(f"Lỗi khi xóa hóa đơn: {e}")
+            return Response({'error': str(e)}, status=500)
+
 class ReportViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'], url_path='total-tiec-cuoi')

@@ -152,7 +152,7 @@
             border: 1px solid #d1d5db;
             padding: 0.6rem 1rem;
             border-radius: 8px;
-            width: 300px;
+            width: 250px;
             font-size: 0.95rem;
             outline: none;
             transition: border-color 0.2s;
@@ -342,6 +342,28 @@
             border-color: #6366f1 !important; /* focus:ring-indigo-500 */
             box-shadow: 0 0 0 2px #6366f133 !important;
         }
+        .filter-section {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+        .filter-select {
+            padding: 0.75rem;
+            padding-right: 0px;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            background-color: #f9fafb;
+            font-size: 0.95rem;
+            min-width: 80px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .filter-select:focus {
+            border-color: #2c3e50;
+            box-shadow: 0 2px 8px rgba(44,62,80,0.10);
+            outline: none;
+        }
     </style>
 </head>
 <body>
@@ -387,6 +409,27 @@
                                 <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
                             </svg>
                         </button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i class="fi fi-sr-filter text-gray-600"></i>
+                        <select id="filterThangTiec" class="filter-select" style="width: 90px;">
+                            <option value="">Tháng</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10</option>
+                            <option value="11">11</option>
+                            <option value="12">12</option>
+                        </select>
+                        <select id="filterNamTiec" class="filter-select" style="width: 80px;">
+                            <option value="">Năm</option>
+                        </select>
                     </div>
                     <button class="search-hall-button" onclick="moFormTraCuuSanhTrong()">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -696,6 +739,9 @@
     let currentPage = 1;
     const itemsPerPage = 8;
 
+    let filterThangTiec = null;
+    let filterNamTiec = null;
+
     function getCookie(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
@@ -727,6 +773,10 @@
                 options.body = JSON.stringify(data);
             }
             const response = await fetch(url, options);
+            // Nếu là 204 No Content thì không đọc body
+            if (response.status === 204) {
+                return null;
+            }
             let responseBody = null;
             try {
                 responseBody = await response.json();
@@ -797,11 +847,30 @@
     // Hàm hiển thị danh sách tiệc cưới
     async function hienThiDanhSach(searchQuery = '') {
         try {
-            const url = searchQuery
-                ? `/api/tieccuoi/?search=${encodeURIComponent(searchQuery)}&page=${currentPage}&limit=${itemsPerPage}`
-                : `/api/tieccuoi/?page=${currentPage}&limit=${itemsPerPage}`;
+            // Tạo URL với tất cả tham số: search, tháng, năm, page, limit
+            const params = new URLSearchParams();
+            params.append('page', currentPage);
+            params.append('limit', itemsPerPage);
+            
+            // Thêm search nếu có
+            if (searchQuery) {
+                params.append('search', searchQuery);
+            }
+            
+            // Thêm filter tháng/năm nếu có
+            const thang = filterThangTiec.value;
+            const nam = filterNamTiec.value;
+            if (thang) {
+                params.append('thang', thang);
+            }
+            if (nam) {
+                params.append('nam', nam);
+            }
+            
+            const url = `/api/tieccuoi/?${params.toString()}`;
             const response = await goiAPI('GET', url);
-            danhSachTiec = response.data || [];
+            let ds = response.data || [];
+            danhSachTiec = ds;
             danhSachTiecElement.innerHTML = '';
 
             if (searchQuery) {
@@ -824,6 +893,14 @@
                     }
                 }
                 const row = document.createElement('tr');
+                const vaitro = "{{ request.user.taikhoan.vaitro|default_if_none:'' }}";
+                let actionButtons = `<button class="action-button view-button" onclick="xemTiec(${tiec.id})">Xem</button>`;
+                if (vaitro === "admin") {
+                    actionButtons += `
+                        <button class="action-button edit-button" onclick="suaTiec(${tiec.id})">Sửa</button>
+                        <button class="action-button delete-button" onclick="xoaTiec(${tiec.id})">Xóa</button>
+                    `;
+                }
                 row.innerHTML = `
                     <td>${tiec.id}</td>
                     <td>${tiec.ten_chu_re}</td>
@@ -835,9 +912,7 @@
                     <td>${tiec.so_luong_ban}</td>
                     <td>
                         <div style="display: flex; gap: 0.2rem;">
-                            <button class="action-button view-button" onclick="xemTiec(${tiec.id})">Xem</button>
-                            <button class="action-button edit-button" onclick="suaTiec(${tiec.id})">Sửa</button>
-                            <button class="action-button delete-button" onclick="xoaTiec(${tiec.id})">Xóa</button>
+                            ${actionButtons}
                         </div>
                     </td>
                 `;
@@ -1205,11 +1280,8 @@
         });
         const selectedSanhId = document.getElementById('sanh').value;
         const selectedSanh = danhSachSanh.find(s => s.id === parseInt(selectedSanhId));
-        console.log('selectedSanh:', selectedSanh);
         const donGiaBanToiThieu = selectedSanh ? selectedSanh.loai_sanh.gia_ban_toi_thieu : 0;
-        console.log('donGiaBanToiThieu:', donGiaBanToiThieu);
         const tongTienMonAn = danhSachMonAnDaChon.reduce((sum, mon) => sum + (mon.don_gia || 0), 0);
-        console.log('tongTienMonAn:', tongTienMonAn);
         const monAnErrorDiv = document.getElementById('monAnError');
         if (monAnErrorDiv) {
             if (selectedSanh && tongTienMonAn < donGiaBanToiThieu) {
@@ -1308,8 +1380,9 @@
         const tongTienMonAn = danhSachMonAnDaChon.reduce((sum, mon) => sum + (mon.don_gia || 0), 0);
         const monAnErrorDiv = document.getElementById('monAnError');
         if (tongTienMonAn < donGiaBanToiThieu) {
-            monAnErrorDiv.textContent = `Tổng tiền món ăn (${tongTienMonAn.toLocaleString('vi-VN')} VNĐ) phải lớn hơn hoặc bằng đơn giá bàn tối thiểu của sảnh (${donGiaBanToiThieu.toLocaleString('vi-VN')} VNĐ)!`;
+            monAnErrorDiv.textContent = `Tổng tiền hiện tại: ${tongTienMonAn.toLocaleString('vi-VN')} VNĐ - cần tối thiểu: ${donGiaBanToiThieu.toLocaleString('vi-VN')} VNĐ. Vui lòng chọn thêm món.`;
             monAnErrorDiv.style.display = 'block';
+            window.alert(`Tổng giá trị món ăn hiện tại là ${tongTienMonAn.toLocaleString('vi-VN')}đ, chưa đủ mức tối thiểu ${donGiaBanToiThieu.toLocaleString('vi-VN')}đ. Vui lòng bổ sung món ăn phù hợp.`);
             return;
         } else {
             monAnErrorDiv.textContent = '';
@@ -1416,6 +1489,27 @@
                     currentPage = 1;
                 }
                 hienThiDanhSach(searchInput.value);
+                // Thông báo xóa thành công (toast)
+                const toast = document.createElement('div');
+                toast.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: #10b981;
+                    color: white;
+                    padding: 12px 20px;
+                    border-radius: 8px;
+                    z-index: 9999;
+                    font-weight: 500;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                `;
+                toast.textContent = 'Đã xóa tiệc cưới thành công!';
+                document.body.appendChild(toast);
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 2000);
             } catch (error) {
                 console.error('Lỗi xóa tiệc:', error);
             }
@@ -1544,12 +1638,49 @@
             layDanhSachMonAn(),
             layDanhSachDichVu()
         ]);
+        filterThangTiec = document.getElementById('filterThangTiec');
+        filterNamTiec = document.getElementById('filterNamTiec');
+        khoiTaoDanhSachNamTiec();
         hienThiDanhSach();
+
+        filterThangTiec.addEventListener('change', function() {
+            currentPage = 1;
+            hienThiDanhSach(searchInput.value);
+        });
+        filterNamTiec.addEventListener('change', function() {
+            currentPage = 1;
+            hienThiDanhSach(searchInput.value);
+        });
     });
+
+    function khoiTaoDanhSachNamTiec() {
+        const currentYear = new Date().getFullYear();
+        const startYear = 2020;
+        for (let year = currentYear; year >= startYear; year--) {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            filterNamTiec.appendChild(option);
+        }
+    }
 
     $('#sanh').on('change', validateSanhTrung);
     document.getElementById('ngayDaiTiec').addEventListener('change', validateSanhTrung);
     document.getElementById('ca').addEventListener('change', validateSanhTrung);
+
+    // Giả sử mỗi lần thêm dịch vụ, bạn push vào mảng selectedServices
+    function themDichVuMoi() {
+        // Lấy danh sách dịch vụ đã chọn (có thể là mảng, hoặc đếm số dòng trong bảng)
+        let soLuongDichVu = selectedServices.length; // hoặc document.querySelectorAll('.row-dich-vu').length
+
+        if (soLuongDichVu >= 20) {
+            alert("Không được thêm quá 20 dịch vụ cho một tiệc cưới!");
+            return;
+        }
+
+        // Nếu chưa đủ 20, cho phép thêm dịch vụ mới
+        // ... code thêm dịch vụ ...
+    }
 </script>
 </body>
 </html>

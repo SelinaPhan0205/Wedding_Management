@@ -9,7 +9,7 @@ class UserSerializer(serializers.ModelSerializer):
 class LoaiSanhSerializer(serializers.ModelSerializer):
     class Meta:
         model = LoaiSanh
-        fields = ['id', 'ten_loai_sanh']
+        fields = ['id', 'ten_loai_sanh', 'gia_ban_toi_thieu']
 
 class SanhSerializer(serializers.ModelSerializer):
     loai_sanh = LoaiSanhSerializer(read_only=True)
@@ -228,7 +228,7 @@ class HoaDonSerializer(serializers.ModelSerializer):
     tiec_cuoi_id = serializers.PrimaryKeyRelatedField(queryset=TiecCuoi.objects.all(), source='tiec_cuoi', write_only=True)
     ma_hoa_don = serializers.IntegerField(source='id', read_only=True)
     ma_tiec = serializers.IntegerField(source='tiec_cuoi.id', read_only=True)
-    tong_tien = serializers.FloatField(source='tiec_cuoi.tong_tien_tiec_cuoi', read_only=True)
+    tong_tien = serializers.SerializerMethodField(read_only=True)
     tien_coc = serializers.FloatField(source='tiec_cuoi.tien_dat_coc', read_only=True)
     tien_con_lai = serializers.SerializerMethodField()
     dich_vu = serializers.SerializerMethodField()
@@ -246,13 +246,16 @@ class HoaDonSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'ma_hoa_don', 'ma_tiec', 'tong_tien', 'tien_coc', 'tien_con_lai', 'dich_vu', 'tiec_cuoi']
 
     def get_tien_con_lai(self, obj):
-        tong = obj.tiec_cuoi.tong_tien_tiec_cuoi if obj.tiec_cuoi else 0
+        tong = obj.tinh_tong_tien() 
         coc = obj.tiec_cuoi.tien_dat_coc if obj.tiec_cuoi else 0
         return tong - coc
 
     def get_dich_vu(self, obj):
         chi_tiet = ChiTietDichVu.objects.filter(tiec_cuoi=obj.tiec_cuoi).select_related('dich_vu')
         return ChiTietDichVuSerializer(chi_tiet, many=True).data
+    
+    def get_tong_tien(self, obj):
+        return obj.tinh_tong_tien()
 
     def perform_update(self, serializer):
         instance = serializer.save()
