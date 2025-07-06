@@ -497,7 +497,7 @@
                     <span class="font-medium text-gray-900 ml-1" id="bmTenCoDau"></span>
                 </div>
                 <div>
-                    <span class="text-gray-500">Ngày lập hóa đơn:</span>
+                    <span class="text-gray-500">Ngày thanh toán:</span>
                     <span class="font-medium text-gray-900 ml-1" id="bmNgayThanhToan"></span>
                 </div>
                 <div>
@@ -569,7 +569,7 @@
                     <input type="number" id="suaSoLuongBan" name="suaSoLuongBan" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
                 </div>
                 <div class="mb-4">
-                    <label for="suaNgayThanhToan" class="block text-gray-700 text-sm font-medium mb-2">Ngày Lập Hóa Đơn:</label>
+                    <label for="suaNgayThanhToan" class="block text-gray-700 text-sm font-medium mb-2">Ngày Thanh Toán:</label>
                     <input type="text" id="suaNgayThanhToan" name="suaNgayThanhToan" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="dd/mm/yyyy" required>
                 </div>
                 <div class="mb-4">
@@ -595,6 +595,10 @@
                 <div class="mb-4">
                     <label for="suaTienPhat" class="block text-gray-700 text-sm font-medium mb-2">Tiền Phạt:</label>
                     <input type="text" id="suaTienPhat" name="suaTienPhat" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100" readonly disabled>
+                </div>
+                <div class="mb-4">
+                    <label for="suaNgayLapHoaDon" class="block text-gray-700 text-sm font-medium mb-2">Ngày lập hóa đơn:</label>
+                    <input type="text" id="suaNgayLapHoaDon" name="suaNgayLapHoaDon" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100" readonly>
                 </div>
                 <div class="flex justify-end gap-3">
                     <button type="button" onclick="dongModalSuaHoaDon()" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-100 transition">Hủy</button>
@@ -802,10 +806,17 @@
                         <td class="text-center">${hoadon.tiec_cuoi && hoadon.tiec_cuoi.id ? hoadon.tiec_cuoi.id : (hoadon.ma_tiec || '')}</td>
                         <td>${hoadon.tiec_cuoi && hoadon.tiec_cuoi.ngay_dai_tiec ? formatDate(hoadon.tiec_cuoi.ngay_dai_tiec) : '-'}</td>
                         <td>${hoadon.ngay_thanh_toan ? formatDate(hoadon.ngay_thanh_toan) : '-'}</td>
+<<<<<<< HEAD
                         <td>${(hoadon.tong_tien != null && hoadon.tong_tien !== undefined) ? hoadon.tong_tien.toLocaleString('vi-VN') + ' VNĐ' : '-'}</td>
                         <td>${hoadon.ngay_thanh_toan ? (hoadon.so_ngay_tre != null ? hoadon.so_ngay_tre : '-') : '-'}</td>
                         <td>${hoadon.ngay_thanh_toan ? (hoadon.tien_phat != null ? hoadon.tien_phat.toLocaleString('vi-VN') + ' VNĐ' : '-') : '-'}</td>
                         <td>${hoadon.ngay_thanh_toan ? (hoadon.trang_thai === 'Thanh toán đúng hạn' || hoadon.trang_thai === 'Thanh toán trễ hạn' ? 'Đã thanh toán' : (hoadon.trang_thai || '-')) : 'Chưa thanh toán'}</td>
+=======
+                        <td>${(hoadon.tong_tien != null && hoadon.tong_tien !== undefined) ? formatVND(hoadon.tong_tien) : '-'}</td>
+                        <td>${hoadon.trang_thai === 'Chưa thanh toán' ? '-' : (hoadon.so_ngay_tre != null ? hoadon.so_ngay_tre : '-')}</td>
+                        <td>${hoadon.trang_thai === 'Chưa thanh toán' ? '-' : (hoadon.tien_phat != null ? formatVND(hoadon.tien_phat) : '-')}</td>
+                        <td>${hoadon.trang_thai === 'Đã thanh toán' ? 'Đã thanh toán' : 'Chưa thanh toán'}</td>
+>>>>>>> af142484febee818da3a44f55a213039d94ca7c7
                         <td style="min-width: 180px; width: 180px;">
                             <div class="flex gap-1 flex-nowrap">
                                 <button class="action-button view-button" onclick="xemHoaDon(${hoadon.id})">Xem</button>

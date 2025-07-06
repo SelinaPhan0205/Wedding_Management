@@ -11,7 +11,7 @@ from rest_framework.filters import SearchFilter
 from django.core.paginator import Paginator
 from .models import *
 from .serializers import *
-from django.db.models import Sum, F
+from django.db.models import Sum, F, Q
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
@@ -428,16 +428,28 @@ class HoaDonViewSet(viewsets.ModelViewSet):
         instance.save()
 
     def list(self, request, *args, **kwargs):
+        from django.db.models import Q
         queryset = self.get_queryset().order_by('-ngay_thanh_toan')
         
-        # Xử lý filter tháng/năm trước (vì cần QuerySet)
+        # Lọc theo tháng/năm cho cả ngày thanh toán và ngày đãi tiệc (ngày lập hóa đơn)
         thang = request.query_params.get('thang')
         nam = request.query_params.get('nam')
-        if thang:
-            queryset = queryset.filter(ngay_thanh_toan__month=int(thang))
-        if nam:
-            queryset = queryset.filter(ngay_thanh_toan__year=int(nam))
-            
+        if thang and nam:
+            queryset = queryset.filter(
+                Q(ngay_thanh_toan__month=int(thang), ngay_thanh_toan__year=int(nam)) |
+                Q(tiec_cuoi__ngay_dai_tiec__month=int(thang), tiec_cuoi__ngay_dai_tiec__year=int(nam))
+            )
+        elif thang:
+            queryset = queryset.filter(
+                Q(ngay_thanh_toan__month=int(thang)) |
+                Q(tiec_cuoi__ngay_dai_tiec__month=int(thang))
+            )
+        elif nam:
+            queryset = queryset.filter(
+                Q(ngay_thanh_toan__year=int(nam)) |
+                Q(tiec_cuoi__ngay_dai_tiec__year=int(nam))
+            )
+        
         # Xử lý search sau khi đã filter
         search_query = request.query_params.get('search', '').strip().lower()
         if search_query:
@@ -635,31 +647,34 @@ class ReportViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'], url_path='actual-receipt')
     def actual_receipt_report(self, request):
-        """Báo cáo thực thu: tổng tiền đã thu (đã thanh toán) theo tháng/năm, trả về details"""
+        """Báo cáo thực thu: chỉ các hóa đơn đã thanh toán"""
         month = int(request.query_params.get('month', datetime.date.today().month))
         year = int(request.query_params.get('year', datetime.date.today().year))
         hoadons = HoaDon.objects.filter(
-            trang_thai__in=['Thanh toán đúng hạn', 'Thanh toán trễ hạn'],
+            trang_thai__in=['Đã thanh toán', 'Thanh toán trễ hạn'],
             ngay_thanh_toan__month=month,
             ngay_thanh_toan__year=year
         ).select_related('tiec_cuoi')
-        total = hoadons.aggregate(total=Sum('tiec_cuoi__tong_tien_tiec_cuoi'))['total'] or 0
         details = []
+        total = 0
         for hd in hoadons:
             tc = hd.tiec_cuoi
-            so_thuc_thu = tc.tong_tien_tiec_cuoi if tc else 0
-            details.append({
-                'ma_hoa_don': hd.id,
-                'ma_tiec': tc.id if tc else '',
-                'ten_khach_hang': f"{tc.ten_chu_re} & {tc.ten_co_dau}" if tc else '',
-                'ngay_thanh_toan': hd.ngay_thanh_toan.strftime('%d/%m/%Y') if hd.ngay_thanh_toan else '-',
-                'so_thuc_thu': so_thuc_thu,
-            })
+            if tc:
+                tong_tien = hd.tinh_tong_tien() or 0
+                tien_phat = hd.tien_phat or 0
+                so_tien = float(tong_tien) + float(tien_phat)
+                total += so_tien
+                details.append({
+                    'ma_hoa_don': hd.id,
+                    'ma_tiec': tc.id,
+                    'ten_khach_hang': f"{tc.ten_chu_re} & {tc.ten_co_dau}",
+                    'ngay_thanh_toan': hd.ngay_thanh_toan.strftime('%Y-%m-%d') if hd.ngay_thanh_toan else '-',
+                    'so_tien': so_tien,
+                })
         return Response({
             'month': month,
             'year': year,
-            'total_actual_receipt': total,
-            'count': hoadons.count(),
+            'total': total,
             'details': details,
         })
 @csrf_exempt
