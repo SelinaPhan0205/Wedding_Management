@@ -64,7 +64,7 @@ DATABASES = {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
         "NAME": "Wedding_Management",
         "USER": "postgres",
-        "PASSWORD": "Hoangngo113",
+        "PASSWORD": "8436530leo",
         "HOST": "localhost",
         "PORT": "5432",  # Thêm cổng mặc định của PostgreSQL
     }
