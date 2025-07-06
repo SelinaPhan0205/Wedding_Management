@@ -34,18 +34,23 @@ class UserSerializer(serializers.ModelSerializer):
 class TaiKhoanSerializer(serializers.ModelSerializer):
     # Trả về thông tin user (username, email, ...)
     user = UserSerializer(read_only=True)
-    # Các trường này chỉ dùng khi tạo mới, không trả về khi GET
+    # Các trường này chỉ dùng khi tạo/sửa, không trả về khi GET
     username = serializers.CharField(write_only=True, required=False)
     password = serializers.CharField(write_only=True, required=False)
     email = serializers.EmailField(write_only=True, required=False)
+    # Thêm trường email để trả về khi GET
+    email_display = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = TaiKhoan
         fields = [
             'id', 'user', 'hovaten', 'sodienthoai', 'vaitro', 'trangthai',
-            'username', 'password', 'email'
+            'username', 'password', 'email', 'email_display'
         ]
-        read_only_fields = ['user']
+        read_only_fields = ['user', 'email_display']
+
+    def get_email_display(self, obj):
+        return obj.user.email if obj.user else ''
 
     def create(self, validated_data):
         username = validated_data.pop('username', None)
