@@ -11,7 +11,7 @@ from rest_framework.filters import SearchFilter
 from django.core.paginator import Paginator
 from .models import *
 from .serializers import *
-from django.db.models import Sum, F
+from django.db.models import Sum, F, Q
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
@@ -431,16 +431,28 @@ class HoaDonViewSet(viewsets.ModelViewSet):
         instance.save()
 
     def list(self, request, *args, **kwargs):
+        from django.db.models import Q
         queryset = self.get_queryset().order_by('-ngay_thanh_toan')
         
-        # Xử lý filter tháng/năm trước (vì cần QuerySet)
+        # Lọc theo tháng/năm cho cả ngày thanh toán và ngày đãi tiệc (ngày lập hóa đơn)
         thang = request.query_params.get('thang')
         nam = request.query_params.get('nam')
-        if thang:
-            queryset = queryset.filter(ngay_thanh_toan__month=int(thang))
-        if nam:
-            queryset = queryset.filter(ngay_thanh_toan__year=int(nam))
-            
+        if thang and nam:
+            queryset = queryset.filter(
+                Q(ngay_thanh_toan__month=int(thang), ngay_thanh_toan__year=int(nam)) |
+                Q(tiec_cuoi__ngay_dai_tiec__month=int(thang), tiec_cuoi__ngay_dai_tiec__year=int(nam))
+            )
+        elif thang:
+            queryset = queryset.filter(
+                Q(ngay_thanh_toan__month=int(thang)) |
+                Q(tiec_cuoi__ngay_dai_tiec__month=int(thang))
+            )
+        elif nam:
+            queryset = queryset.filter(
+                Q(ngay_thanh_toan__year=int(nam)) |
+                Q(tiec_cuoi__ngay_dai_tiec__year=int(nam))
+            )
+        
         # Xử lý search sau khi đã filter
         search_query = request.query_params.get('search', '').strip().lower()
         if search_query:
