@@ -360,16 +360,36 @@
                 return await response.json();
             } catch (error) {
                 console.error(`Lỗi gọi API ${endpoint}:`, error);
+                // Trả về dữ liệu mẫu cho thực thu
                 return {
-                    chartData: {
-                        labels: ['01/05', '05/05', '10/05', '15/05', '20/05'],
-                        data: [5, 10, 8, 20, 15]
-                    },
-                    tableData: [
-                        { ma_giao_dich: 'TT001', ma_tiec: 'TC001', ten_khach_hang: 'Nguyễn Văn A', ngay_thuc_thu: '05/05/2025', so_tien: 10000000, phuong_thuc: 'Chuyển khoản', noi_dung: 'Đặt cọc lần 1' },
-                        { ma_giao_dich: 'TT002', ma_tiec: 'TC002', ten_khach_hang: 'Trần Thị B', ngay_thuc_thu: '15/05/2025', so_tien: 20000000, phuong_thuc: 'Tiền mặt', noi_dung: 'Thanh toán đợt cuối' },
-                        { ma_giao_dich: 'TT003', ma_tiec: 'TC003', ten_khach_hang: 'Lê Văn C', ngay_thuc_thu: '10/05/2025', so_tien: 15000000, phuong_thuc: 'Chuyển khoản', noi_dung: 'Thanh toán đợt 2' },
-                        { ma_giao_dich: 'TT004', ma_tiec: 'TC004', ten_khach_hang: 'Phạm Thị D', ngay_thuc_thu: '20/05/2025', so_tien: 8000000, phuong_thuc: 'Tiền mặt', noi_dung: 'Đặt cọc' }
+                    details: [
+                        { 
+                            ma_hoa_don: 'HD001', 
+                            ma_tiec: 'TC001', 
+                            ten_khach_hang: 'Nguyễn Văn A & Trần Thị B', 
+                            ngay_thanh_toan: '2025-01-15', 
+                            tong_tien: 10000000, 
+                            tien_phat: 500000,
+                            trang_thai: 'Đã thanh toán'
+                        },
+                        { 
+                            ma_hoa_don: 'HD002', 
+                            ma_tiec: 'TC002', 
+                            ten_khach_hang: 'Lê Văn C & Phạm Thị D', 
+                            ngay_thanh_toan: '2025-01-20', 
+                            tong_tien: 15000000, 
+                            tien_phat: 0,
+                            trang_thai: 'Đã thanh toán'
+                        },
+                        { 
+                            ma_hoa_don: 'HD003', 
+                            ma_tiec: 'TC003', 
+                            ten_khach_hang: 'Hoàng Văn E & Nguyễn Thị F', 
+                            ngay_thanh_toan: '2025-01-25', 
+                            tong_tien: 12000000, 
+                            tien_phat: 200000,
+                            trang_thai: 'Thanh toán trễ hạn'
+                        }
                     ]
                 };
             }
@@ -410,11 +430,16 @@
                 const details = data.details || [];
                 const dateMap = {};
                 details.forEach(item => {
-                    // Ưu tiên lấy ngày thanh toán hoặc ngày thực thu
-                    const ngay = item.ngay_thanh_toan || item.ngay_thuc_thu || item.ngay_tiec || null;
-                    if (!ngay) return;
+                    // Ưu tiên lấy ngày thanh toán
+                    const ngay = item.ngay_thanh_toan || null;
+                    if (!ngay || ngay === '-' || ngay === '') return;
+                    // Tính số tiền thực thu
+                    let soTien = item.so_tien;
+                    if (soTien == null) {
+                        soTien = (item.tong_tien || 0) + (item.tien_phat || 0);
+                    }
                     if (!dateMap[ngay]) dateMap[ngay] = 0;
-                    dateMap[ngay] += item.so_thuc_thu || item.so_tien || 0;
+                    dateMap[ngay] += soTien;
                 });
                 // Sắp xếp ngày tăng dần
                 const labels = Object.keys(dateMap).sort();
@@ -491,27 +516,22 @@
                 const tableLoading = document.getElementById('tableLoading');
                 const table = document.getElementById('revenueTable');
                 const tbody = document.getElementById('revenueTableBody');
-                const totalRevenue = details.reduce((sum, item) => sum + (item.so_thuc_thu || 0), 0);
+                const totalRevenue = details.reduce((sum, item) => sum + (item.so_tien || 0), 0);
 
                 // Gán lại dữ liệu từ hóa đơn nếu thiếu
                 tbody.innerHTML = details.length
                   ? details.map(item => {
-                        // Ưu tiên lấy từ hóa đơn nếu có
-                        let maHoaDon = item.ma_hoa_don || (item.hoa_don && item.hoa_don.ma_hoa_don) || item.id || '-';
-                        let ngayThanhToan = item.ngay_thanh_toan || (item.hoa_don && item.hoa_don.ngay_thanh_toan) || '-';
-                        // Chỉ lấy tên chú rể
-                        let tenKhachHang = item.ten_khach_hang || (item.hoa_don && item.hoa_don.ten_khach_hang) || '-';
-                        // Nếu có dấu & thì chỉ lấy phần trước dấu &
+                        let tenKhachHang = item.ten_khach_hang || '-';
                         if (tenKhachHang.includes('&')) {
                             tenKhachHang = tenKhachHang.split('&')[0].trim();
                         }
                         return `
                         <tr>
-                            <td>${maHoaDon}</td>
-                            <td>${item.ma_tiec || (item.hoa_don && item.hoa_don.ma_tiec) || '-'}</td>
+                            <td>${item.ma_hoa_don || '-'}</td>
+                            <td>${item.ma_tiec || '-'}</td>
                             <td>${tenKhachHang}</td>
-                            <td>${ngayThanhToan}</td>
-                            <td>${formatVND(item.so_thuc_thu || 0)}</td>
+                            <td>${item.ngay_thanh_toan || '-'}</td>
+                            <td>${formatVND(item.so_tien || 0)}</td>
                         </tr>
                         `;
                     }).join('') + `
@@ -564,11 +584,11 @@
                 document.getElementById('content').classList.add('collapsed');
             }
             renderYearOptions();
-            setTimeout(() => {
-                const now = new Date();
-                document.getElementById('monthFilter').value = now.getMonth() + 1;
-                document.getElementById('yearFilter').value = now.getFullYear();
-            }, 0);
+            // Set tháng/năm hiện tại
+            const now = new Date();
+            document.getElementById('monthFilter').value = now.getMonth() + 1;
+            document.getElementById('yearFilter').value = now.getFullYear();
+            // GỌI loadReportData() SAU KHI ĐÃ SET GIÁ TRỊ
             await loadReportData();
         });
     </script>

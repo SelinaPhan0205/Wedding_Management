@@ -809,8 +809,8 @@
                         <td>${hoadon.tiec_cuoi && hoadon.tiec_cuoi.ngay_dai_tiec ? formatDate(hoadon.tiec_cuoi.ngay_dai_tiec) : '-'}</td>
                         <td>${hoadon.ngay_thanh_toan ? formatDate(hoadon.ngay_thanh_toan) : '-'}</td>
                         <td>${(hoadon.tong_tien != null && hoadon.tong_tien !== undefined) ? formatVND(hoadon.tong_tien) : '-'}</td>
-                        <td>${hoadon.so_ngay_tre != null ? hoadon.so_ngay_tre : '-'}</td>
-                        <td>${hoadon.tien_phat != null ? formatVND(hoadon.tien_phat) : '-'}</td>
+                        <td>${hoadon.trang_thai === 'Chưa thanh toán' ? '-' : (hoadon.so_ngay_tre != null ? hoadon.so_ngay_tre : '-')}</td>
+                        <td>${hoadon.trang_thai === 'Chưa thanh toán' ? '-' : (hoadon.tien_phat != null ? formatVND(hoadon.tien_phat) : '-')}</td>
                         <td>${hoadon.trang_thai === 'Đã thanh toán' ? 'Đã thanh toán' : 'Chưa thanh toán'}</td>
                         <td style="min-width: 180px; width: 180px;">
                             <div class="flex gap-1 flex-nowrap">
