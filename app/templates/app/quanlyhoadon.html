@@ -391,6 +391,8 @@
             transition: background 0.18s, color 0.18s;
             font-size: 15px;
             min-width: 120px;
+            white-space: nowrap;
+            justify-content: space-between;
         }
         .filter-btn-trangthai:hover {
             background: #f5f5f5;
@@ -399,7 +401,7 @@
             font-size: 15px;
             color: #22c55e; /* xanh lá nhẹ */
             opacity: 1;
-            margin-right: 2px;
+            margin-left: 2px;
         }
         .filter-btn-trangthai:not(.active) .tick {
             display: none;
@@ -467,13 +469,13 @@
                             style="z-index:101; right:0; top:calc(100% + 4px); min-width:160px;">
                             <div id="filterTrangThaiGroup" class="flex flex-col">
                                 <button type="button" class="filter-btn-trangthai active" data-value="">
-                                    <span class="tick">✔</span> Tất cả
+                                    Tất cả <span class="tick">✔</span>
                                 </button>
                                 <button type="button" class="filter-btn-trangthai" data-value="Chưa thanh toán">
-                                    <span class="tick">✔</span> Chưa thanh toán
+                                    Chưa thanh toán <span class="tick">✔</span>
                                 </button>
                                 <button type="button" class="filter-btn-trangthai" data-value="Đã thanh toán">
-                                    <span class="tick">✔</span> Đã thanh toán
+                                    Đã thanh toán <span class="tick">✔</span>
                                 </button>
                             </div>
                         </div>
