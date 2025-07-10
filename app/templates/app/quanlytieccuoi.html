@@ -367,6 +367,40 @@
     </style>
 </head>
 <body>
+    <!-- Popup xác nhận xóa tiệc cưới -->
+    <div id="popupXacNhanXoa" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden" style="z-index:2000;">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md text-center">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">Xác nhận xóa tiệc cưới</h2>
+            <p class="mb-6 text-gray-700">Bạn có chắc chắn muốn xóa tiệc cưới này? Thao tác này không thể hoàn tác.</p>
+            <div class="flex justify-center gap-4">
+                <button id="btnXacNhanXoa" class="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition">OK</button>
+                <button id="btnHuyXacNhanXoa" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-100 transition">Hủy</button>
+            </div>
+        </div>
+    </div>
+    <script>
+    // Popup xác nhận xóa tiệc cưới
+    window.tiecIdCanXoa = null;
+    function hienPopupXacNhanXoa(id) {
+        window.tiecIdCanXoa = id;
+        document.getElementById('popupXacNhanXoa').classList.remove('hidden');
+    }
+    function anPopupXacNhanXoa() {
+        window.tiecIdCanXoa = null;
+        document.getElementById('popupXacNhanXoa').classList.add('hidden');
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('btnXacNhanXoa').onclick = async function() {
+            if (window.tiecIdCanXoa !== null) {
+                await xoaTiec(window.tiecIdCanXoa, true);
+                anPopupXacNhanXoa();
+            }
+        };
+        document.getElementById('btnHuyXacNhanXoa').onclick = function() {
+            anPopupXacNhanXoa();
+        };
+    });
+    </script>
     <!-- Nút toggle sidebar -->
     <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
 
@@ -898,7 +932,7 @@
                 if (vaitro === "admin") {
                     actionButtons += `
                         <button class="action-button edit-button" onclick="suaTiec(${tiec.id})">Sửa</button>
-                        <button class="action-button delete-button" onclick="xoaTiec(${tiec.id})">Xóa</button>
+                        <button class="action-button delete-button" onclick="hienPopupXacNhanXoa(${tiec.id})">Xóa</button>
                     `;
                 }
                 row.innerHTML = `
@@ -1477,7 +1511,10 @@
 
     // Hàm xóa tiệc
     async function xoaTiec(id) {
-        if (confirm('Bạn có chắc chắn muốn xóa tiệc cưới này không? Hành động này không thể hoàn tác.')) {
+        // Cho phép truyền thêm tham số boQuaXacNhan để bỏ qua confirm khi gọi từ popup
+        let boQuaXacNhan = false;
+        if (arguments.length > 1) boQuaXacNhan = arguments[1];
+        if (boQuaXacNhan || confirm('Bạn có chắc chắn muốn xóa tiệc cưới này không? Hành động này không thể hoàn tác.')) {
             try {
                 await goiAPI('DELETE', `/api/tieccuoi/${id}/`);
                 const response = await goiAPI('GET', '/api/tieccuoi/count/');
