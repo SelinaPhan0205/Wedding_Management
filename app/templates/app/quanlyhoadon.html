@@ -660,6 +660,7 @@
                 <div class="mb-4">
                     <label for="suaTienCoc" class="block text-gray-700 text-sm font-medium mb-2">Tiền Cọc:</label>
                     <input type="text" id="suaTienCoc" name="suaTienCoc" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                    <span id="suaTienCocError" class="text-red-500 text-sm mt-1 block"></span>
                 </div>
                 <div class="flex justify-end gap-3">
                     <button type="button" onclick="dongModalSuaHoaDon()" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-100 transition">Hủy</button>
@@ -1151,29 +1152,50 @@
                 }
             }
             const soLuongBanNhap = parseInt(document.getElementById('suaSoLuongBan').value);
+            let tienCocRaw = document.getElementById('suaTienCoc').value;
+            let tienCoc = parseInt(tienCocRaw.replace(/[^\d]/g, ''), 10) || 0;
+            const tongTien = parseInt(document.getElementById('suaTongTien').value.replace(/[^\d]/g, ''), 10) || 0;
+
             // Lấy thông tin tiệc cưới từ hóa đơn hiện tại
             const hoadonHienTai = await goiAPI('GET', `/api/hoadon/${currentHoaDonId}/`);
-            const tiecCuoiId = hoadonHienTai.tiec_cuoi ? hoadonHienTai.tiec_cuoi.id : null;
             const tiec = hoadonHienTai.tiec_cuoi;
             if (!tiec) {
                 alert('Không tìm thấy thông tin tiệc cưới!');
                 return;
             }
-            if (soLuongBanNhap < tiec.so_luong_ban) {
-                alert(`Số lượng bàn không được nhỏ hơn số lượng bàn đã đặt trong tiệc cưới. Vui lòng nhập số bàn lớn hơn hoặc bằng ${tiec.so_luong_ban}.`);
+            // Kiểm tra số lượng bàn không vượt quá tổng số bàn + số bàn dự trữ
+            const soLuongBanToiDa = (tiec.so_luong_ban || 0) + (tiec.so_luong_ban_du_tru || 0);
+            if (soLuongBanNhap > soLuongBanToiDa) {
+                document.getElementById('suaSoLuongBanError').textContent =
+                    `Số lượng bàn không được vượt quá tổng số bàn (${soLuongBanToiDa}) của tiệc cưới!`;
+                document.getElementById('suaSoLuongBan').focus();
                 return;
+            } else {
+                document.getElementById('suaSoLuongBanError').textContent = '';
             }
-            let tienCocRaw = document.getElementById('suaTienCoc').value;
-            let tienCoc = parseInt(tienCocRaw.replace(/[^\d]/g, ''), 10) || 0;
-            console.log('Tiền cọc gửi lên:', tienCoc); // phải là 25000000 nếu nhập 25.000.000
-            const updatedHoaDonData = {
-                tiec_cuoi_id: tiecCuoiId,
-                so_luong_ban: soLuongBanNhap,
-                ngay_thanh_toan: ngayThanhToanServer,
-                tong_tien: parseInt(document.getElementById('suaTongTien').value.replace(/[^\d]/g, ''), 10) || 0,
-                tien_coc: tienCoc
-            };
+
+            // Kiểm tra tiền cọc không lớn hơn tổng tiền (nếu cần)
+            if (tienCoc > tongTien) {
+                const tienCocError = document.getElementById('suaTienCocError');
+                if (tienCocError) {
+                    tienCocError.textContent = 'Tiền cọc không được lớn hơn tổng tiền!';
+                } else {
+                    alert('Tiền cọc không được lớn hơn tổng tiền!');
+                }
+                document.getElementById('suaTienCoc').focus();
+                return;
+            } else {
+                const tienCocError = document.getElementById('suaTienCocError');
+                if (tienCocError) tienCocError.textContent = '';
+            }
             try {
+                const updatedHoaDonData = {
+                    tiec_cuoi_id: tiec.id,
+                    so_luong_ban: soLuongBanNhap,
+                    ngay_thanh_toan: ngayThanhToanServer,
+                    tong_tien: tongTien,
+                    tien_coc: tienCoc
+                };
                 await goiAPI('PUT', `/api/hoadon/${currentHoaDonId}/`, updatedHoaDonData);
                 // Lấy lại hóa đơn để biết id tiệc cưới
                 const hoadonHienTai = await goiAPI('GET', `/api/hoadon/${currentHoaDonId}/`);
@@ -1190,6 +1212,7 @@
                     }
                     let tienCocRaw = document.getElementById('suaTienCoc').value;
                     let tienCoc = parseInt(tienCocRaw.replace(/[^\d]/g, ''), 10) || 0;
+                    const tongTien = parseInt(document.getElementById('suaTongTien').value.replace(/[^\d]/g, ''), 10) || 0;
                     tiecCuoiHienTai.tien_dat_coc = tienCoc;
                     await goiAPI('PUT', `/api/tieccuoi/${tiecCuoiId}/`, tiecCuoiHienTai);
                 }
@@ -1515,33 +1538,6 @@
         // Sắp xếp danh sách tiệc theo ID giảm dần (mới nhất lên đầu)
         danhSachTiecCuoi.sort((a, b) => b.id - a.id);
 
-        document.getElementById('suaSoLuongBan').addEventListener('input', async function() {
-            const soLuongBan = parseInt(this.value) || 0;
-            // Lấy lại hóa đơn hiện tại để biết id tiệc cưới
-            const hoadonHienTai = await goiAPI('GET', `/api/hoadon/${currentHoaDonId}/`);
-            const tiecCuoiId = hoadonHienTai.tiec_cuoi ? hoadonHienTai.tiec_cuoi.id : null;
-            if (tiecCuoiId) {
-                // Gọi API lấy tổng tiền mới với số lượng bàn mới
-                // Nếu backend có API tính tổng tiền, gọi API đó, ví dụ:
-                // const res = await goiAPI('GET', `/api/tieccuoi/${tiecCuoiId}/tinh_tong_tien/?so_luong_ban=${soLuongBan}`);
-                // document.getElementById('suaTongTien').value = res.tong_tien;
-
-                // Nếu không có API, tự tính trên frontend:
-                // Lấy lại thông tin tiệc cưới
-                const tiecCuoi = await goiAPI('GET', `/api/tieccuoi/${tiecCuoiId}/`);
-                // Tính tổng tiền: tổng món ăn * số lượng bàn + tổng dịch vụ
-                let tongMonAn = 0, tongDichVu = 0;
-                if (tiecCuoi.chitietthucdon_set) {
-                    tongMonAn = tiecCuoi.chitietthucdon_set.reduce((sum, ct) => sum + ct.thanh_tien, 0);
-                }
-                if (tiecCuoi.chitietdichvu_set) {
-                    tongDichVu = tiecCuoi.chitietdichvu_set.reduce((sum, ct) => sum + ct.thanh_tien, 0);
-                }
-                const tongTien = tongMonAn * soLuongBan + tongDichVu;
-                document.getElementById('suaTongTien').value = formatVND(tongTien);
-            }
-        });
-
         const suaTienCocInput = document.getElementById('suaTienCoc');
         suaTienCocInput.addEventListener('blur', function() {
             let value = suaTienCocInput.value.replace(/\D/g, '');
@@ -1549,6 +1545,30 @@
         });
         suaTienCocInput.addEventListener('focus', function() {
             suaTienCocInput.value = suaTienCocInput.value.replace(/\D/g, '');
+        });
+        document.getElementById('suaSoLuongBan').addEventListener('input', async function() {
+            const soLuongBan = parseInt(this.value) || 0;
+            const hoadonHienTai = await goiAPI('GET', `/api/hoadon/${currentHoaDonId}/`);
+            const tiec = hoadonHienTai.tiec_cuoi;
+            if (!tiec) return;
+            const soLuongBanToiDa = (tiec.so_luong_ban || 0) + (tiec.so_luong_ban_du_tru || 0);
+            if (soLuongBan > soLuongBanToiDa) {
+                document.getElementById('suaSoLuongBanError').textContent =
+                    `Số lượng bàn không được vượt quá tổng số bàn (${soLuongBanToiDa}) của tiệc cưới!`;
+            } else {
+                document.getElementById('suaSoLuongBanError').textContent = '';
+            }
+        });
+        // Kiểm tra realtime tiền cọc khi sửa hóa đơn
+        document.getElementById('suaTienCoc').addEventListener('input', function() {
+            let tienCocRaw = this.value;
+            let tienCoc = parseInt(tienCocRaw.replace(/[^\d]/g, ''), 10) || 0;
+            const tongTien = parseInt(document.getElementById('suaTongTien').value.replace(/[^\d]/g, ''), 10) || 0;
+            if (tienCoc > tongTien) {
+                document.getElementById('suaTienCocError').textContent = 'Tiền cọc không được lớn hơn tổng tiền!';
+            } else {
+                document.getElementById('suaTienCocError').textContent = '';
+            }
         });
     </script>
 </body>
