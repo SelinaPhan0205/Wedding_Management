@@ -881,6 +881,9 @@
             if (danhSachTiec.length === 0) {
                 danhSachTiecElement.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-gray-500">Không có tiệc cưới nào.</td></tr>';
             }
+            // Sắp xếp danh sách tiệc theo ID giảm dần (mới nhất lên đầu)
+            danhSachTiec.sort((a, b) => b.id - a.id);
+            
             danhSachTiec.forEach((tiec, index) => {
                 const stt = (currentPage - 1) * itemsPerPage + index + 1;
                 let ngayHienThi = '';
@@ -902,7 +905,7 @@
                     `;
                 }
                 row.innerHTML = `
-                    <td>${tiec.id}</td>
+                    <td>TC${tiec.id}</td>
                     <td>${tiec.ten_chu_re}</td>
                     <td>${tiec.ten_co_dau}</td>
                     <td>${tiec.so_dien_thoai}</td>

@@ -798,8 +798,8 @@
                     actionButtons += actionButton;
 
                     html += `<tr data-tien-coc="${hoadon.tien_coc || 0}">
-                        <td class="text-center">${hoadon.id}</td>
-                        <td class="text-center">${hoadon.tiec_cuoi && hoadon.tiec_cuoi.id ? hoadon.tiec_cuoi.id : (hoadon.ma_tiec || '')}</td>
+                        <td class="text-center">HD${hoadon.id}</td>
+                        <td class="text-center">${hoadon.tiec_cuoi && hoadon.tiec_cuoi.id ? `TC${hoadon.tiec_cuoi.id}` : (hoadon.ma_tiec ? `TC${hoadon.ma_tiec}` : '')}</td>
                         <td>${hoadon.tiec_cuoi && hoadon.tiec_cuoi.ngay_dai_tiec ? formatDate(hoadon.tiec_cuoi.ngay_dai_tiec) : '-'}</td>
                         <td>${hoadon.ngay_thanh_toan ? formatDate(hoadon.ngay_thanh_toan) : '-'}</td>
                         <td>${(hoadon.tong_tien != null && hoadon.tong_tien !== undefined) ? formatVND(hoadon.tong_tien) : '-'}</td>
@@ -1415,6 +1415,9 @@
             btnLuuHoaDon.disabled = false;
             btnLuuHoaDon.classList.remove('opacity-50', 'cursor-not-allowed');
         });
+
+        // Sắp xếp danh sách tiệc theo ID giảm dần (mới nhất lên đầu)
+        danhSachTiecCuoi.sort((a, b) => b.id - a.id);
     </script>
 </body>
 </html>
