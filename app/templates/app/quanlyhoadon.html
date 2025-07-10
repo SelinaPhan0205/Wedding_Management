@@ -644,14 +644,10 @@
             <button type="button" onclick="dongModalSuaHoaDon()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-2xl font-bold focus:outline-none" aria-label="Đóng">×</button>
             <h2 id="modalTitleSuaHoaDon" class="text-2xl font-bold mb-6 text-gray-800">Chỉnh Sửa Hóa Đơn</h2>
             <form id="formSuaHoaDon" autocomplete="off">
-                <div class="mb-4 relative">
-                    <label for="suaMaTiec" class="block text-gray-700 text-sm font-medium mb-2">Mã Số Tiệc:</label>
-                    <input type="text" id="suaMaTiec" name="suaMaTiec" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Nhập hoặc chọn mã số tiệc..." required autocomplete="off">
-                    <div id="suaMaTiecAutocomplete" class="autocomplete-list hidden"></div>
-                </div>
                 <div class="mb-4">
                     <label for="suaSoLuongBan" class="block text-gray-700 text-sm font-medium mb-2">Số Lượng Bàn:</label>
                     <input type="number" id="suaSoLuongBan" name="suaSoLuongBan" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                    <span id="suaSoLuongBanError" class="text-red-500 text-sm mt-1 block"></span>
                 </div>
                 <div class="mb-4">
                     <label for="suaNgayThanhToan" class="block text-gray-700 text-sm font-medium mb-2">Ngày Thanh Toán:</label>
@@ -659,27 +655,11 @@
                 </div>
                 <div class="mb-4">
                     <label for="suaTongTien" class="block text-gray-700 text-sm font-medium mb-2">Tổng Tiền:</label>
-                    <input type="number" id="suaTongTien" name="suaTongTien" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                    <input type="text" id="suaTongTien" name="suaTongTien" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100" readonly>
                 </div>
                 <div class="mb-4">
                     <label for="suaTienCoc" class="block text-gray-700 text-sm font-medium mb-2">Tiền Cọc:</label>
-                    <input type="number" id="suaTienCoc" name="suaTienCoc" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
-                </div>
-                <div class="mb-4">
-                    <label for="suaTienConLai" class="block text-gray-700 text-sm font-medium mb-2">Tiền Còn Lại:</label>
-                    <input type="number" id="suaTienConLai" name="suaTienConLai" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
-                </div>
-                <div class="mb-4">
-                    <label for="suaTrangThai" class="block text-gray-700 text-sm font-medium mb-2">Trạng Thái:</label>
-                    <input type="text" id="suaTrangThai" name="suaTrangThai" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100" readonly disabled>
-                </div>
-                <div class="mb-4">
-                    <label for="suaSoNgayTre" class="block text-gray-700 text-sm font-medium mb-2">Số Ngày Trễ:</label>
-                    <input type="number" id="suaSoNgayTre" name="suaSoNgayTre" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100" readonly disabled>
-                </div>
-                <div class="mb-4">
-                    <label for="suaTienPhat" class="block text-gray-700 text-sm font-medium mb-2">Tiền Phạt:</label>
-                    <input type="text" id="suaTienPhat" name="suaTienPhat" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100" readonly disabled>
+                    <input type="text" id="suaTienCoc" name="suaTienCoc" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
                 </div>
                 <div class="flex justify-end gap-3">
                     <button type="button" onclick="dongModalSuaHoaDon()" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-100 transition">Hủy</button>
@@ -747,8 +727,8 @@
 
         // Hàm định dạng tiền VND
         function formatVND(number) {
-            if (number == null || isNaN(number)) return '-';
-            return Number(number).toLocaleString('vi-VN', { maximumFractionDigits: 0 }) + ' VND';
+            if (isNaN(number)) return '';
+            return number.toLocaleString('vi-VN');
         }
 
         let danhSachHoaDon = [];
@@ -1012,7 +992,6 @@
                 isEditModeHoaDon = true;
                 currentHoaDonId = id;
                 document.getElementById('modalTitleSuaHoaDon').textContent = 'Chỉnh Sửa Hóa Đơn';
-                document.getElementById('suaMaTiec').value = hoadon.tiec_cuoi && hoadon.tiec_cuoi.id ? hoadon.tiec_cuoi.id : (hoadon.ma_tiec || '');
                 document.getElementById('suaSoLuongBan').value = hoadon.so_luong_ban || 0;
 
                 let ngayThanhToanInput = hoadon.ngay_thanh_toan || '';
@@ -1024,12 +1003,8 @@
                 }
                 document.getElementById('suaNgayThanhToan').value = ngayThanhToanInput;
 
-                document.getElementById('suaTongTien').value = hoadon.tong_tien || 0;
-                document.getElementById('suaTienCoc').value = hoadon.tien_coc || 0;
-                document.getElementById('suaTienConLai').value = hoadon.tien_con_lai || 0;
-                document.getElementById('suaTrangThai').value = hoadon.trang_thai || '';
-                document.getElementById('suaSoNgayTre').value = hoadon.so_ngay_tre || 0;
-                document.getElementById('suaTienPhat').value = formatVND(hoadon.tien_phat || 0);
+                document.getElementById('suaTongTien').value = formatVND(hoadon.tong_tien || 0);
+                document.getElementById('suaTienCoc').value = formatVND(hoadon.tien_coc || 0);
                 modalSuaHoaDon.classList.remove('hidden');
                 modalSuaHoaDon.scrollTop = 0;
                 const modalContent = modalSuaHoaDon.querySelector('.modal-content');
@@ -1175,14 +1150,11 @@
                     ngayThanhToanServer = ngayThanhToanStr;
                 }
             }
-            const tiecCuoiValue = document.getElementById('suaMaTiec').value;
-            const tiecCuoiId = Number(tiecCuoiValue);
-            if (!tiecCuoiId || isNaN(tiecCuoiId) || tiecCuoiId <= 0) {
-                alert('Mã số tiệc không hợp lệ. Vui lòng chọn lại!');
-                return;
-            }
             const soLuongBanNhap = parseInt(document.getElementById('suaSoLuongBan').value);
-            const tiec = danhSachTiecCuoi.find(t => String(t.id) === String(tiecCuoiId));
+            // Lấy thông tin tiệc cưới từ hóa đơn hiện tại
+            const hoadonHienTai = await goiAPI('GET', `/api/hoadon/${currentHoaDonId}/`);
+            const tiecCuoiId = hoadonHienTai.tiec_cuoi ? hoadonHienTai.tiec_cuoi.id : null;
+            const tiec = hoadonHienTai.tiec_cuoi;
             if (!tiec) {
                 alert('Không tìm thấy thông tin tiệc cưới!');
                 return;
@@ -1191,16 +1163,36 @@
                 alert(`Số lượng bàn không được nhỏ hơn số lượng bàn đã đặt trong tiệc cưới. Vui lòng nhập số bàn lớn hơn hoặc bằng ${tiec.so_luong_ban}.`);
                 return;
             }
+            let tienCocRaw = document.getElementById('suaTienCoc').value;
+            let tienCoc = parseInt(tienCocRaw.replace(/[^\d]/g, ''), 10) || 0;
+            console.log('Tiền cọc gửi lên:', tienCoc); // phải là 25000000 nếu nhập 25.000.000
             const updatedHoaDonData = {
                 tiec_cuoi_id: tiecCuoiId,
-                so_luong_ban: parseInt(document.getElementById('suaSoLuongBan').value),
+                so_luong_ban: soLuongBanNhap,
                 ngay_thanh_toan: ngayThanhToanServer,
-                tong_tien: parseInt(document.getElementById('suaTongTien').value),
-                tien_coc: parseInt(document.getElementById('suaTienCoc').value),
-                tien_con_lai: parseInt(document.getElementById('suaTienConLai').value)
+                tong_tien: parseInt(document.getElementById('suaTongTien').value.replace(/[^\d]/g, ''), 10) || 0,
+                tien_coc: tienCoc
             };
             try {
                 await goiAPI('PUT', `/api/hoadon/${currentHoaDonId}/`, updatedHoaDonData);
+                // Lấy lại hóa đơn để biết id tiệc cưới
+                const hoadonHienTai = await goiAPI('GET', `/api/hoadon/${currentHoaDonId}/`);
+                const tiecCuoiId = hoadonHienTai.tiec_cuoi ? hoadonHienTai.tiec_cuoi.id : null;
+                if (tiecCuoiId) {
+                    console.log('Đang cập nhật tiền cọc cho tiệc cưới ID:', tiecCuoiId);
+                    // Lấy toàn bộ dữ liệu tiệc cưới hiện tại
+                    const tiecCuoiHienTai = await goiAPI('GET', `/api/tieccuoi/${tiecCuoiId}/`);
+                    console.log('Tiệc cưới hiện tại:', tiecCuoiHienTai);
+                    // Chuyển trường sanh thành sanh_id nếu cần
+                    if (tiecCuoiHienTai.sanh && typeof tiecCuoiHienTai.sanh === 'object') {
+                        tiecCuoiHienTai.sanh_id = tiecCuoiHienTai.sanh.id;
+                        delete tiecCuoiHienTai.sanh;
+                    }
+                    let tienCocRaw = document.getElementById('suaTienCoc').value;
+                    let tienCoc = parseInt(tienCocRaw.replace(/[^\d]/g, ''), 10) || 0;
+                    tiecCuoiHienTai.tien_dat_coc = tienCoc;
+                    await goiAPI('PUT', `/api/tieccuoi/${tiecCuoiId}/`, tiecCuoiHienTai);
+                }
                 hienThiDanhSachHoaDon(searchHoaDonInput.value);
                 dongModalSuaHoaDon();
             } catch (error) {
@@ -1421,45 +1413,7 @@
             }
         }
 
-        const suaMaTiecInput = document.getElementById('suaMaTiec');
-        const suaAutocompleteList = document.getElementById('suaMaTiecAutocomplete');
 
-        if (suaMaTiecInput) {
-            suaMaTiecInput.addEventListener('input', function(e) {
-                hienAutocompleteSuaMaTiec(e.target.value);
-            });
-        }
-
-        function hienAutocompleteSuaMaTiec(query) {
-            if (!suaAutocompleteList) return;
-            suaAutocompleteList.innerHTML = '';
-            const filtered = danhSachTiecCuoi.filter(tiec =>
-                tiec.id.toString().includes(query) ||
-                (tiec.ten_chu_re && tiec.ten_chu_re.toLowerCase().includes(query.toLowerCase())) ||
-                (tiec.ten_co_dau && tiec.ten_co_dau.toLowerCase().includes(query.toLowerCase()))
-            );
-            filtered.forEach(tiec => {
-                const item = document.createElement('div');
-                item.classList.add('autocomplete-item');
-                item.textContent = `TC${String(tiec.id).padStart(2, '0')} - ${tiec.ten_chu_re} & ${tiec.ten_co_dau}`;
-                item.onclick = () => {
-                    suaMaTiecInput.value = tiec.id;
-                    suaAutocompleteList.classList.add('hidden');
-                };
-                suaAutocompleteList.appendChild(item);
-            });
-            if (filtered.length > 0) {
-                suaAutocompleteList.classList.remove('hidden');
-            } else {
-                suaAutocompleteList.classList.add('hidden');
-            }
-        }
-
-        document.addEventListener('click', function(event) {
-            if (suaAutocompleteList && !suaAutocompleteList.contains(event.target) && event.target !== suaMaTiecInput) {
-                suaAutocompleteList.classList.add('hidden');
-            }
-        });
 
         document.addEventListener('click', function(event) {
             if (autocompleteList && !autocompleteList.contains(event.target) && event.target !== maTiecInput) {
@@ -1560,6 +1514,42 @@
 
         // Sắp xếp danh sách tiệc theo ID giảm dần (mới nhất lên đầu)
         danhSachTiecCuoi.sort((a, b) => b.id - a.id);
+
+        document.getElementById('suaSoLuongBan').addEventListener('input', async function() {
+            const soLuongBan = parseInt(this.value) || 0;
+            // Lấy lại hóa đơn hiện tại để biết id tiệc cưới
+            const hoadonHienTai = await goiAPI('GET', `/api/hoadon/${currentHoaDonId}/`);
+            const tiecCuoiId = hoadonHienTai.tiec_cuoi ? hoadonHienTai.tiec_cuoi.id : null;
+            if (tiecCuoiId) {
+                // Gọi API lấy tổng tiền mới với số lượng bàn mới
+                // Nếu backend có API tính tổng tiền, gọi API đó, ví dụ:
+                // const res = await goiAPI('GET', `/api/tieccuoi/${tiecCuoiId}/tinh_tong_tien/?so_luong_ban=${soLuongBan}`);
+                // document.getElementById('suaTongTien').value = res.tong_tien;
+
+                // Nếu không có API, tự tính trên frontend:
+                // Lấy lại thông tin tiệc cưới
+                const tiecCuoi = await goiAPI('GET', `/api/tieccuoi/${tiecCuoiId}/`);
+                // Tính tổng tiền: tổng món ăn * số lượng bàn + tổng dịch vụ
+                let tongMonAn = 0, tongDichVu = 0;
+                if (tiecCuoi.chitietthucdon_set) {
+                    tongMonAn = tiecCuoi.chitietthucdon_set.reduce((sum, ct) => sum + ct.thanh_tien, 0);
+                }
+                if (tiecCuoi.chitietdichvu_set) {
+                    tongDichVu = tiecCuoi.chitietdichvu_set.reduce((sum, ct) => sum + ct.thanh_tien, 0);
+                }
+                const tongTien = tongMonAn * soLuongBan + tongDichVu;
+                document.getElementById('suaTongTien').value = formatVND(tongTien);
+            }
+        });
+
+        const suaTienCocInput = document.getElementById('suaTienCoc');
+        suaTienCocInput.addEventListener('blur', function() {
+            let value = suaTienCocInput.value.replace(/\D/g, '');
+            if (value) suaTienCocInput.value = formatVND(Number(value));
+        });
+        suaTienCocInput.addEventListener('focus', function() {
+            suaTienCocInput.value = suaTienCocInput.value.replace(/\D/g, '');
+        });
     </script>
 </body>
 </html>
