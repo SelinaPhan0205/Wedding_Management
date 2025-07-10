@@ -527,13 +527,12 @@
                         </tr>
                         `;
                     }).join('');
-                    // Dòng tổng cộng
-                    const avgTiLe = totalCount > 0 ? (totalTiLe / totalCount).toFixed(2) : '';
+                    // Dòng tổng cộng: không hiển thị tỉ lệ
                     const totalRow = `
                         <tr style="background-color: #f1f5f9;">
                           <td colspan="5" style="font-weight:600;">Tổng cộng</td>
                           <td style="font-weight:600;">${formatVND(totalDoanhThu)}</td>
-                          <td style="font-weight:600;">${avgTiLe}</td>
+                          <td></td>
                         </tr>
                     `;
                     tbody.innerHTML = rows + totalRow;
