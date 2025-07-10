@@ -211,7 +211,6 @@
             z-index: 10;
         }
         .table-section tr:last-child td {
-            font-weight: 600;
             background-color: #f9fafb;
         }
         .loading {
@@ -501,12 +500,20 @@
                 const tableLoading = document.getElementById('tableLoading');
                 const table = document.getElementById('revenueTable');
                 const tbody = document.getElementById('revenueTableBody');
-                tbody.innerHTML = (data.details && data.details.length)
-                  ? data.details.map(item => {
-                        // Chỉ lấy tên chú rể (nếu có dấu & thì lấy phần trước dấu &)
+
+                if (data.details && data.details.length) {
+                    let totalDoanhThu = 0;
+                    let totalTiLe = 0;
+                    let totalCount = 0;
+                    const rows = data.details.map(item => {
                         let tenKhachHang = item.ten_khach_hang || '-';
                         if (tenKhachHang.includes('&')) {
                             tenKhachHang = tenKhachHang.split('&')[0].trim();
+                        }
+                        totalDoanhThu += item.doanh_thu || 0;
+                        if (item.ti_le != null && !isNaN(item.ti_le)) {
+                            totalTiLe += Number(item.ti_le);
+                            totalCount++;
                         }
                         return `
                         <tr>
@@ -519,8 +526,20 @@
                           <td>${item.ti_le != null ? item.ti_le : ''}</td>
                         </tr>
                         `;
-                    }).join('')
-                  : '<tr><td colspan="7" class="text-center">Không có dữ liệu</td></tr>';
+                    }).join('');
+                    // Dòng tổng cộng
+                    const avgTiLe = totalCount > 0 ? (totalTiLe / totalCount).toFixed(2) : '';
+                    const totalRow = `
+                        <tr style="background-color: #f1f5f9;">
+                          <td colspan="5" style="font-weight:600;">Tổng cộng</td>
+                          <td style="font-weight:600;">${formatVND(totalDoanhThu)}</td>
+                          <td style="font-weight:600;">${avgTiLe}</td>
+                        </tr>
+                    `;
+                    tbody.innerHTML = rows + totalRow;
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center">Không có dữ liệu</td></tr>';
+                }
 
                 // Hide loading and show content
                 chartLoading.classList.add('hidden');

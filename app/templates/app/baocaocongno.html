@@ -550,12 +550,10 @@
                 document.getElementById('content').classList.add('collapsed');
             }
             renderYearOptions();
-            // Đợi DOM render xong mới set value cho năm/tháng
-            setTimeout(() => {
-                const now = new Date();
-                document.getElementById('monthFilter').value = now.getMonth() + 1;
-                document.getElementById('yearFilter').value = now.getFullYear();
-            }, 0);
+            // Đặt tháng/năm hiện tại và gọi loadReportData sau khi set xong
+            const now = new Date();
+            document.getElementById('monthFilter').value = now.getMonth() + 1;
+            document.getElementById('yearFilter').value = now.getFullYear();
             await loadReportData();
         });
     </script>
