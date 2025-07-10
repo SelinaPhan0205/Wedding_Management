@@ -464,7 +464,10 @@
                         </button>
                     </div>
                     <div class="flex items-center gap-2 relative">
-                        <i class="fi fi-sr-filter text-gray-600 cursor-pointer" id="filterIcon"></i>
+                        <div class="flex items-center gap-1">
+                          <i class="fi fi-sr-filter text-gray-600 cursor-pointer" id="filterIcon"></i>
+                          <span class="text-base text-gray-600 font-medium hidden sm:inline">Lọc trạng thái</span>
+                        </div>
                         <div id="filterTrangThaiPopup" class="absolute bg-white rounded-lg shadow-lg p-0 mt-2 hidden"
                             style="z-index:101; right:0; top:calc(100% + 4px); min-width:160px;">
                             <div id="filterTrangThaiGroup" class="flex flex-col">
