@@ -264,6 +264,17 @@
     </style>
 </head>
 <body>
+<!-- Popup xác nhận xóa quy định -->
+<div id="popupXacNhanXoaQuyDinh" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden" style="z-index:2000;">
+    <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md text-center">
+        <h2 class="text-2xl font-bold mb-4 text-gray-800">Xác nhận xóa quy định</h2>
+        <p class="mb-6 text-gray-700">Bạn có chắc chắn muốn xóa quy định này? Thao tác này không thể hoàn tác.</p>
+        <div class="flex justify-center gap-4">
+            <button id="btnXacNhanXoaQuyDinh" class="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition">OK</button>
+            <button id="btnHuyXacNhanXoaQuyDinh" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-100 transition">Hủy</button>
+        </div>
+    </div>
+</div>
     <!-- Nút toggle sidebar -->
     <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
 
@@ -470,7 +481,7 @@
                         <td>${qd.mo_ta || ''}</td>
                         <td>
                             <button class="action-button edit-button" onclick="suaQuyDinh(${qd.id})">Sửa</button>
-                            <button class="action-button delete-button" onclick="xoaQuyDinh(${qd.id})">Xóa</button>
+                            <button class="action-button delete-button" onclick="hienPopupXacNhanXoaQuyDinh(${qd.id})">Xóa</button>
                         </td>
                     `;
                     danhSachQuyDinhElement.appendChild(row);
@@ -586,22 +597,29 @@
             }
         });
 
-        // Xóa quy định
-        async function xoaQuyDinh(id) {
-            if (confirm('Bạn có chắc chắn muốn xóa quy định này không?')) {
+        // --- Popup xác nhận xóa quy định ---
+        let quyDinhIdCanXoa = null;
+        function hienPopupXacNhanXoaQuyDinh(id) {
+            quyDinhIdCanXoa = id;
+            document.getElementById('popupXacNhanXoaQuyDinh').classList.remove('hidden');
+        }
+        document.getElementById('btnHuyXacNhanXoaQuyDinh').onclick = function() {
+            quyDinhIdCanXoa = null;
+            document.getElementById('popupXacNhanXoaQuyDinh').classList.add('hidden');
+        };
+        document.getElementById('btnXacNhanXoaQuyDinh').onclick = async function() {
+            if (quyDinhIdCanXoa !== null) {
                 try {
-                    await goiAPI('DELETE', `/api/quydinh/${id}/`);
+                    await goiAPI('DELETE', `/api/quydinh/${quyDinhIdCanXoa}/`);
                     // Lấy lại tổng số quy định với search hiện tại
                     const response = await goiAPI('GET', `/api/quydinh/count/?search=${encodeURIComponent(searchInput.value)}`);
                     const totalItems = response.total || 0;
                     const totalPages = Math.ceil(totalItems / itemsPerPage);
                     if (totalItems === 0 && searchInput.value) {
-                        // Nếu không còn kết quả tìm kiếm, reset search và hiển thị lại toàn bộ danh sách
                         searchInput.value = '';
                         currentPage = 1;
                         hienThiDanhSachQuyDinh('');
                     } else {
-                        // Nếu vẫn còn kết quả, cập nhật lại trang hiện tại cho hợp lý
                         if (currentPage > totalPages && totalPages > 0) {
                             currentPage = totalPages;
                         } else if (totalPages === 0) {
@@ -632,7 +650,9 @@
                     console.error('Lỗi xóa quy định:', error);
                 }
             }
-        }
+            quyDinhIdCanXoa = null;
+            document.getElementById('popupXacNhanXoaQuyDinh').classList.add('hidden');
+        };
 
         // Tìm kiếm
         searchInput.addEventListener('input', function(event) {

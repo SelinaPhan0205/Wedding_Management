@@ -265,6 +265,17 @@
     </style>
 </head>
 <body>
+    <!-- Popup xác nhận xóa dịch vụ -->
+    <div id="popupXacNhanXoaDichVu" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden" style="z-index:2000;">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md text-center">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">Xác nhận xóa dịch vụ</h2>
+            <p class="mb-6 text-gray-700">Bạn có chắc chắn muốn xóa dịch vụ này? Thao tác này không thể hoàn tác.</p>
+            <div class="flex justify-center gap-4">
+                <button id="btnXacNhanXoaDichVu" class="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition">OK</button>
+                <button id="btnHuyXacNhanXoaDichVu" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-100 transition">Hủy</button>
+            </div>
+        </div>
+    </div>
     <!-- Nút toggle sidebar -->
     <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
 
@@ -364,6 +375,27 @@
     </div>
 
     <script>
+    // Popup xác nhận xóa dịch vụ
+    window.dichVuIdCanXoa = null;
+    function hienPopupXacNhanXoaDichVu(id) {
+        window.dichVuIdCanXoa = id;
+        document.getElementById('popupXacNhanXoaDichVu').classList.remove('hidden');
+    }
+    function anPopupXacNhanXoaDichVu() {
+        window.dichVuIdCanXoa = null;
+        document.getElementById('popupXacNhanXoaDichVu').classList.add('hidden');
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('btnXacNhanXoaDichVu').onclick = async function() {
+            if (window.dichVuIdCanXoa !== null) {
+                await xoaDichVu(window.dichVuIdCanXoa, true);
+                anPopupXacNhanXoaDichVu();
+            }
+        };
+        document.getElementById('btnHuyXacNhanXoaDichVu').onclick = function() {
+            anPopupXacNhanXoaDichVu();
+        };
+    });
     // --- Toggle sidebar ---
     function toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
@@ -472,7 +504,7 @@
                     <td>${dichVu.mo_ta || ''}</td>
                     <td class="whitespace-nowrap">
                         <button class="action-button edit-button" onclick="suaDichVu(${dichVu.id})">Sửa</button>
-                        <button class="action-button delete-button" onclick="xoaDichVu(${dichVu.id})">Xóa</button>
+                        <button class="action-button delete-button" onclick="hienPopupXacNhanXoaDichVu(${dichVu.id})">Xóa</button>
                     </td>
                 `;
                 danhSachDichVuBodyElement.appendChild(row);
@@ -610,7 +642,10 @@
 
     // --- Xóa dịch vụ ---
     async function xoaDichVu(id) {
-        if (confirm('Bạn có chắc chắn muốn xóa dịch vụ này không?')) {
+        // Cho phép truyền thêm tham số boQuaXacNhan để bỏ qua confirm khi gọi từ popup
+        let boQuaXacNhan = false;
+        if (arguments.length > 1) boQuaXacNhan = arguments[1];
+        if (boQuaXacNhan || confirm('Bạn có chắc chắn muốn xóa dịch vụ này không?')) {
             try {
                 await goiAPI('DELETE', `/api/dichvu/${id}/`);
                 // Lấy lại tổng số dịch vụ để cập nhật phân trang
