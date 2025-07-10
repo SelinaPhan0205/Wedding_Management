@@ -360,6 +360,17 @@
     </style>
 </head>
 <body>
+    <!-- Popup xác nhận xóa sảnh -->
+    <div id="popupXacNhanXoaHoaDon" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden" style="z-index:2000;">
+        <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md text-center">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">Xác nhận xóa hóa đơn</h2>
+            <p class="mb-6 text-gray-700">Bạn có chắc chắn muốn xóa hóa đơn này? Thao tác này không thể hoàn tác.</p>
+            <div class="flex justify-center gap-4">
+                <button id="btnXacNhanXoaHoaDon" class="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition">OK</button>
+                <button id="btnHuyXacNhanXoaHoaDon" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-100 transition">Hủy</button>
+            </div>
+        </div>
+    </div>
     <!-- Nút toggle sidebar -->
     <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
 
@@ -793,7 +804,7 @@
                     let actionButtons = `<button class="action-button view-button" onclick="xemHoaDon(${hoadon.id})">Xem</button>`;
                     if (vaitro === 'admin') {
                         actionButtons += `<button class="action-button edit-button" onclick="suaHoaDon(${hoadon.id})">Sửa</button>
-                                         <button class="action-button delete-button" onclick="xoaHoaDon(${hoadon.id})">Xóa</button>`;
+                                         <button class="action-button delete-button" onclick="hienPopupXacNhanXoaHoaDon(${hoadon.id})">Xóa</button>`;
                     }
                     actionButtons += actionButton;
 
@@ -1094,51 +1105,74 @@
             }
         });
 
+
+        // --- Popup xác nhận xóa hóa đơn ---
+        let hoaDonIdCanXoa = null;
+        const popupXacNhanXoaHoaDon = document.getElementById('popupXacNhanXoaHoaDon');
+        const btnXacNhanXoaHoaDon = document.getElementById('btnXacNhanXoaHoaDon');
+        const btnHuyXacNhanXoaHoaDon = document.getElementById('btnHuyXacNhanXoaHoaDon');
+
+        function hienPopupXacNhanXoaHoaDon(id) {
+            hoaDonIdCanXoa = id;
+            popupXacNhanXoaHoaDon.classList.remove('hidden');
+        }
+
+        btnXacNhanXoaHoaDon.onclick = async function() {
+            if (hoaDonIdCanXoa !== null) {
+                await xoaHoaDon(hoaDonIdCanXoa);
+                hoaDonIdCanXoa = null;
+            }
+            popupXacNhanXoaHoaDon.classList.add('hidden');
+        };
+
+        btnHuyXacNhanXoaHoaDon.onclick = function() {
+            hoaDonIdCanXoa = null;
+            popupXacNhanXoaHoaDon.classList.add('hidden');
+        };
+
         async function xoaHoaDon(id) {
-            if (confirm('Bạn có chắc chắn muốn xóa hóa đơn này không?')) {
-                try {
-                    console.log(`Bắt đầu xóa hóa đơn ID: ${id}`);
-                    await goiAPI('DELETE', `/api/hoadon/${id}/`);
-                    console.log('Đã xóa hóa đơn thành công');
-                    await new Promise(resolve => setTimeout(resolve, 200));
-                    const countResponse = await goiAPI('GET', `/api/hoadon/count/`);
-                    const totalItems = countResponse.total || 0;
-                    const totalPages = Math.ceil(totalItems / itemsPerPageHoaDon);
-                    if (currentPageHoaDon > totalPages && totalPages > 0) {
-                        currentPageHoaDon = totalPages;
-                        console.log(`Chuyển về trang cuối: ${currentPageHoaDon}`);
-                    }
-                    if (totalPages === 0) {
-                        currentPageHoaDon = 1;
-                        console.log('Không còn hóa đơn nào, chuyển về trang 1');
-                    }
-                    console.log('Đang cập nhật danh sách sau khi xóa...');
-                    await hienThiDanhSachHoaDon(searchHoaDonInput.value);
-                    console.log('Xóa hóa đơn thành công và đã cập nhật danh sách');
-                    const toast = document.createElement('div');
-                    toast.style.cssText = `
-                        position: fixed;
-                        top: 20px;
-                        right: 20px;
-                        background: #10b981;
-                        color: white;
-                        padding: 12px 20px;
-                        border-radius: 8px;
-                        z-index: 9999;
-                        font-weight: 500;
-                        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                    `;
-                    toast.textContent = 'Đã xóa hóa đơn thành công!';
-                    document.body.appendChild(toast);
-                    setTimeout(() => {
-                        if (toast.parentNode) {
-                            toast.parentNode.removeChild(toast);
-                        }
-                    }, 2000);
-                } catch (error) {
-                    console.error('Lỗi xóa hóa đơn:', error);
-                    alert('Có lỗi khi xóa hóa đơn. Vui lòng thử lại.');
+            try {
+                console.log(`Bắt đầu xóa hóa đơn ID: ${id}`);
+                await goiAPI('DELETE', `/api/hoadon/${id}/`);
+                console.log('Đã xóa hóa đơn thành công');
+                await new Promise(resolve => setTimeout(resolve, 200));
+                const countResponse = await goiAPI('GET', `/api/hoadon/count/`);
+                const totalItems = countResponse.total || 0;
+                const totalPages = Math.ceil(totalItems / itemsPerPageHoaDon);
+                if (currentPageHoaDon > totalPages && totalPages > 0) {
+                    currentPageHoaDon = totalPages;
+                    console.log(`Chuyển về trang cuối: ${currentPageHoaDon}`);
                 }
+                if (totalPages === 0) {
+                    currentPageHoaDon = 1;
+                    console.log('Không còn hóa đơn nào, chuyển về trang 1');
+                }
+                console.log('Đang cập nhật danh sách sau khi xóa...');
+                await hienThiDanhSachHoaDon(searchHoaDonInput.value);
+                console.log('Xóa hóa đơn thành công và đã cập nhật danh sách');
+                const toast = document.createElement('div');
+                toast.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: #10b981;
+                    color: white;
+                    padding: 12px 20px;
+                    border-radius: 8px;
+                    z-index: 9999;
+                    font-weight: 500;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                `;
+                toast.textContent = 'Đã xóa hóa đơn thành công!';
+                document.body.appendChild(toast);
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 2000);
+            } catch (error) {
+                console.error('Lỗi xóa hóa đơn:', error);
+                alert('Có lỗi khi xóa hóa đơn. Vui lòng thử lại.');
             }
         }
 
