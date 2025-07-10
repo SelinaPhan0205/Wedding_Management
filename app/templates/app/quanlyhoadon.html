@@ -745,12 +745,8 @@
                 }
                 const thang = filterThang.value;
                 const nam = filterNam.value;
-                if (thang) {
-                    params.append('thang', thang);
-                }
-                if (nam) {
-                    params.append('nam', nam);
-                }
+                if (thang) params.append('thang', thang);
+                if (nam) params.append('nam', nam); 
                 params.append('_t', Date.now());
                 const url = `/api/hoadon/?${params.toString()}`;
                 const response = await goiAPI('GET', url);
@@ -1347,6 +1343,7 @@
         }
 
         function khoiTaoDanhSachNam() {
+            filterNam.innerHTML = '<option value="">Tất cả</option>';
             const currentYear = new Date().getFullYear();
             const startYear = 2020;
             for (let year = currentYear; year >= startYear; year--) {
@@ -1355,7 +1352,7 @@
                 option.textContent = year;
                 filterNam.appendChild(option);
             }
-        }
+        }  
 
         filterThang.addEventListener('change', function() {
             currentPageHoaDon = 1;
@@ -1368,8 +1365,11 @@
         });
 
         document.addEventListener('DOMContentLoaded', async () => {
-            console.log("Đang tải danh sách hóa đơn");
             khoiTaoDanhSachNam();
+            // Set mặc định tháng/năm hiện tại
+            const now = new Date();
+            filterThang.value = (now.getMonth() + 1).toString();
+            filterNam.value = now.getFullYear().toString();
             hienThiDanhSachHoaDon();
         });
 

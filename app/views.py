@@ -429,25 +429,28 @@ class HoaDonViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         from django.db.models import Q
+        import datetime
         queryset = self.get_queryset().order_by('-ngay_thanh_toan')
         
-        # Lọc theo tháng/năm cho cả ngày thanh toán và ngày đãi tiệc (ngày lập hóa đơn)
+        # Lọc chỉ theo ngày lập hóa đơn (ngày đãi tiệc)
         thang = request.query_params.get('thang')
         nam = request.query_params.get('nam')
+        if thang == '':
+            thang = None
+        if nam == '':
+            nam = None
         if thang and nam:
             queryset = queryset.filter(
-                Q(ngay_thanh_toan__month=int(thang), ngay_thanh_toan__year=int(nam)) |
-                Q(tiec_cuoi__ngay_dai_tiec__month=int(thang), tiec_cuoi__ngay_dai_tiec__year=int(nam))
+                tiec_cuoi__ngay_dai_tiec__month=int(thang),
+                tiec_cuoi__ngay_dai_tiec__year=int(nam)
             )
         elif thang:
             queryset = queryset.filter(
-                Q(ngay_thanh_toan__month=int(thang)) |
-                Q(tiec_cuoi__ngay_dai_tiec__month=int(thang))
+                tiec_cuoi__ngay_dai_tiec__month=int(thang)
             )
         elif nam:
             queryset = queryset.filter(
-                Q(ngay_thanh_toan__year=int(nam)) |
-                Q(tiec_cuoi__ngay_dai_tiec__year=int(nam))
+                tiec_cuoi__ngay_dai_tiec__year=int(nam)
             )
         
         # Xử lý search sau khi đã filter

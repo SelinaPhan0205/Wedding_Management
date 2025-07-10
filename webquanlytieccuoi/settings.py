@@ -62,9 +62,9 @@ WSGI_APPLICATION = 'webquanlytieccuoi.wsgi.application'
 DATABASES = {
     'default': {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": "Wedding_Management",
+        "NAME": "weddingdb",
         "USER": "postgres",
-        "PASSWORD": "8436530leo",
+        "PASSWORD": "NVTS220205s",
         "HOST": "localhost",
         "PORT": "5432",  # Thêm cổng mặc định của PostgreSQL
     }
