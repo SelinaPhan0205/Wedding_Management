@@ -357,6 +357,53 @@
             box-shadow: 0 2px 8px rgba(44,62,80,0.10);
             outline: none;
         }
+        .filter-btn-trangthai {
+            padding: 8px 16px;
+            border-radius: 8px;
+            background: #f3f4f6;
+            color: #374151;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            text-align: left;
+            transition: background 0.2s, color 0.2s;
+        }
+        #filterTrangThaiPopup {
+            min-width: 160px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.10);
+            border: none;
+            padding: 6px 0;
+            right: 0;
+            top: calc(100% + 4px);
+        }
+        .filter-btn-trangthai {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 12px;
+            border-radius: 4px;
+            background: none;
+            color: #374151;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            text-align: left;
+            transition: background 0.18s, color 0.18s;
+            font-size: 15px;
+            min-width: 120px;
+        }
+        .filter-btn-trangthai:hover {
+            background: #f5f5f5;
+        }
+        .filter-btn-trangthai .tick {
+            font-size: 15px;
+            color: #22c55e; /* xanh lá nhẹ */
+            opacity: 1;
+            margin-right: 2px;
+        }
+        .filter-btn-trangthai:not(.active) .tick {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -415,14 +462,20 @@
                         </button>
                     </div>
                     <div class="flex items-center gap-2 relative">
-                        <i class="fi fi-sr-filter text-gray-600" id="filterIcon"></i>
-                        <div id="filterTrangThaiPopup" class="absolute bg-white border rounded-lg shadow-lg p-3 mt-2 hidden" style="z-index: 100; right: 0; min-width: 180px;">
-                            <label class="block mb-2 font-medium text-gray-700">Lọc theo trạng thái:</label>
-                            <select id="filterTrangThai" class="filter-select w-full">
-                                <option value="">Tất cả</option>
-                                <option value="Chưa thanh toán">Chưa thanh toán</option>
-                                <option value="Đã thanh toán">Đã thanh toán</option>
-                            </select>
+                        <i class="fi fi-sr-filter text-gray-600 cursor-pointer" id="filterIcon"></i>
+                        <div id="filterTrangThaiPopup" class="absolute bg-white rounded-lg shadow-lg p-0 mt-2 hidden"
+                            style="z-index:101; right:0; top:calc(100% + 4px); min-width:160px;">
+                            <div id="filterTrangThaiGroup" class="flex flex-col">
+                                <button type="button" class="filter-btn-trangthai active" data-value="">
+                                    <span class="tick">✔</span> Tất cả
+                                </button>
+                                <button type="button" class="filter-btn-trangthai" data-value="Chưa thanh toán">
+                                    <span class="tick">✔</span> Chưa thanh toán
+                                </button>
+                                <button type="button" class="filter-btn-trangthai" data-value="Đã thanh toán">
+                                    <span class="tick">✔</span> Đã thanh toán
+                                </button>
+                            </div>
                         </div>
                         <select id="filterThang" class="filter-select" style="width: 80px;">
                             <option value="">Tháng</option>
@@ -637,26 +690,42 @@
     </div>
 
     <script>
-        // --- Biến filter trạng thái ---
-        const filterIcon = document.querySelector('.fi-sr-filter');
+        const filterIcon = document.getElementById('filterIcon');
         const filterTrangThaiPopup = document.getElementById('filterTrangThaiPopup');
-        const filterTrangThai = document.getElementById('filterTrangThai');
+        const filterTrangThaiGroup = document.getElementById('filterTrangThaiGroup');
+        let trangThaiDangChon = '';
 
-        // Sự kiện hiện/ẩn popup lọc trạng thái
         filterIcon.addEventListener('click', function(e) {
             e.stopPropagation();
-            filterTrangThaiPopup.classList.toggle('hidden');
+            // Đặt popup lệch trái nếu gần mép phải
+            const rect = filterIcon.getBoundingClientRect();
+            const popup = filterTrangThaiPopup;
+            popup.classList.toggle('hidden');
+            if (!popup.classList.contains('hidden')) {
+                const rightSpace = window.innerWidth - rect.right;
+                if (rightSpace < 200) {
+                    popup.style.right = '0';
+                    popup.style.left = 'auto';
+                } else {
+                    popup.style.right = '110%';
+                    popup.style.left = 'auto';
+                }
+            }
         });
         document.addEventListener('click', function(e) {
             if (!filterTrangThaiPopup.contains(e.target) && e.target !== filterIcon) {
                 filterTrangThaiPopup.classList.add('hidden');
             }
         });
-        // Sự kiện lọc theo trạng thái
-        filterTrangThai.addEventListener('change', function() {
-            currentPageHoaDon = 1;
-            hienThiDanhSachHoaDon(searchHoaDonInput.value);
-            filterTrangThaiPopup.classList.add('hidden');
+        filterTrangThaiGroup.querySelectorAll('.filter-btn-trangthai').forEach(btn => {
+            btn.addEventListener('click', function() {
+                filterTrangThaiGroup.querySelectorAll('.filter-btn-trangthai').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                trangThaiDangChon = btn.getAttribute('data-value');
+                currentPageHoaDon = 1;
+                hienThiDanhSachHoaDon(searchHoaDonInput.value);
+                filterTrangThaiPopup.classList.add('hidden');
+            });
         });
         // Sidebar toggle logic
         function toggleSidebar() {
@@ -787,8 +856,7 @@
                 const nam = filterNam.value;
                 if (thang) params.append('thang', thang);
                 if (nam) params.append('nam', nam); 
-                const trangThai = filterTrangThai.value;
-                if (trangThai) params.append('trang_thai', trangThai);
+                if (trangThaiDangChon) params.append('trang_thai', trangThaiDangChon);
                 params.append('_t', Date.now());
                 const url = `/api/hoadon/?${params.toString()}`;
                 const response = await goiAPI('GET', url);
