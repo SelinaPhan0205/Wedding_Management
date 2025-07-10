@@ -414,8 +414,16 @@
                             </svg>
                         </button>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <i class="fi fi-sr-filter text-gray-600"></i>
+                    <div class="flex items-center gap-2 relative">
+                        <i class="fi fi-sr-filter text-gray-600" id="filterIcon"></i>
+                        <div id="filterTrangThaiPopup" class="absolute bg-white border rounded-lg shadow-lg p-3 mt-2 hidden" style="z-index: 100; right: 0; min-width: 180px;">
+                            <label class="block mb-2 font-medium text-gray-700">Lọc theo trạng thái:</label>
+                            <select id="filterTrangThai" class="filter-select w-full">
+                                <option value="">Tất cả</option>
+                                <option value="Chưa thanh toán">Chưa thanh toán</option>
+                                <option value="Đã thanh toán">Đã thanh toán</option>
+                            </select>
+                        </div>
                         <select id="filterThang" class="filter-select" style="width: 80px;">
                             <option value="">Tháng</option>
                             <option value="1">1</option>
@@ -629,6 +637,27 @@
     </div>
 
     <script>
+        // --- Biến filter trạng thái ---
+        const filterIcon = document.querySelector('.fi-sr-filter');
+        const filterTrangThaiPopup = document.getElementById('filterTrangThaiPopup');
+        const filterTrangThai = document.getElementById('filterTrangThai');
+
+        // Sự kiện hiện/ẩn popup lọc trạng thái
+        filterIcon.addEventListener('click', function(e) {
+            e.stopPropagation();
+            filterTrangThaiPopup.classList.toggle('hidden');
+        });
+        document.addEventListener('click', function(e) {
+            if (!filterTrangThaiPopup.contains(e.target) && e.target !== filterIcon) {
+                filterTrangThaiPopup.classList.add('hidden');
+            }
+        });
+        // Sự kiện lọc theo trạng thái
+        filterTrangThai.addEventListener('change', function() {
+            currentPageHoaDon = 1;
+            hienThiDanhSachHoaDon(searchHoaDonInput.value);
+            filterTrangThaiPopup.classList.add('hidden');
+        });
         // Sidebar toggle logic
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
@@ -758,6 +787,8 @@
                 const nam = filterNam.value;
                 if (thang) params.append('thang', thang);
                 if (nam) params.append('nam', nam); 
+                const trangThai = filterTrangThai.value;
+                if (trangThai) params.append('trang_thai', trangThai);
                 params.append('_t', Date.now());
                 const url = `/api/hoadon/?${params.toString()}`;
                 const response = await goiAPI('GET', url);
@@ -785,17 +816,9 @@
                     }
                     let actionButton = '';
                     if (hoadon.ngay_thanh_toan) {
-                        actionButton = `<button class="action-button undo-button" onclick="hoanTacThanhToan(${hoadon.id}, this)" title="Hoàn tác thanh toán">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                            </svg>
-                        </button>`;
+                        actionButton = `<button class="action-button undo-button" onclick="hoanTacThanhToan(${hoadon.id}, this)" title="Hoàn tác thanh toán">Hoàn tác</button>`;
                     } else {
-                        actionButton = `<button class="action-button confirm-button" onclick="xacNhanThanhToan(${hoadon.id}, this)" title="Xác nhận thanh toán" id="btnThanhToan_${hoadon.id}">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                            </svg>
-                        </button>`;
+                        actionButton = `<button class="action-button confirm-button" onclick="xacNhanThanhToan(${hoadon.id}, this)" title="Xác nhận thanh toán" id="btnThanhToan_${hoadon.id}">Xác nhận</button>`;
                     }
                     let actionButtons = `<button class="action-button view-button" onclick="xemHoaDon(${hoadon.id})">Xem</button>`;
                     if (vaitro === 'admin') {
@@ -805,13 +828,17 @@
                     actionButtons += actionButton;
 
                     html += `<tr data-tien-coc="${hoadon.tien_coc || 0}">
-                        <td class="text-center">HD${hoadon.id}</td>
-                        <td class="text-center">${hoadon.tiec_cuoi && hoadon.tiec_cuoi.id ? `TC${hoadon.tiec_cuoi.id}` : (hoadon.ma_tiec ? `TC${hoadon.ma_tiec}` : '')}</td>
+                        <td class="text-center">HD${String(hoadon.id).padStart(2, '0')}</td>
+                        <td class="text-center">${
+                            hoadon.tiec_cuoi && hoadon.tiec_cuoi.id
+                                ? `TC${String(hoadon.tiec_cuoi.id).padStart(2, '0')}`
+                                : (hoadon.ma_tiec ? `TC${String(hoadon.ma_tiec).padStart(2, '0')}` : '')
+                        }</td>
                         <td>${hoadon.tiec_cuoi && hoadon.tiec_cuoi.ngay_dai_tiec ? formatDate(hoadon.tiec_cuoi.ngay_dai_tiec) : '-'}</td>
                         <td>${hoadon.ngay_thanh_toan ? formatDate(hoadon.ngay_thanh_toan) : '-'}</td>
                         <td>${(hoadon.tong_tien != null && hoadon.tong_tien !== undefined) ? formatVND(hoadon.tong_tien) : '-'}</td>
-                        <td>${hoadon.trang_thai === 'Chưa thanh toán' ? '-' : (hoadon.so_ngay_tre != null ? hoadon.so_ngay_tre : '-')}</td>
-                        <td>${hoadon.trang_thai === 'Chưa thanh toán' ? '-' : (hoadon.tien_phat != null ? formatVND(hoadon.tien_phat) : '-')}</td>
+                        <td>${hoadon.so_ngay_tre > 0 ? hoadon.so_ngay_tre : '-'}</td>
+                        <td>${hoadon.tien_phat > 0 ? formatVND(hoadon.tien_phat) : '-'}</td>
                         <td>${hoadon.trang_thai === 'Đã thanh toán' ? 'Đã thanh toán' : 'Chưa thanh toán'}</td>
                         <td style="min-width: 180px; width: 180px;">
                             <div class="flex gap-1 flex-nowrap">
@@ -1299,7 +1326,7 @@
             filtered.forEach(tiec => {
                 const item = document.createElement('div');
                 item.classList.add('autocomplete-item');
-                item.textContent = `${tiec.id} - ${tiec.ten_chu_re} & ${tiec.ten_co_dau}`;
+                item.textContent = `TC${String(tiec.id).padStart(2, '0')} - ${tiec.ten_chu_re} & ${tiec.ten_co_dau}`;
                 item.onclick = () => {
                     maTiecInput.value = tiec.id;
                     autocompleteList.classList.add('hidden');
@@ -1333,7 +1360,7 @@
             filtered.forEach(tiec => {
                 const item = document.createElement('div');
                 item.classList.add('autocomplete-item');
-                item.textContent = `${tiec.id} - ${tiec.ten_chu_re} & ${tiec.ten_co_dau}`;
+                item.textContent = `TC${String(tiec.id).padStart(2, '0')} - ${tiec.ten_chu_re} & ${tiec.ten_co_dau}`;
                 item.onclick = () => {
                     suaMaTiecInput.value = tiec.id;
                     suaAutocompleteList.classList.add('hidden');
@@ -1377,7 +1404,7 @@
         }
 
         function khoiTaoDanhSachNam() {
-            filterNam.innerHTML = '<option value="">Tất cả</option>';
+            filterNam.innerHTML = '<option value="">Năm</option>';
             const currentYear = new Date().getFullYear();
             const startYear = 2020;
             for (let year = currentYear; year >= startYear; year--) {

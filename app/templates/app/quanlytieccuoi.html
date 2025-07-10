@@ -894,12 +894,8 @@
             // Thêm filter tháng/năm nếu có
             const thang = filterThangTiec.value;
             const nam = filterNamTiec.value;
-            if (thang) {
-                params.append('thang', thang);
-            }
-            if (nam) {
-                params.append('nam', nam);
-            }
+            if (thang) params.append('thang', thang);
+            if (nam) params.append('nam', nam);
             
             const url = `/api/tieccuoi/?${params.toString()}`;
             const response = await goiAPI('GET', url);
@@ -939,7 +935,7 @@
                     `;
                 }
                 row.innerHTML = `
-                    <td>TC${tiec.id}</td>
+                    <td>TC${String(tiec.id).padStart(2, '0')}</td>
                     <td>${tiec.ten_chu_re}</td>
                     <td>${tiec.ten_co_dau}</td>
                     <td>${tiec.so_dien_thoai}</td>
@@ -1681,6 +1677,9 @@
         filterThangTiec = document.getElementById('filterThangTiec');
         filterNamTiec = document.getElementById('filterNamTiec');
         khoiTaoDanhSachNamTiec();
+        const now = new Date();
+        filterThangTiec.value = (now.getMonth() + 1).toString();
+        filterNamTiec.value = now.getFullYear().toString();
         hienThiDanhSach();
 
         filterThangTiec.addEventListener('change', function() {
@@ -1694,6 +1693,7 @@
     });
 
     function khoiTaoDanhSachNamTiec() {
+        filterNamTiec.innerHTML = '<option value="">Năm</option>';
         const currentYear = new Date().getFullYear();
         const startYear = 2020;
         for (let year = currentYear; year >= startYear; year--) {

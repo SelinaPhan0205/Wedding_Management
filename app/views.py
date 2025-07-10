@@ -330,10 +330,23 @@ class TiecCuoiViewSet(viewsets.ModelViewSet):
         # Xử lý filter tháng/năm trước (vì cần QuerySet)
         thang = request.query_params.get('thang')
         nam = request.query_params.get('nam')
-        if thang:
-            queryset = queryset.filter(ngay_dai_tiec__month=int(thang))
-        if nam:
-            queryset = queryset.filter(ngay_dai_tiec__year=int(nam))
+        if thang == '':
+            thang = None
+        if nam == '':
+            nam = None
+        if thang and nam:
+            queryset = queryset.filter(
+                ngay_dai_tiec__month=int(thang),
+                ngay_dai_tiec__year=int(nam)
+            )
+        elif thang:
+            queryset = queryset.filter(
+                ngay_dai_tiec__month=int(thang)
+            )
+        elif nam:
+            queryset = queryset.filter(
+                ngay_dai_tiec__year=int(nam)
+            )
             
         # Xử lý các filter khác
         sanh_id = request.query_params.get('sanh_id')
@@ -376,7 +389,24 @@ class TiecCuoiViewSet(viewsets.ModelViewSet):
 class HoaDonViewSet(viewsets.ModelViewSet):
     queryset = HoaDon.objects.all().select_related('tiec_cuoi')
     serializer_class = HoaDonSerializer
-
+    
+    def list(self, request, *args, **kwargs):
+        from datetime import date
+        today = date.today()
+        for hd in HoaDon.objects.filter(trang_thai='Chưa thanh toán'):
+            ngay_tiec = hd.tiec_cuoi.ngay_dai_tiec if hd.tiec_cuoi else None
+            if ngay_tiec and today > ngay_tiec:
+                so_ngay_tre = (today - ngay_tiec).days
+                hd.so_ngay_tre = so_ngay_tre
+                tong_tien = hd.tiec_cuoi.tinh_tong_tien(hd.so_luong_ban)
+                tien_coc = hd.tiec_cuoi.tien_dat_coc if hd.tiec_cuoi else 0
+                hd.tien_phat = max((tong_tien - tien_coc) * 0.01 * so_ngay_tre, 0)
+                hd.save()
+            else:
+                hd.so_ngay_tre = 0
+                hd.tien_phat = 0
+                hd.save()
+            
     def perform_create(self, serializer):
         instance = serializer.save()
         if instance.ngay_thanh_toan:
@@ -430,7 +460,7 @@ class HoaDonViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         from django.db.models import Q
         import datetime
-        queryset = self.get_queryset().order_by('-ngay_thanh_toan')
+        queryset = self.get_queryset().order_by('-id')
         
         # Lọc chỉ theo ngày lập hóa đơn (ngày đãi tiệc)
         thang = request.query_params.get('thang')
@@ -452,7 +482,10 @@ class HoaDonViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(
                 tiec_cuoi__ngay_dai_tiec__year=int(nam)
             )
-        
+        # Lọc theo trạng thái hóa đơn
+        trang_thai = request.query_params.get('trang_thai')
+        if trang_thai:
+            queryset = queryset.filter(trang_thai=trang_thai)
         # Xử lý search sau khi đã filter
         search_query = request.query_params.get('search', '').strip().lower()
         if search_query:
