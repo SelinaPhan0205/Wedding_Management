@@ -726,6 +726,12 @@
                 filterTrangThaiGroup.querySelectorAll('.filter-btn-trangthai').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 trangThaiDangChon = btn.getAttribute('data-value');
+                // Cập nhật label
+                if (trangThaiDangChon === "") {
+                    filterLabel.textContent = "Lọc trạng thái";
+                } else {
+                    filterLabel.textContent = btn.textContent.replace("✔", "").trim();
+                }
                 currentPageHoaDon = 1;
                 hienThiDanhSachHoaDon(searchHoaDonInput.value);
                 filterTrangThaiPopup.classList.add('hidden');
@@ -980,10 +986,13 @@
             hienThiDanhSachHoaDon(searchHoaDonInput.value);
         }
 
-        function moFormThemHoaDon() {
+        async function moFormThemHoaDon() {
             isEditModeHoaDon = false;
             document.getElementById('modalTitleHoaDon').textContent = 'Thêm Hóa Đơn Mới';
             formHoaDon.reset();
+            // Lấy lại toàn bộ hóa đơn để kiểm tra trùng
+            const response = await goiAPI('GET', '/api/hoadon/?limit=10000');
+            danhSachHoaDon = Array.isArray(response) ? response : (response.results || response.data || []);
             modalHoaDon.classList.remove('hidden');
         }
 
