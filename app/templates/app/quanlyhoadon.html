@@ -369,12 +369,13 @@
             transition: background 0.2s, color 0.2s;
         }
         #filterTrangThaiPopup {
+            left: 0 !important;
+            right: auto !important;
+            top: calc(100% + 4px) !important;
             min-width: 160px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.10);
             border: none;
             padding: 6px 0;
-            right: 0;
-            top: calc(100% + 4px);
         }
         .filter-btn-trangthai {
             display: flex;
@@ -464,42 +465,43 @@
                         </button>
                     </div>
                     <div class="flex items-center gap-2 relative">
-                        <div class="flex items-center gap-1">
-                          <i class="fi fi-sr-filter text-gray-600 cursor-pointer" id="filterIcon"></i>
-                          <span class="text-base text-gray-600 font-medium hidden sm:inline">Lọc trạng thái</span>
+                      <div class="flex items-center gap-1 relative" id="filterLabelWrapper">
+                        <i class="fi fi-sr-filter text-gray-600 cursor-pointer" id="filterIcon"></i>
+                        <span class="text-base text-gray-600 font-medium hidden sm:inline cursor-pointer" id="filterLabel">Lọc trạng thái</span>
+                        <div id="filterTrangThaiPopup"
+                             class="absolute bg-white rounded-lg shadow-lg p-0 mt-2 hidden"
+                             style="z-index:101; left:0; top:calc(100% + 4px); min-width:160px;">
+                          <div id="filterTrangThaiGroup" class="flex flex-col">
+                            <button type="button" class="filter-btn-trangthai active" data-value="">
+                              Tất cả <span class="tick">✔</span>
+                            </button>
+                            <button type="button" class="filter-btn-trangthai" data-value="Chưa thanh toán">
+                              Chưa thanh toán <span class="tick">✔</span>
+                            </button>
+                            <button type="button" class="filter-btn-trangthai" data-value="Đã thanh toán">
+                              Đã thanh toán <span class="tick">✔</span>
+                            </button>
+                          </div>
                         </div>
-                        <div id="filterTrangThaiPopup" class="absolute bg-white rounded-lg shadow-lg p-0 mt-2 hidden"
-                            style="z-index:101; right:0; top:calc(100% + 4px); min-width:160px;">
-                            <div id="filterTrangThaiGroup" class="flex flex-col">
-                                <button type="button" class="filter-btn-trangthai active" data-value="">
-                                    Tất cả <span class="tick">✔</span>
-                                </button>
-                                <button type="button" class="filter-btn-trangthai" data-value="Chưa thanh toán">
-                                    Chưa thanh toán <span class="tick">✔</span>
-                                </button>
-                                <button type="button" class="filter-btn-trangthai" data-value="Đã thanh toán">
-                                    Đã thanh toán <span class="tick">✔</span>
-                                </button>
-                            </div>
-                        </div>
-                        <select id="filterThang" class="filter-select" style="width: 80px;">
-                            <option value="">Tháng</option>
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                            <option value="6">6</option>
-                            <option value="7">7</option>
-                            <option value="8">8</option>
-                            <option value="9">9</option>
-                            <option value="10">10</option>
-                            <option value="11">11</option>
-                            <option value="12">12</option>
-                        </select>
-                        <select id="filterNam" class="filter-select" style="width: 80px;">
-                            <option value="">Năm</option>
-                        </select>
+                      </div>
+                      <select id="filterThang" class="filter-select" style="width: 80px;">
+                          <option value="">Tháng</option>
+                          <option value="1">1</option>
+                          <option value="2">2</option>
+                          <option value="3">3</option>
+                          <option value="4">4</option>
+                          <option value="5">5</option>
+                          <option value="6">6</option>
+                          <option value="7">7</option>
+                          <option value="8">8</option>
+                          <option value="9">9</option>
+                          <option value="10">10</option>
+                          <option value="11">11</option>
+                          <option value="12">12</option>
+                      </select>
+                      <select id="filterNam" class="filter-select" style="width: 80px;">
+                          <option value="">Năm</option>
+                      </select>
                     </div>
                     <button class="add-button" onclick="moFormThemHoaDon()">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -696,32 +698,24 @@
 
     <script>
         const filterIcon = document.getElementById('filterIcon');
+        const filterLabel = document.getElementById('filterLabel');
         const filterTrangThaiPopup = document.getElementById('filterTrangThaiPopup');
         const filterTrangThaiGroup = document.getElementById('filterTrangThaiGroup');
         let trangThaiDangChon = '';
 
-        filterIcon.addEventListener('click', function(e) {
+        function toggleFilterPopup(e) {
             e.stopPropagation();
-            // Đặt popup lệch trái nếu gần mép phải
-            const rect = filterIcon.getBoundingClientRect();
-            const popup = filterTrangThaiPopup;
-            popup.classList.toggle('hidden');
-            if (!popup.classList.contains('hidden')) {
-                const rightSpace = window.innerWidth - rect.right;
-                if (rightSpace < 200) {
-                    popup.style.right = '0';
-                    popup.style.left = 'auto';
-                } else {
-                    popup.style.right = '110%';
-                    popup.style.left = 'auto';
-                }
-            }
-        });
+            filterTrangThaiPopup.classList.toggle('hidden');
+        }
+        filterIcon.addEventListener('click', toggleFilterPopup);
+        filterLabel.addEventListener('click', toggleFilterPopup);
+
         document.addEventListener('click', function(e) {
-            if (!filterTrangThaiPopup.contains(e.target) && e.target !== filterIcon) {
+            if (!filterTrangThaiPopup.contains(e.target) && e.target !== filterIcon && e.target !== filterLabel) {
                 filterTrangThaiPopup.classList.add('hidden');
             }
         });
+
         filterTrangThaiGroup.querySelectorAll('.filter-btn-trangthai').forEach(btn => {
             btn.addEventListener('click', function() {
                 filterTrangThaiGroup.querySelectorAll('.filter-btn-trangthai').forEach(b => b.classList.remove('active'));
