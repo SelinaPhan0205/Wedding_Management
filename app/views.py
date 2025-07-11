@@ -362,14 +362,26 @@ class TiecCuoiViewSet(viewsets.ModelViewSet):
         # Xử lý search cuối cùng (sau khi đã filter)
         search_query = request.query_params.get('search', '').strip().lower()
         if search_query:
-            search_query_no_diacritics = bo_dau(search_query).lower()
-            queryset = [
-                t for t in queryset
-                if search_query_no_diacritics in bo_dau(t.ten_chu_re or '').lower()
-                or search_query_no_diacritics in bo_dau(t.ten_co_dau or '').lower()
-                or search_query_no_diacritics in bo_dau(t.so_dien_thoai or '').lower()
-                or search_query_no_diacritics in bo_dau(t.sanh.ten_sanh if t.sanh else '').lower()
-            ]
+            import re
+            ma_tiec_match = re.match(r'^tc0*(\d*)$', search_query, re.IGNORECASE)
+            if ma_tiec_match:
+                if ma_tiec_match.group(1):
+                    search_id = int(ma_tiec_match.group(1))
+                    queryset = [t for t in queryset if t.id == search_id]
+                # Nếu chỉ là "TC" hoặc "TC0", không filter gì thêm (giữ nguyên queryset)
+            elif search_query.isdigit():
+                # Nếu chỉ nhập số, cũng filter theo id
+                search_id = int(search_query)
+                queryset = [t for t in queryset if t.id == search_id]
+            else:
+                search_query_no_diacritics = bo_dau(search_query).lower()
+                queryset = [
+                    t for t in queryset
+                    if search_query_no_diacritics in bo_dau(t.ten_chu_re or '').lower()
+                    or search_query_no_diacritics in bo_dau(t.ten_co_dau or '').lower()
+                    or search_query_no_diacritics in bo_dau(t.so_dien_thoai or '').lower()
+                    or search_query_no_diacritics in bo_dau(t.sanh.ten_sanh if t.sanh else '').lower()
+                ]
         # Phân trang
         page = int(request.query_params.get('page', 1))
         limit = int(request.query_params.get('limit', 8))
@@ -489,15 +501,28 @@ class HoaDonViewSet(viewsets.ModelViewSet):
         # Xử lý search sau khi đã filter
         search_query = request.query_params.get('search', '').strip().lower()
         if search_query:
-            queryset = queryset.filter(
-                tiec_cuoi__ten_chu_re__icontains=search_query
-            ) | queryset.filter(
-                tiec_cuoi__ten_co_dau__icontains=search_query
-            ) | queryset.filter(
-                tiec_cuoi__id__icontains=search_query
-            ) | queryset.filter(
-                id__icontains=search_query
-            )
+            import re
+            ma_tiec_match = re.match(r'^tc0*(\d*)$', search_query, re.IGNORECASE)
+            ma_hd_match = re.match(r'^hd0*(\d*)$', search_query, re.IGNORECASE)
+            if ma_tiec_match:
+                # Nếu chỉ nhập "TC" hoặc "TC0" (không có số), không filter theo id
+                if ma_tiec_match.group(1):
+                    search_id = int(ma_tiec_match.group(1))
+                    queryset = queryset.filter(tiec_cuoi__id=search_id)
+                # Nếu chỉ là "TC" hoặc "TC0", không filter gì thêm (giữ nguyên queryset)
+            elif ma_hd_match:
+                # Nếu chỉ nhập "HD" hoặc "HD0" (không có số), không filter theo id
+                if ma_hd_match.group(1):
+                    search_id = int(ma_hd_match.group(1))
+                    queryset = queryset.filter(id=search_id)
+                # Nếu chỉ là "HD" hoặc "HD0", không filter gì thêm (giữ nguyên queryset)
+            else:
+                queryset = queryset.filter(
+                    Q(tiec_cuoi__ten_chu_re__icontains=search_query) |
+                    Q(tiec_cuoi__ten_co_dau__icontains=search_query) |
+                    Q(tiec_cuoi__id__icontains=search_query) |
+                    Q(id__icontains=search_query)
+                )
         # Phân trang
         page = int(request.query_params.get('page', 1))
         limit = int(request.query_params.get('limit', 8))
