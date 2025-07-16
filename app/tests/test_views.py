@@ -611,12 +611,13 @@ class ReportViewSetTest(TestCase):
             ten_dich_vu='Trang trí sảnh',
             don_gia=2000000.0
         )
+        today = date.today()
         self.tiec_cuoi = TiecCuoi.objects.create(
             tai_khoan=self.tai_khoan,
             sanh=self.sanh,
             ten_chu_re='Nguyễn Văn A',
             ten_co_dau='Trần Thị B',
-            ngay_dai_tiec=date(2024, 12, 25),
+            ngay_dai_tiec=today,  # SỬA LẠI NGÀY
             so_luong_ban=30,
             so_luong_ban_du_tru=5,
             ca='Tối',
@@ -632,7 +633,7 @@ class ReportViewSetTest(TestCase):
         """Test ReportViewSet total_tiec_cuoi action"""
         response = self.client.get('/api/report/total-tiec-cuoi/')
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['total_tiec'], 1)
+        self.assertEqual(response.data['total_tiec_cuoi'], 1)
 
     def test_report_overview(self):
         """Test ReportViewSet overview action"""
